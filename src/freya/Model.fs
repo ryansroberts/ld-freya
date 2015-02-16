@@ -1,27 +1,24 @@
-module Model 
+module Model
+
 open VDS.RDF
 
-type Uri =
+type Uri = 
   | Uri of string
 
-
-type Path =
+type Path = 
   | Path of string
 
-type Target = {
-    Id : Uri
+type Target = 
+  { Id : Uri
     Path : Path
-    Content : string
-    }
+    Content : string }
 
-type Compilation = {
-  Id : Uri
-  Targets : Target list  
-  }
+type Compilation = 
+  { Id : Uri
+    Targets : Target list }
 
-type Tool =
+type Tool = 
   | Process of string * string
   | EchoContent
-
 
 type Rule = Target -> Tool option
