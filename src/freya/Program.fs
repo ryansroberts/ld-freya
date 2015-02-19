@@ -47,6 +47,13 @@ module Store =
     | true -> g.LoadFromUri(System.Uri s)
     | false -> g.LoadFromFile s
     Memory g
+
+  let loadStream (s : System.IO.Stream) =
+    let g = new Graph()
+    let p = new TurtleParser()
+    use sr = new System.IO.StreamReader(s)
+    p.Load (g,sr)
+    Memory g
   
   let query (store : store) (q : string) = 
     (store.QueryProcessor()).ProcessQuery(parser.ParseFromString(q))
@@ -78,15 +85,14 @@ type Model.Uri with
     | :? IUriNode as n -> Model.Uri(string n)
     | _ -> failwith "Not a uri node"
 
-let loadCompilation (g : Graph) = 
-  let g = Store.loadGraph g
-  let resultset = Store.resultset g
+let loadCompilation (s:Store.store) = 
+  let resultset = Store.resultset s
   let single (r : SparqlResult) = r.[0]
   let double (r : SparqlResult) = (r.[0], r.[1])
   { Id = 
       resultset "select ?id where {?id a compilation:Compilation}"
       |> Seq.exactlyOne
-      |> single :?> IUriNode
+      |> single
       |> Uri.fromVDS
     Targets = 
       resultset """
@@ -94,7 +100,7 @@ let loadCompilation (g : Graph) =
                     where {
                        ?cmp a compilation:Compilation .
                        ?cmp prov:uses ?id .
-                       ?id cnt:chars ?chars .
+                       ?id cnt:chars ?chars 
                     }
                     """
       |> Seq.map double
@@ -105,7 +111,17 @@ let loadCompilation (g : Graph) =
                Content = string chars })
       |> Seq.toList }
 
+open Nessos.UnionArgParser
+
+type InputEncoding =
+  | TTL
+
+type Argument = 
+| InputEncoding of InputEncoding 
+
 [<EntryPoint>]
-let main argv = 
-  printfn "%A" argv
+let main argv =
+  Store.loadStream (System.Console.OpenStandardInput ())
+  |> loadCompilation
+  |> printfn "%A" 
   0 // return an integer exit code

@@ -10,3 +10,4 @@ nuget DotNetRdf
 nuget UnionArgParser
 
 github fsharp/FAKE modules/Octokit/Octokit.fsx
+github nhsevidence/ld-mimir common/RDF.fs
