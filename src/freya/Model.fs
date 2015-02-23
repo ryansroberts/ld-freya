@@ -1,9 +1,7 @@
 module Model
 
+open common.RDF
 open VDS.RDF
-
-type Uri = 
-  | Uri of string
 
 type Path = 
   | Path of string
