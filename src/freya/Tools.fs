@@ -8,7 +8,6 @@ let echoContent (c : Target) g =
     let puri = puri g
     let qn = qn g
     let literal = literal g
-    let a = a
-    triples (puri c.Id, 
-             [ (a, qn "cnt:ContentAsText")
-               (qn "cnt:chars", literal c.Content) ])
+    let a = a g
+    triples (puri c.Id, [(a, qn "cnt:ContentAsText")
+                         (qn "cnt:chars", literal c.Content)])
