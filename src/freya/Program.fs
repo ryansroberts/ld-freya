@@ -13,7 +13,6 @@ type common.RDF.Uri with
 type Compilation
     with static member load (s : Store.store) = 
         let resultset = Store.resultset s
-        printfn "%A" resultset
         let single (r : SparqlResult) = r.[0]
         let double (r : SparqlResult) = (r.[0], r.[1])
         { Id = 
@@ -23,11 +22,11 @@ type Compilation
             |> Uri.fromVDS
           Targets = 
             resultset """
-                        select (?id,?chars)
+                        select ?id ?chars 
                         where {
-                        ?cmp a compilation:Compilation .
-                        ?cmp prov:uses ?id .
-                        ?id cnt:chars ?chars 
+                            ?cmp a compilation:Compilation .
+                            ?cmp prov:uses ?id .
+                            ?id cnt:chars ?chars .
                         }
                         """
             |> Seq.map double
@@ -51,15 +50,11 @@ type Arguments =
 
 [<EntryPoint>]
 let main argv =
-
-    printfn "lol"
     let parser = UnionArgParser.Create<Arguments>()
     let args = parser.Parse argv
 
     let ont = (args.GetResult(<@ CompilationOntology @>))
     let prov = (args.GetResult(<@ Provenance @>))
-
-
 
     let prov = Store.loadFile prov
     Store.defaultNamespaces prov "http://nice.org.uk/ns/compilation#"

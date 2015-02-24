@@ -3,7 +3,7 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
-@prefix prov: <http://www.w3.org/ns/prov/>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
 @prefix owl: <http://www.w3.org/2002/07/owl#>.
 @prefix git2prov: <http://nice.org.uk/ns/prov#>.
 @prefix base: <http://nice.org.uk/ns/prov#>.
@@ -17,7 +17,7 @@
                                                                                                              prov:agent <http://nice.org.uk/ns/prov#user/ryanroberts> ; 
                                                                                                              prov:hadRole "initiator"];
                                                                                   prov:startedAtTime "2015-02-23T12:12:47.259270+00:00"^^xsd:dateTime;
-                                                                                  prov:uses <http://nice.org.uk/ns/prov/commit/a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.txt>;
+                                                                                  prov:uses <http://nice.org.uk/ns/prov/commit/a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.md>;
                                                                                   prov:wasAssociatedWith <http://nice.org.uk/ns/prov/user/ryanroberts>.
 
 <http://nice.org.uk/ns/prov/commit/a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.md> compilation:path "new.md";
