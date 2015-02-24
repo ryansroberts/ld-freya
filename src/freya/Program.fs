@@ -15,6 +15,7 @@ type Compilation
         let resultset = Store.resultset s
         let single (r : SparqlResult) = r.[0]
         let double (r : SparqlResult) = (r.[0], r.[1])
+        let triple (r : SparqlResult) = (r.[0], r.[1],r.[2])
         { Id = 
             resultset "select ?id where {?id a compilation:Compilation}"
             |> Seq.exactlyOne
@@ -22,20 +23,22 @@ type Compilation
             |> Uri.fromVDS
           Targets = 
             resultset """
-                        select ?id ?chars 
+                        select ?id ?chars ?path 
                         where {
                             ?cmp a compilation:Compilation .
                             ?cmp prov:uses ?id .
                             ?id cnt:chars ?chars .
+                            ?id compilation:path ?path .
                         }
                         """
-            |> Seq.map double
+            |> Seq.map triple 
             |> Seq.map (function 
-                    | (id, chars) -> 
+                    | (id, chars, path) -> 
                         { Id = Uri.fromVDS id
-                          Path = Path((string) (Uri.fromVDS id))
+                          Path = Path.fromStr (string path)
                           Content = string chars })
-            |> Seq.toList }
+          |> Seq.toList }
+
 
 open Nessos.UnionArgParser
 

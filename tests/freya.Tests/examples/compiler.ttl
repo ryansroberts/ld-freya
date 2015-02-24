@@ -1,0 +1,36 @@
+@base <http://nice.org.uk/ns/compilation#>.
+
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix qs: <http://nice.org.uk/ns/qs#>.
+
+:Echo a :Tool .
+
+:Annotate a :Tool .
+
+:QualityStandards a :Directory;
+    :path """qualitystandards""".
+
+:QualityStandard a :Directory;
+    :path """{QualityStandardId}""";
+    :represents qs:QualityStandard;
+    :parent :QualityStandards .
+
+:Introduction a :FilePattern;
+    :represents qs:QualityStandard;
+    :path """Introduction.md""";
+    :tool :Echo;
+    :parent :QualityStandard .
+
+:QualityStatments a :Directory;
+    :path """statements/{StatementId}""";
+    :parent :QualityStandard .
+
+:QualityStatement a :FilePattern;
+    :represents qs:QualityStatement;
+    :path """Statement.md""";
+    :tool :Echo
+          :Annotate;
+    :parent :QualityStatements .
