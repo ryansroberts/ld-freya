@@ -9,5 +9,6 @@ let echoContent (c : Target) g =
     let qn = qn g
     let literal = literal g
     let a = a g
-    triples (puri c.Id, [(a, qn "cnt:ContentAsText")
-                         (qn "cnt:chars", literal c.Content)])
+    triples (puri c.Id, 
+             [ (a, qn "cnt:ContentAsText")
+               (qn "cnt:chars", literal c.Content) ])

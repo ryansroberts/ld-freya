@@ -10,7 +10,6 @@ nuget DotNetRdf
 nuget UnionArgParser
 nuget FSharpX
 nuget FSharpX.Core
-nuget FSharpX.Text
 
 github fsharp/FAKE modules/Octokit/Octokit.fsx
 github nhsevidence/ld-mimir common/RDF.fs

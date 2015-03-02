@@ -10,19 +10,18 @@ type common.RDF.Uri with
         | :? IUriNode as n -> Uri.Sys n.Uri
         | _ -> failwith "Not a uri node"
 
-type Compilation
-    with static member load (s : Store.store) = 
+type Compilation with
+    static member load (s : Store.store) = 
         let resultset = Store.resultset s
         let single (r : SparqlResult) = r.[0]
-        let double (r : SparqlResult) = (r.[0], r.[1])
-        let triple (r : SparqlResult) = (r.[0], r.[1],r.[2])
+        let triple (r : SparqlResult) = (r.[0], r.[1], r.[2])
         { Id = 
-            resultset "select ?id where {?id a compilation:Compilation}"
-            |> Seq.exactlyOne
-            |> single
-            |> Uri.fromVDS
+              resultset "select ?id where {?id a compilation:Compilation}"
+              |> Seq.exactlyOne
+              |> single
+              |> Uri.fromVDS
           Targets = 
-            resultset """
+              resultset """
                         select ?id ?chars ?path 
                         where {
                             ?cmp a compilation:Compilation .
@@ -31,14 +30,13 @@ type Compilation
                             ?id compilation:path ?path .
                         }
                         """
-            |> Seq.map triple 
-            |> Seq.map (function 
-                    | (id, chars, path) -> 
-                        { Id = Uri.fromVDS id
-                          Path = Path.fromStr (string path)
-                          Content = string chars })
-          |> Seq.toList }
-
+              |> Seq.map triple
+              |> Seq.map (function 
+                     | (id, chars, path) -> 
+                         { Id = Uri.fromVDS id
+                           Path = Path.fromStr (string path)
+                           Content = string chars })
+              |> Seq.toList }
 
 open Nessos.UnionArgParser
 
@@ -52,18 +50,15 @@ type Arguments =
             | Provenance p -> "Path or url to input provenance"
 
 [<EntryPoint>]
-let main argv =
+let main argv = 
     let parser = UnionArgParser.Create<Arguments>()
     let args = parser.Parse argv
-
     let ont = (args.GetResult(<@ CompilationOntology @>))
     let prov = (args.GetResult(<@ Provenance @>))
-
     let prov = Store.loadFile prov
     Store.defaultNamespaces prov "http://nice.org.uk/ns/compilation#"
     Store.dump prov |> ignore
-
-    prov 
+    prov
     |> Compilation.load
     |> printfn "%A"
     0 // return an integer exit code
