@@ -41,7 +41,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="RDF.fs" />
     <Compile Include="Model.fs" />
     <Compile Include="Tools.fs" />
     <Compile Include="Rules.fs" />
@@ -76,6 +75,17 @@
       <ItemGroup>
         <Reference Include="dotNetRDF">
           <HintPath>..\..\packages\dotNetRDF\lib\net40\dotNetRDF.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="($(TargetFrameworkIdentifier) == '.NETFramework' And ($(TargetFrameworkVersion) == 'v4.0' Or $(TargetFrameworkVersion) == 'v4.5' Or $(TargetFrameworkVersion) == 'v4.5.1' Or $(TargetFrameworkVersion) == 'v4.5.2' Or $(TargetFrameworkVersion) == 'v4.5.3')) Or ($(TargetFrameworkIdentifier) == 'MonoAndroid') Or ($(TargetFrameworkIdentifier) == 'MonoTouch')">
+      <ItemGroup>
+        <Reference Include="FSharp.RDF">
+          <HintPath>..\..\packages\FSharp.RDF\lib\net40\FSharp.RDF.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

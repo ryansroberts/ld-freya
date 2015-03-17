@@ -50,12 +50,12 @@
 
 ###  http://nice.org.uk/ns/compilation#QualityStandards
 
-<http://nice.org.uk/ns/compilation#QualityStandards> rdf:type <http://nice.org.uk/ns/compilationn#DirectoryPattern> ,
+<http://nice.org.uk/ns/compilation#QualityStandards> rdf:type <http://nice.org.uk/ns/compilation#DirectoryPattern> ,
                                                               owl:NamedIndividual ;
                                                      
                                                      <http://nice.org.uk/ns/compilationn#expression> "qualitystandards"^^xsd:string ;
                                                      
-                                                     <http://nice.org.uk/ns/compilation#parent> <http://nice.org.uk/ns/compilation#QualityStandards> .
+                                                     <http://nice.org.uk/ns/compilation#parent> <http://nice.org.uk/ns/compilation#Root> .
 
 
 
@@ -68,13 +68,13 @@
                   
                   <http://nice.org.uk/ns/compilation#tool> <http://nice.org.uk/ns/compilation#Content> ;
                   
-                  <http://nice.org.uk/ns/compilation#parent> <http://nice.org.uk/ns/compilationn#QualityStandard> .
+                  <http://nice.org.uk/ns/compilation#parent> <http://nice.org.uk/ns/compilation#QualityStandard> .
 
 
 
 ###  http://nice.org.uk/ns/compilationn#QualityStandard
 
-<http://nice.org.uk/ns/compilationn#QualityStandard> rdf:type <http://nice.org.uk/ns/compilationn#DirectoryPattern> ,
+<http://nice.org.uk/ns/compilationn#QualityStandard> rdf:type <http://nice.org.uk/ns/compilation#DirectoryPattern> ,
                                                               owl:NamedIndividual ;
                                                      
                                                      <http://nice.org.uk/ns/compilationn#expression> "(?<QualityStandardId>\\s+)"^^xsd:string .

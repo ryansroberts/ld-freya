@@ -1,12 +1,17 @@
 module Model
 
-open common.RDF
+
+
+
 open VDS.RDF
 open FSharpx
 open System.Text.RegularExpressions
+open FSharp.RDF
+open resource
+
 
 type Segment =
-    | Segment of string
+| Segment of string
 
 type Path =
     | Path of Segment list
@@ -29,28 +34,27 @@ type Tool =
     | Process of string * string
     | EchoContent
 
-type Glob =
-    | Glob of System.Text.RegularExpressions.Regex
+type Expression =
+    | Expression of System.Text.RegularExpressions.Regex
 
 type DirectoryPattern =
     { Id : Uri
-      Parent : DirectoryPattern option
-      Glob : Glob }
+      Expression : Expression }
 
 type FilePattern =
     { Id : Uri
-      Parent : DirectoryPattern
-      Glob : Glob
+      Expression : Expression
       Tools : Tool list
       Represents : Uri }
 
 type Capture = string * string
 
-type GlobMatch =
+type ExpressionMatch =
     | Matches of Capture list
 
+
 type ResourcePath =
-    | ResourcePath of (DirectoryPattern list * FilePattern)
+| ResourcePath of DirectoryPattern list * FilePattern
 
 type ToolMatch = {
   Target : Target
@@ -58,9 +62,9 @@ type ToolMatch = {
   Captured: Capture list
 }
 
-let matchesGlob (s, g) = seq {
+let matchesExpression (s, g) = seq {
      match g, s with
-      | Glob re, Segment s ->
+      | Expression re, Segment s ->
           match re.Match s with
           | m when m.Length <> 0 -> yield Some (Matches [])
           | _ -> yield None }
@@ -68,20 +72,21 @@ let matchesGlob (s, g) = seq {
 let globs rp = seq {
   match rp with
   | ResourcePath ( dx,fp ) ->
-  for d in dx -> d.Glob
-  yield fp.Glob
+  for d in dx -> d.Expression
+  yield fp.Expression
   }
 
 let capture = function
   | Some (Matches cx) -> cx
   | None -> []
 
+
 let toolsFor rp t =
     match rp,t.Path with
       | ResourcePath (dx,fp),Path px ->
         let mx = globs rp
                  |> Seq.zip px
-                 |> Seq.collect matchesGlob
+                 |> Seq.collect matchesExpression
         match mx |> Seq.exists ((=) None) with
           | false -> Some {
             Target = t
@@ -89,12 +94,80 @@ let toolsFor rp t =
             Captured = mx |> Seq.toList |> List.collect capture}
           | _ -> None
 
-let loadMake s =
-  let roots = Store.resultset s """
-    select ?root
-    where {
-      ?root a compilation:Directory .
-    }
-  """
+[<AutoOpen>]
+module compilationuris =
+  let directoryPattern = Uri.from (prefixes.compilation + "DirectoryPattern")
+  let filePattern = Uri.from (prefixes.compilation + "FilePattern")
+  let tool = Uri.from (prefixes.compilation + "tool")
+  let root = Uri.from (prefixes.compilation + "Root")
+  let parent =  Uri.from (prefixes.compilation + "parent")
+  let expression = Uri.from (prefixes.compilation + "expression")
+  let represents  = Uri.from (prefixes.compilation + "represents")
+  let compilation = Uri.from (prefixes.compilation + "Compilation")
+
+let loadMake g =
+
+  let xf = fromSubject (filePattern) g
+
+  let getExpression = function
+      | FunctionalDataProperty expression xsd.string ex -> Expression(Regex ex)
+      | fp -> failwith (sprintf "%A expression is not a functional property" fp)
+
+  let getRepresents = function
+      | FunctionalProperty represents (O (Uri u)) -> u
+      | fp -> failwith (sprintf "%A represents " fp)
+
+  let getParent = function
+    | TraverseFunctional parent p -> p
+    | fp -> failwith (sprintf "%A has no parent" fp)
+
+  let id (R(S (Uri u),_) ) = u
+
+  let getFilePattern f =  {
+      Id = id f
+      Expression = getExpression f
+      Tools = [EchoContent]
+      Represents = getRepresents f
+      }
+
+  let rec getDirectoryPath d : DirectoryPattern list= [
+    yield! getDirectoryPath (getParent d)
+    match d with
+    | Is root _ -> ()
+    | _ ->
+      yield {
+        Id = id d
+        Expression = getExpression d
+      }
+    ]
+
+  [for f in xf -> ResourcePath(getDirectoryPath (getParent f),getFilePattern f)]
 
 
+
+let loadCompilation g : Compilation =
+    let uses = prefixes.prov + "uses" |> Uri.from;
+    let chars = prefixes.cnt + "chars" |> Uri.from;
+    let path = prefixes.compilation + "path" |> Uri.from;
+
+    let id (R(S (Uri u),_) ) = u
+
+    let getChars = function
+      | FunctionalDataProperty chars xsd.string s -> s
+      | r -> failwith (sprintf "%A has no content property" r)
+
+    let getPath = function
+      | FunctionalDataProperty path xsd.string s -> s
+      | r -> failwith (sprintf "%A has no path property" r)
+
+    let getUses = function
+      | Traverse uses xe ->
+        [for e in xe -> {
+          Id = id e
+          Content = getChars e
+          Path = getPath e |> Path.fromStr
+          }]
+
+    match fromSubject compilation g with
+    | [] -> failwith "Input contains no compilation resource"
+    | c::_ -> {Id = id c;Targets = getUses c}
