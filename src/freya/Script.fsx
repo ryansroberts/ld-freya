@@ -1,15 +1,18 @@
-module freya.Tests
+#r "../../packages/dotNetRDF/lib/net40/dotNetRDF.dll"
+#r "../../packages/VDS.Common/lib/net40-client/VDS.Common.dll"
+#r "../../packages/FSharpx.Core/lib/40/FSharpx.Core.dll"
+#r "../../packages/FSharp.RDF/lib/net40/FSharp.RDF.dll"
+#r "../../packages/Unquote/lib/net40/Unquote.dll"
 
+#load "Model.fs"
+open FSharp.RDF
+open System.IO
+open Swensen.Unquote
 open Model
 open System.Text.RegularExpressions
-open FSharp.RDF
 
-open Xunit
-open Swensen.Unquote
 
-[<Fact>]
-let ``Matching targets from resource paths`` () =
-  let rp = ResourcePath(
+let rp = ResourcePath(
     [{Id=Uri.from "http://nice.org.uk/ns/dqxs";Expression=Expression(Regex "qualitystandards")}
      {Id=Uri.from "https://nice.org.uk/ns/dqs";Expression=Expression(Regex "standard_(?<QualityStandardId>.*)")}],
      {
@@ -18,23 +21,22 @@ let ``Matching targets from resource paths`` () =
       Tools = [Content]
       Represents = Uri.from "http://nice.org.uk/ns/QualityStatement"
       })
-  let matchingTarget = {
+let matchingTarget = {
       Id = Uri.from "http://nice.org.uk/ns/target1"
       Path = Path.from "qualitystandards/standard_1/statement_23.md"
-      Content = ""
-      }
+      Content = "Content"
+ }
 
-  let nonMatchingTarget = {
+let nonMatchingTarget = {
     Id = Uri.from "http://nice.org.uk/ns/target1"
     Path = Path.from "qualitystandards/lol/standard_23.md"
     Content = ""
     }
 
-  test <@ toolsFor rp nonMatchingTarget = None @>
-  test <@ toolsFor rp matchingTarget = Some ({
+test <@ toolsFor rp nonMatchingTarget = None @>
+test <@ toolsFor rp matchingTarget = Some ({
     Target = matchingTarget
     Tools = [Content]
     Captured = [("QualityStandardId","1")
                 ("QualityStatementId","23")]
     }) @>
-

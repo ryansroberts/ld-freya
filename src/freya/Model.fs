@@ -1,8 +1,5 @@
 module Model
 
-
-
-
 open VDS.RDF
 open FSharpx
 open System.Text.RegularExpressions
@@ -15,7 +12,7 @@ type Segment =
 
 type Path =
     | Path of Segment list
-    static member fromStr s =
+    static member from s =
         Strings.split '/' s
         |> Array.map Segment
         |> Array.toList
@@ -32,7 +29,7 @@ type Compilation =
 
 type Tool =
     | Process of string * string
-    | EchoContent
+    | Content
 
 type Expression =
     | Expression of System.Text.RegularExpressions.Regex
@@ -66,7 +63,8 @@ let matchesExpression (s, g) = seq {
      match g, s with
       | Expression re, Segment s ->
           match re.Match s with
-          | m when m.Length <> 0 -> yield Some (Matches [])
+          | m when m.Length <> 0 ->
+              yield Some (Matches [for g in re.GetGroupNames() |> Seq.filter ( (<>) "0" ) -> (g,m.Groups.[g].Value)])
           | _ -> yield None }
 
 let globs rp = seq {
@@ -107,7 +105,7 @@ module compilationuris =
 
 let loadMake g =
 
-  let xf = fromSubject (filePattern) g
+  let xf = fromSubject filePattern g
 
   let getExpression = function
       | FunctionalDataProperty expression xsd.string ex -> Expression(Regex ex)
@@ -121,12 +119,12 @@ let loadMake g =
     | TraverseFunctional parent p -> p
     | fp -> failwith (sprintf "%A has no parent" fp)
 
-  let id (R(S (Uri u),_) ) = u
+  let id (R(S u,_) ) = u
 
   let getFilePattern f =  {
       Id = id f
       Expression = getExpression f
-      Tools = [EchoContent]
+      Tools = [Content]
       Represents = getRepresents f
       }
 
@@ -150,7 +148,7 @@ let loadCompilation g : Compilation =
     let chars = prefixes.cnt + "chars" |> Uri.from;
     let path = prefixes.compilation + "path" |> Uri.from;
 
-    let id (R(S (Uri u),_) ) = u
+    let id (R(S u,_) ) = u
 
     let getChars = function
       | FunctionalDataProperty chars xsd.string s -> s
@@ -165,7 +163,7 @@ let loadCompilation g : Compilation =
         [for e in xe -> {
           Id = id e
           Content = getChars e
-          Path = getPath e |> Path.fromStr
+          Path = getPath e |> Path.from
           }]
 
     match fromSubject compilation g with
