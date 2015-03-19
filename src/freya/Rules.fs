@@ -6,5 +6,5 @@ open Tools
 type GraphUpdate = VDS.RDF.Graph -> unit
 
 let alwaysEchoContent (c : Target) = Model.Content
-let execute = function
-    | c, EchoContent -> Tools.echoContent c
+let execute = function 
+  | c, EchoContent -> Tools.echoContent c
