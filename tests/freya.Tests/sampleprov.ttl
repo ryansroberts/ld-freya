@@ -1,0 +1,62 @@
+@base <http://nice.org.uk/ns/prov#>.
+
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix git2prov: <http://nice.org.uk/git2prov//tree/master>.
+@prefix base: <http://nice.org.uk/ns/prov#>.
+@prefix compilation: <http://nice.org.uk/ns/prov#>.
+@prefix cnt: <http://www.w3.org/2011/content#>.
+
+_:autos1 a prov:Association;
+         prov:agent <http://nice.org.uk/git2prov//tree/master/user/ryansroberts@gmail.com>;
+         prov:hadRole "author, committer".
+_:autos2 a prov:Association;
+         prov:agent <http://nice.org.uk/git2prov//tree/master/user/ryansroberts@gmail.com>;
+         prov:hadRole "author, committer".
+_:autos3 a prov:Association;
+         prov:agent <http://nice.org.uk/git2prov//tree/master/user/ryansroberts@gmail.com>;
+         prov:hadRole "author, committer".
+_:autos4 a prov:Association;
+         prov:agent <http://nice.org.uk/git2prov//tree/master/user/ryanroberts>;
+         prov:hadRole "initiator".
+<http://nice.org.uk/git2prov//tree/master/commit/28482e583c23b531bd97a8ef6fe45f0db8fc2174/CG87/chapters/introduction/Introduction.md> a prov:Entity;
+                                                                                                                                      cnt:chars """# Type 2 diabetes: The management of type 2 diabetes
+
+Adding some introduction text
+""";
+                                                                                                                                      prov:specializationOf <http://nice.org.uk/ns/prov#/CG87/chapters/introduction/Introduction.md>;
+                                                                                                                                      prov:wasAttributedTo <http://nice.org.uk/git2prov//tree/master/user/ryansroberts@gmail.com>;
+                                                                                                                                      prov:wasGeneratedBy <http://nice.org.uk/git2prov//tree/master/commit/ba0abdd>.
+<http://nice.org.uk/git2prov//tree/master/commit/a6e569cf1852e7d43db1ba7dc3e3da5f0fcb709c/CG87/chapters/introduction/Introduction.md> a prov:Entity;
+                                                                                                                                      cnt:chars """# Type 2 diabetes: The management of type 2 diabetes
+""";
+                                                                                                                                      prov:specializationOf <http://nice.org.uk/ns/prov#/CG87/chapters/introduction/Introduction.md>;
+                                                                                                                                      prov:wasAttributedTo <http://nice.org.uk/git2prov//tree/master/user/ryansroberts@gmail.com>;
+                                                                                                                                      prov:wasGeneratedBy <http://nice.org.uk/git2prov//tree/master/commit/dee040f>.
+<http://nice.org.uk/git2prov//tree/master/commit/ae84cd4> a prov:Activity;
+                                                          prov:endedAtTime "2014-09-11T15:10:25.000000+01:00"^^xsd:dateTime;
+                                                          prov:qualifiedAssociation _:autos1;
+                                                          prov:startedAtTime "2014-09-11T15:10:25.000000+01:00"^^xsd:dateTime;
+                                                          prov:wasAssociatedWith <http://nice.org.uk/git2prov//tree/master/user/ryansroberts@gmail.com>.
+<http://nice.org.uk/git2prov//tree/master/commit/ba0abdd> a prov:Activity;
+                                                          prov:endedAtTime "2014-09-11T15:29:24.000000+01:00"^^xsd:dateTime;
+                                                          prov:informedBy <http://nice.org.uk/git2prov//tree/master/commit/dee040f>;
+                                                          prov:qualifiedAssociation _:autos3;
+                                                          prov:startedAtTime "2014-09-11T15:29:24.000000+01:00"^^xsd:dateTime;
+                                                          prov:uses <http://nice.org.uk/git2prov//tree/master/commit/28482e583c23b531bd97a8ef6fe45f0db8fc2174/CG87/chapters/introduction/Introduction.md>;
+                                                          prov:wasAssociatedWith <http://nice.org.uk/git2prov//tree/master/user/ryansroberts@gmail.com>.
+<http://nice.org.uk/git2prov//tree/master/commit/dee040f> a prov:Activity;
+                                                          prov:endedAtTime "2014-09-11T15:12:08.000000+01:00"^^xsd:dateTime;
+                                                          prov:informedBy <http://nice.org.uk/git2prov//tree/master/commit/ae84cd4>;
+                                                          prov:qualifiedAssociation _:autos2;
+                                                          prov:startedAtTime "2014-09-11T15:12:08.000000+01:00"^^xsd:dateTime;
+                                                          prov:uses <http://nice.org.uk/git2prov//tree/master/commit/a6e569cf1852e7d43db1ba7dc3e3da5f0fcb709c/CG87/chapters/introduction/Introduction.md>;
+                                                          prov:wasAssociatedWith <http://nice.org.uk/git2prov//tree/master/user/ryansroberts@gmail.com>.
+<http://nice.org.uk/ns/prov#/compilation/2015-02-12T14:51:19.3894960+00:00> a compilation:Compilation;
+                                                                            prov:qualifiedAssociation _:autos4;
+                                                                            prov:startedAtTime "2015-02-12T14:51:19.390395+00:00"^^xsd:dateTime;
+                                                                            prov:uses <http://nice.org.uk/git2prov//tree/master/commit/28482e583c23b531bd97a8ef6fe45f0db8fc2174/CG87/chapters/introduction/Introduction.md>;
+                                                                            prov:wasAssociatedWith <http://nice.org.uk/git2prov//tree/master/user/ryanroberts>.

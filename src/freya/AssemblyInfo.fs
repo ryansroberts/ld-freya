@@ -1,21 +1,14 @@
-﻿module freya.AssemblyInfo
+namespace System
+
 open System.Reflection
-open System.Runtime.CompilerServices
 
-[<assembly: AssemblyTitle("freya")>]
-[<assembly: AssemblyDescription("")>]
-[<assembly: AssemblyConfiguration("")>]
-[<assembly: AssemblyCompany("")>]
-[<assembly: AssemblyProduct("")>]
-[<assembly: AssemblyCopyright("ryanroberts")>]
-[<assembly: AssemblyTrademark("")>]
+[<assembly:AssemblyTitleAttribute("freya")>]
+[<assembly:AssemblyProductAttribute("freya")>]
+[<assembly:AssemblyDescriptionAttribute("Make tool for linked data")>]
+[<assembly:AssemblyVersionAttribute("1.0")>]
+[<assembly:AssemblyFileVersionAttribute("1.0")>]
+do ()
 
-// The assembly version has the format {Major}.{Minor}.{Build}.{Revision}
-
-[<assembly: AssemblyVersion("1.0.0.0")>]
-
-//[<assembly: AssemblyDelaySign(false)>]
-//[<assembly: AssemblyKeyFile("")>]
-
-()
-
+module internal AssemblyVersionInformation = 
+  [<Literal>]
+  let Version = "1.0"

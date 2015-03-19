@@ -1,24 +1,18 @@
-module freya.Tests
+#r "../../packages/dotNetRDF/lib/net40/dotNetRDF.dll"
+#r "../../packages/VDS.Common/lib/net40-client/VDS.Common.dll"
+#r "../../packages/FSharpx.Core/lib/40/FSharpx.Core.dll"
+#r "../../packages/FSharp.RDF/lib/net40/FSharp.RDF.dll"
+#r "../../packages/Unquote/lib/net40/Unquote.dll"
+#load "Model.fs"
 
+open FSharp.RDF
+open System.IO
+open Swensen.Unquote
 open Model
 open System.Text.RegularExpressions
-open FSharp.RDF
-open Xunit
-open Swensen.Unquote
+open resource
 
-[<Fact>]
-let ``Loading resource path from compilation ontology``() =
-  let matchingTarget =
-    { Id = Uri.from "http://nice.org.uk/ns/target1"
-      Path = Path.from "qualitystandards/standard_1/statement_23.md"
-      Content = "" }
-
-  let nonMatchingTarget =
-    { Id = Uri.from "http://nice.org.uk/ns/target1"
-      Path = Path.from "qualitystandards/lol/standard_23.md"
-      Content = "" }
-
-  let qsCompilation = """
+let qsCompilation = """
 @prefix : <http://nice.org.uk/ns/compilation#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -40,32 +34,22 @@ let ``Loading resource path from compilation ontology``() =
                                                      <http://nice.org.uk/ns/compilation#parent> <http://nice.org.uk/ns/compilation#Root> .
 
 
-:QualityStatement rdf:type <http://nice.org.uk/ns/compilation#FilePattern> ,
-                           owl:NamedIndividual ;
-
-                  <http://nice.org.uk/ns/compilation#expression> "statement_(?<QualityStatementId>.*).md"^^xsd:string ;
-
+:QualityStatement rdf:type <http://nice.org.uk/ns/compilation#FilePattern> ,  owl:NamedIndividual ;
+                  <http://nice.org.uk/ns/compilation#expression> "statement-(?<QualityStatementId>.*)"^^xsd:string ;
                   <http://nice.org.uk/ns/compilation#tool> <http://nice.org.uk/ns/compilation#Content> ;
                   <http://nice.org.uk/ns/compilation#represents> <http://nice.org.uk/ns/qualitystandard#QualityStatement>;
-
                   <http://nice.org.uk/ns/compilation#parent> <http://nice.org.uk/ns/compilation#QualityStandard> .
 
 
 <http://nice.org.uk/ns/compilation#QualityStandard> rdf:type <http://nice.org.uk/ns/compilation#DirectoryPattern> ,
                                                               owl:NamedIndividual ;
 
-                                                     <http://nice.org.uk/ns/compilation#expression> "standard_(?<QualityStandardId>.*)"^^xsd:string ;
+                                                     <http://nice.org.uk/ns/compilation#expression> "qualitystandard_(?<QualityStandardId>.*)"^^xsd:string ;
 
 
                   <http://nice.org.uk/ns/compilation#parent> <http://nice.org.uk/ns/compilation#QualityStandards> .
 
     """
-  let g = Graph.from qsCompilation
-  let rp = loadMake g |> List.head
-  test <@ toolsFor rp nonMatchingTarget = None @>
-  test
-    <@ toolsFor rp matchingTarget = Some({ Target = matchingTarget
-                                           Tools = [ Content ]
-                                           Captured =
-                                             [ ("QualityStandardId", "1")
-                                               ("QualityStatementId", "23") ] }) @>
+let g = Graph.from qsCompilation
+
+test <@ loadMake g = List.Empty @>
