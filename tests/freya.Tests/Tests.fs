@@ -62,10 +62,55 @@ let ``Loading resource path from compilation ontology``() =
     """
   let g = Graph.from qsCompilation
   let rp = loadMake g |> List.head
-  test <@ toolsFor rp nonMatchingTarget = None @>
+  test <@ toolsFor nonMatchingTarget rp = None @>
   test
-    <@ toolsFor rp matchingTarget = Some({ Target = matchingTarget
-                                           Tools = [ Content ]
-                                           Captured =
+  <@ toolsFor matchingTarget rp = Some({ Target = matchingTarget
+                                         Represents = (Uri.from "http://nice.org.uk/ns/qualitystandard#QualityStatement")
+                                         Tools = [ Content ]
+                                         Captured =
                                              [ ("QualityStandardId", "1")
                                                ("QualityStatementId", "23") ] }) @>
+
+[<Fact>]
+let ``Load provenance as build targets`` () =
+  let prov = """
+@base <http://nice.org.uk/ns/compilation#>.
+
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix compilation: <http://nice.org.uk/ns/compilation#>.
+@prefix cnt: <http://www.w3.org/2011/content#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://nice.org.uk/ns/compilation#compilation/2015-02-23T12:12:47.2583040+00:00y> a compilation:Compilation;
+                                                                                  rdfs:label "Change this to a compilation message that is actualy useful to somebody";
+                                                                                  prov:qualifiedAssociation [a prov:Association ;
+                                                                                                             prov:agent <http://nice.org.uk/ns/prov#user/ryanroberts> ;
+                                                                                                             prov:hadRole "initiator"];
+                                                                                  prov:startedAtTime "2015-02-23T12:12:47.259270+00:00"^^xsd:dateTime;
+                                                                                  prov:uses <http://nice.org.uk/ns/prov/commit/a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.md>;
+                                                                                  prov:wasAssociatedWith <http://nice.org.uk/ns/prov/user/ryanroberts>.
+
+<http://nice.org.uk/ns/prov/commit/a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.md> compilation:path "new.md";
+                                                                                     a prov:Entity;
+                                                                                     cnt:chars "Some content "^^xsd:string;
+                                                                                     prov:specializationOf <http://nice.org.uk/ns/prov/new.md>;
+                                                                                     prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
+                                                                                     prov:wasGeneratedBy <http://nice.org.uk/ns/prov/commit/c47800c>.
+
+  """
+
+  let g = Graph.from prov
+  let c = loadCompilation g
+  test <@ c =
+    {
+        Id = Uri.from "http://nice.org.uk/ns/compilation#compilation/2015-02-23T12:12:47.2583040+00:00"
+        Targets = [{
+                Id = Uri.from "http://nice.org.uk/ns/prov/commit/a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.md"
+                Path = Path [Segment "new.md"]
+                Content = "Some content "}
+        ]
+    }
+  @>
