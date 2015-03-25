@@ -30,3 +30,6 @@ let make xrp t =
   |> execMatches
 
 let makeAll xrp xt = xt |> List.collect (make xrp)
+
+
+let failures xe = xe |> List.filter (function | Failure _ -> true|_ ->false)

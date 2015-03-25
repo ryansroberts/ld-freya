@@ -1,0 +1,8 @@
+type file
+id NICE.Freya
+version 1.0
+authors Ryan Roberts
+description
+       Ontology make tool
+files
+  bin/Release ==> tools

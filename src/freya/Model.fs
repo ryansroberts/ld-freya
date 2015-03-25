@@ -22,7 +22,7 @@ type Target =
     Path : Path
     Content : string }
 
-type Compilation =
+type Provenance =
   { Id : Uri
     Targets : Target list }
 
@@ -162,10 +162,9 @@ let loadMake g =
       yield { Id = id d
               Expression = getExpression d } ]
 
-  [ for f in xf ->
-      ResourcePath(getDirectoryPath (getParent f), getFilePattern f) ]
+  [ for f in xf -> ResourcePath(getDirectoryPath (getParent f), getFilePattern f) ]
 
-let loadCompilation g : Compilation =
+let loadProvenance g  =
   let uses = prefixes.prov + "uses" |> Uri.from
   let specialisationOf = prefixes.prov + "specializationOf" |> Uri.from
   let chars = prefixes.cnt + "chars" |> Uri.from
