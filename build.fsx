@@ -251,7 +251,6 @@ Target "Release" (fun _ ->
   // TODO: |> uploadFile "PATH_TO_FILE"
   |> releaseDraft
   |> Async.RunSynchronously)
-Target "BuildPackage" DoNothing
 // --------------------------------------------------------------------------------------
    // Run all targets by default. Invoke 'build <Target>' to override
 

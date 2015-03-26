@@ -19,6 +19,7 @@ type Path =
 
 type Target =
   { Id : Uri
+    ProvId : Uri
     Path : Path
     Content : string }
 
@@ -190,6 +191,7 @@ let loadProvenance g  =
     | Traverse uses xe ->
       [ for e in xe ->
           { Id = getSpecialisationOf e
+            ProvId = id e
             Content = getChars e
             Path = getPath e |> Path.from } ]
   match fromType compilation g with
