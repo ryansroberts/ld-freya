@@ -260,7 +260,6 @@ Target "All" DoNothing
 #else
 =?> ("SourceLink", Pdbstr.tryFind().IsSome )
 #endif
-==> "NuGet"
 ==> "BuildPackage"
 "CleanDocs" ==> "GenerateHelp" ==> "GenerateReferenceDocs" ==> "GenerateDocs"
 "CleanDocs" ==> "GenerateHelpDebug"
