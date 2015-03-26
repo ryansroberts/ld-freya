@@ -251,9 +251,20 @@ Target "Release" (fun _ ->
   // TODO: |> uploadFile "PATH_TO_FILE"
   |> releaseDraft
   |> Async.RunSynchronously)
-Target "BuildPackage" DoNothing
 // --------------------------------------------------------------------------------------
-// Run all targets by default. Invoke 'build <Target>' to override
+   // Run all targets by default. Invoke 'build <Target>' to override
+
+
+Target "BuildPackage" (fun _ ->
+  let n = Environment.GetEnvironmentVariable "TRAVIS_BUILD_NUMBER"
+  let v = sprintf "1.0.%s" n
+  [
+   ("mono",".paket/paket.exe pack output . version " + v)
+   ("mono",sprintf ".paket/paket.exe push url https://www.nuget.org file Freya.%s.nupkg" v)
+  ]
+  |> List.iter (fun (v,a) -> Shell.Exec (v,args=a) |> ignore)
+)
+
 Target "All" DoNothing
 "Clean" ==> "AssemblyInfo" ==> "Build" ==> "RunTests"
 =?> ("GenerateReferenceDocs", isLocalBuild && not isMono)

@@ -19,10 +19,11 @@ type Path =
 
 type Target =
   { Id : Uri
+    ProvId : Uri
     Path : Path
     Content : string }
 
-type Compilation =
+type Provenance =
   { Id : Uri
     Targets : Target list }
 
@@ -53,8 +54,21 @@ type ResourcePath =
 
 type ToolMatch =
   { Target : Target
+    Represents : Uri
     Tools : Tool list
     Captured : Capture list }
+
+open Store
+
+type ToolFailure =
+  { Prov : Resource list}
+type ToolSuccess =
+  { Prov : Resource list
+    Output : Resource list}
+type ToolExecution =
+  | Failure of ToolFailure
+  | Success of ToolSuccess
+
 
 let matchesExpression (s, g) =
   seq {
@@ -82,7 +96,7 @@ let capture =
   | Some(Matches cx) -> cx
   | None -> []
 
-let toolsFor rp t =
+let toolsFor t rp =
   match rp, t.Path with
   | ResourcePath(dx, fp), Path px ->
     let mx =
@@ -92,12 +106,14 @@ let toolsFor rp t =
     match mx |> Seq.exists ((=) None) with
     | false ->
       Some { Target = t
+             Represents = fp.Represents
              Tools = fp.Tools
              Captured =
                mx
                |> Seq.toList
                |> List.collect capture }
     | _ -> None
+
 
 [<AutoOpen>]
 module compilationuris =
@@ -123,7 +139,7 @@ let loadMake g =
 
   let getRepresents =
     function
-    | FunctionalProperty represents (O(Uri u)) -> u
+    | FunctionalProperty represents (O(Node.Uri u,_)) -> u
     | fp -> failwith (sprintf "%A represents " fp)
 
   let getParent =
@@ -141,17 +157,17 @@ let loadMake g =
 
   let rec getDirectoryPath d : DirectoryPattern list =
     [ match d with
-      | FunctionalProperty parent (O(Uri r)) when r <> root ->
+      | FunctionalProperty parent (O(Node.Uri r,_)) when r <> root ->
         yield! getDirectoryPath (getParent d)
       | _ -> ()
       yield { Id = id d
               Expression = getExpression d } ]
 
-  [ for f in xf ->
-      ResourcePath(getDirectoryPath (getParent f), getFilePattern f) ]
+  [ for f in xf -> ResourcePath(getDirectoryPath (getParent f), getFilePattern f) ]
 
-let loadCompilation g : Compilation =
+let loadProvenance g  =
   let uses = prefixes.prov + "uses" |> Uri.from
+  let specialisationOf = prefixes.prov + "specializationOf" |> Uri.from
   let chars = prefixes.cnt + "chars" |> Uri.from
   let path = prefixes.compilation + "path" |> Uri.from
   let id (R(S u, _)) = u
@@ -166,10 +182,16 @@ let loadCompilation g : Compilation =
     | FunctionalDataProperty path xsd.string s -> s
     | r -> failwith (sprintf "%A has no path property" r)
 
+  let getSpecialisationOf =
+    function
+    | FunctionalProperty specialisationOf (O(Node.Uri s,_)) -> s
+    | r -> failwith (sprintf "%A has no specialisationOf" r)
+
   let getUses = function
     | Traverse uses xe ->
       [ for e in xe ->
-          { Id = id e
+          { Id = getSpecialisationOf e
+            ProvId = id e
             Content = getChars e
             Path = getPath e |> Path.from } ]
   match fromType compilation g with
