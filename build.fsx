@@ -260,7 +260,7 @@ Target "BuildPackage" (fun _ ->
   let v = sprintf "1.0.%s" n
   [
    ("mono",".paket/paket.exe pack output . version " + v)
-   ("mono",sprintf ".paket/paket.exe push url https://www.nuget.org file Freya.%s.nupkg" v)
+   ("mono",sprintf ".paket/paket.exe push url https://www.nuget.org file NICE.Freya.%s.nupkg" v)
   ]
   |> List.iter (fun (v,a) -> Shell.Exec (v,args=a) |> ignore)
 )
