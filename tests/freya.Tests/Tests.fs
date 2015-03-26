@@ -80,7 +80,7 @@ let prov = """@base <http://nice.org.uk/ns/compilation#>.
 @prefix cnt: <http://www.w3.org/2011/content#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
-<http://nice.org.uk/ns/compilation#compilation/2015-02-23T12:12:47.2583040+00:00>
+<http://nice.org.uk/ns/compilation#compilation_2015-02-23T12:12:47.2583040+00:00>
   a compilation:Compilation;
   rdfs:label "Change this to a compilation message that is actualy useful to somebody";
   prov:qualifiedAssociation [a prov:Association ;
@@ -105,9 +105,9 @@ let provM = graph.loadFormat graph.parse.ttl (graph.fromString prov) |> loadProv
 let ``Translate provenence to compilation targets`` () =
  test <@
     {
-        Id = Uri.from "http://nice.org.uk/ns/compilation#compilation/2015-02-23T12:12:47.2583040+00:00"
+        Id = Uri.from "http://nice.org.uk/ns/compilation#compilation_2015-02-23T12:12:47.2583040+00:00"
         Targets = [{
-                Id = Uri.from "http://nice.org.uk/ns/prov/new.md"
+                Id = Uri.from "http://nice.org.uk/ns/prov#new.md"
                 ProvId = Uri.from "http://nice.org.uk/ns/prov/commit/a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.md"
                 Path = Path[Segment "qualitystandards"; Segment "standard_1"; Segment "statement_23.md"];
                 Content = "Some content"}
