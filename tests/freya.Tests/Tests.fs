@@ -101,17 +101,14 @@ let prov = """@base <http://nice.org.uk/ns/compilation#>.
 
 let provM = graph.loadFormat graph.parse.ttl (graph.fromString prov) |> loadProvenance
 
+[<Fact>]
 let ``Translate provenence to compilation targets`` () =
- test <@
-    {
-        Id = Uri.from "http://nice.org.uk/ns/compilation#compilation_2015-02-23T12:12:47.2583040+00:00"
-        Targets = [{
-                Id = Uri.from "http://nice.org.uk/ns/prov#new.md"
-                ProvId = Uri.from "http://nice.org.uk/ns/prov/commit/a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.md"
-                Path = Path[Segment "qualitystandards"; Segment "standard_1"; Segment "statement_23.md"];
-                Content = "Some content"}
-        ]
-    } = provM
+  test <@ {
+     Id = Uri.from "http://nice.org.uk/ns/compilation#compilation_2015-02-23T12:12:47.2583040+00:00"
+     Targets = [{Id = Uri.from "http://nice.org.uk/ns/prov/new.md"
+                 ProvId = Uri.from "http://nice.org.uk/ns/prov/commit/a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.md"
+                 Path = Path [Segment "qualitystandards"; Segment "standard_1"; Segment "statement_23.md"]
+                 Content = "Some content"}]} = provM
     @>
 
 let res = makeAll [rp] provM.Targets
