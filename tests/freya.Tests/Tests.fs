@@ -101,7 +101,6 @@ let prov = """@base <http://nice.org.uk/ns/compilation#>.
 
 let provM = graph.loadFormat graph.parse.ttl (graph.fromString prov) |> loadProvenance
 
-[<Fact>]
 let ``Translate provenence to compilation targets`` () =
  test <@
     {
