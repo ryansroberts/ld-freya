@@ -5,4 +5,4 @@ authors Ryan Roberts
 description
        Ontology make tool
 files
-  bin/Release ==> tools
+  ../../bin ==> tools
