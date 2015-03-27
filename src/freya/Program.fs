@@ -42,11 +42,21 @@ type Arguments =
       | Describe t -> "Display actions available at path"
       | Action t -> "Perform the specified action"
       | Output t -> "Directory to save compilaton output"
+
 [<EntryPoint>]
 let main argv =
   let parser = UnionArgParser.Create<Arguments>()
   let args = parser.Parse argv
   let makeOntology = graph.loadFrom (args.GetResult(<@ MakeOntology @>)) |> loadMake
+
+  let toLower (s:string) = s.ToLower()
+  let containsParam param = Seq.map toLower >> Seq.exists ((=) (toLower param))
+  let paramIsHelp param = containsParam param ["help"; "?"; "/?"; "-h"; "--help"; "/h"; "/help"]
+
+  if (( argv.Length = 2 && paramIsHelp argv.[1] ) || argv.Length = 1) then
+    printfn """Usage: freya [options]
+                %s""" ( parser.Usage ()  )
+    exit 1
 
   compile makeOntology (args.GetResult <@ Compile @> |> graph.loadFrom) (args.GetResult <@ Output @>)
 

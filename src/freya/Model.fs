@@ -69,7 +69,6 @@ type ToolExecution =
   | Failure of ToolFailure
   | Success of ToolSuccess
 
-
 let matchesExpression (s, g) =
   seq {
     match g, s with
@@ -81,7 +80,7 @@ let matchesExpression (s, g) =
                    [ for g in re.GetGroupNames() |> Seq.filter ((<>) "0") ->
                        (g, m.Groups.[g].Value) ])
       | _ -> yield None
-  }
+    }
 
 let globs rp =
   seq {
