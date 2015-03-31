@@ -1,11 +1,11 @@
 module freya.Tests
-
-open Model
-open Tools
+open Freya
 open System.Text.RegularExpressions
 open FSharp.RDF
 open Xunit
 open Swensen.Unquote
+open compilation
+open tools
 
 let matchingTarget =
     { Id = Uri.from "http://nice.org.uk/ns/target1"
@@ -80,17 +80,35 @@ let prov = """@base <http://nice.org.uk/ns/compilation#>.
 @prefix cnt: <http://www.w3.org/2011/content#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
+<http://nice.org.uk/ns/prov/commit#999586c1dfe8a71c6cbf6c129f404c5642ff31bd>
+  a prov:Commit;
+  compilation:path "qualitystandards/standard_1/statement_23.md";
+  cnt:chars "Some content"^^xsd:string;
+  prov:specializationOf <http://nice.org.uk/ns/prov/new.md>;
+  prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
+  prov:wasGeneratedBy <http://nice.org.uk/ns/prov/commit/c47800c>.
+
+<yhttp://nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd>
+  a prov:Commit;
+  prov:informedBy <http://nice.org.uk/ns/prov/commit#999586c1dfe8a71c6cbf6c129f404c5642ff31bd> ;
+  compilation:path "qualitystandards/standard_1/statement_23.md";
+  cnt:chars "Some content"^^xsd:string;
+  prov:specializationOf <http://nice.org.uk/ns/prov/new.md>;
+  prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
+  prov:wasGeneratedBy <http://nice.org.uk/ns/prov/commit/c47800c>.
+
 <http://nice.org.uk/ns/compilation#compilation_2015-02-23T12:12:47.2583040+00:00>
   a compilation:Compilation;
   rdfs:label "Change this to a compilation message that is actualy useful to somebody";
+  prov:informedBy <http://nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd>;
   prov:qualifiedAssociation [a prov:Association ;
                              prov:agent <http://nice.org.uk/ns/prov#user/ryanroberts> ;
                              prov:hadRole "initiator"];
   prov:startedAtTime "2015-02-23T12:12:47.259270+00:00"^^xsd:dateTime;
-  prov:uses <http://nice.org.uk/ns/prov/commit/a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.md>;
+  prov:uses <http://nice.org.uk/ns/prov/entity#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd>;
   prov:wasAssociatedWith <http://nice.org.uk/ns/prov/user/ryanroberts>.
 
-<http://nice.org.uk/ns/prov/commit/a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.md>
+<http://nice.org.uk/ns/prov/entity#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd>
   a prov:Entity;
   compilation:path "qualitystandards/standard_1/statement_23.md";
   cnt:chars "Some content"^^xsd:string;
@@ -105,6 +123,7 @@ let provM = graph.loadFormat graph.parse.ttl (graph.fromString prov) |> loadProv
 let ``Translate provenence to compilation targets`` () =
   test <@ {
      Id = Uri.from "http://nice.org.uk/ns/compilation#compilation_2015-02-23T12:12:47.2583040+00:00"
+     Commits = []
      Targets = [{Id = Uri.from "http://nice.org.uk/ns/prov/new.md"
                  ProvId = Uri.from "http://nice.org.uk/ns/prov/commit/a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.md"
                  Path = Path [Segment "qualitystandards"; Segment "standard_1"; Segment "statement_23.md"]

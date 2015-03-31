@@ -1,4 +1,5 @@
-module Model
+namespace Freya
+
 
 open VDS.RDF
 open FSharpx
@@ -16,6 +17,14 @@ type Path =
     |> Array.map Segment
     |> Array.toList
     |> Path.Path
+  override x.ToString() =
+    match x with
+    | Path xs -> System.String.Join("/",xs)
+
+[<AutoOpen>]
+module path =
+  let (++) (Path a) (Path b) = a @ b
+
 
 type Target =
   { Id : Uri
@@ -23,8 +32,14 @@ type Target =
     Path : Path
     Content : string }
 
+
+type Commit =
+  { Id : Uri
+    When: System.DateTimeOffset}
+
 type Provenance =
   { Id : Uri
+    Commits : Commit list
     Targets : Target list }
 
 type Tool =
@@ -68,6 +83,9 @@ type ToolSuccess =
 type ToolExecution =
   | Failure of ToolFailure
   | Success of ToolSuccess
+
+
+module compilation =
 
 let matchesExpression (s, g) =
   seq {
@@ -166,11 +184,28 @@ let loadMake g =
 
 let loadProvenance g  =
   let uses = prefixes.prov + "uses" |> Uri.from
+  let commit = prefixes.prov + "uses" |> Uri.from
   let specialisationOf = prefixes.prov + "specializationOf" |> Uri.from
+  let informedBy = prefixes.prov + "informedBy" |> Uri.from
+  let endedAtTime = prefixes.prov + "endedAtTime" |> Uri.from;
   let chars = prefixes.cnt + "chars" |> Uri.from
   let path = prefixes.compilation + "path" |> Uri.from
   let id (R(S u, _)) = u
 
+  let getEndedAt =
+    function
+      | FunctionalDataProperty endedAtTime xsd.datetimeoffset d -> d
+      | r -> failwith(sprintf "%A has no endedAtTime property" r)
+
+  let rec getCommits x = [
+      match x with
+      | TraverseFunctional informedBy x ->
+        yield {
+            Id = id x
+            When = getEndedAt x
+        }
+      | _ -> ()
+      ]
   let getChars =
     function
     | FunctionalDataProperty chars xsd.string s -> s
@@ -197,4 +232,5 @@ let loadProvenance g  =
   | [] -> failwith "Input contains no compilation resource"
   | c :: _ ->
     { Id = id c
+      Commits = getCommits c
       Targets = getUses c }

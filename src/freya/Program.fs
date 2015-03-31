@@ -1,12 +1,15 @@
+namespace Freya
 open VDS.RDF
 open VDS.RDF.Writing
 open VDS.RDF.Query
 open FSharp.RDF
-open Model
 open Nessos.UnionArgParser
 open Assertion
-open Tools
+open compilation
+open tools
+open output
 
+module main =
 let empty () = Graph ( new VDS.RDF.Graph () )
 
 let toFile (p) = new System.IO.StreamWriter ( System.IO.File.OpenWrite p  )
@@ -14,19 +17,22 @@ let toFile (p) = new System.IO.StreamWriter ( System.IO.File.OpenWrite p  )
 let (++) a b = System.IO.Path.Combine (a,b)
 let fragment (Uri.Sys u) = u.Fragment
 
-
-let compile m p d =
-  let p = (loadProvenance p)
-  let fn = (d ++ (fragment p.Id) + ".ttl")
-  let xe = makeAll m p.Targets
-  match failures xe with
-    | [] ->
-      [for (Success({Prov=_;Output=o})) in xe do yield! o]
-      |> output.toGraph !"http://nice.org.uk/ns/compilation" []
-      |> graph.format graph.write.ttl (toFile fn)
+let compile pth m p d =
+  let pr = (loadProvenance p)
+  let xe = makeAll m pr.Targets
+  let failure = function | Failure(_) -> true | _ -> false
+  match List.partition failure xe with
+    | x::xs,_ ->
+      [for (Failure{Prov=px}) in x::xs do yield! px]
+      |> output.toGraph p
+      |> output.format graph.write.ttl System.Console.Error
+      |> ignore
+      1
+    | [],x::xs->
+      [for (Success s) in x::xs -> s]
+      |> results.saveCompilation pth pr p
       |> ignore
       0
-    | xf::[] -> 1
 
 type Arguments =
   | [<Mandatory>]MakeOntology of string
@@ -58,5 +64,4 @@ let main argv =
                 %s""" ( parser.Usage ()  )
     exit 1
 
-  compile makeOntology (args.GetResult <@ Compile @> |> graph.loadFrom) (args.GetResult <@ Output @>)
-
+  compile (args.GetResult <@ Output @> |> Path.from) makeOntology (args.GetResult <@ Compile @> |> graph.loadFrom) (args.GetResult <@ Output @>)

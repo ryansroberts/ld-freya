@@ -1,11 +1,12 @@
-module Tools
-
-open Model
+namespace Freya
 open FSharp.RDF
 open Assertion
 open rdf
 open owl
+open compilation
 
+
+module tools =
 let content (c : ToolMatch) = Success {
   Prov = []
   Output = [owl.individual c.Target.Id [c.Represents] [
@@ -31,5 +32,3 @@ let make xrp t =
 
 let makeAll xrp xt = xt |> List.collect (make xrp)
 
-
-let failures xe = xe |> List.filter (function | Failure _ -> true|_ ->false)
