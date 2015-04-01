@@ -1,35 +1,34 @@
-module Tools
+namespace Freya
 
-open Model
 open FSharp.RDF
 open Assertion
 open rdf
 open owl
+open compilation
 
-let content (c : ToolMatch) = Success {
-  Prov = []
-  Output = [owl.individual c.Target.Id [c.Represents] [
-             dataProperty !"cnt:chars" (c.Target.Content^^xsd.string)
-             ]]
-  }
+module tools =
+  let content (c : ToolMatch) =
+    Success
+      { Prov = []
+        Output =
+          [ owl.individual c.Target.Id [ c.Represents ]
+              [ dataProperty !"cnt:chars" (c.Target.Content ^^ xsd.string) ] ] }
 
-let exec t =
-  match t with
+  let exec t =
+    match t with
     | Content -> content
 
-let execMatches xtm =
-  match xtm with
-  | [x] ->  [for tl in x.Tools -> x |> exec tl ]
-  | x::xs -> [Failure {Prov =[]}]
-  | [] -> []
+  let execMatches xtm =
+    match xtm with
+    | [ x ] ->
+      [ for tl in x.Tools -> x |> exec tl ]
+    | x :: xs -> [ Failure { Prov = [] } ]
+    | [] -> []
 
-let make xrp t =
-  xrp
-  |> List.map (toolsFor t)
-  |> List.choose id
-  |> execMatches
+  let make xrp t =
+    xrp
+    |> List.map (toolsFor t)
+    |> List.choose id
+    |> execMatches
 
-let makeAll xrp xt = xt |> List.collect (make xrp)
-
-
-let failures xe = xe |> List.filter (function | Failure _ -> true|_ ->false)
+  let makeAll xrp xt = xt |> List.collect (make xrp)
