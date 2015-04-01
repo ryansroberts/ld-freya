@@ -5,6 +5,7 @@
 #r "../../packages/Unquote/lib/net40/Unquote.dll"
 #load "Model.fs"
 #load "Tools.fs"
+
 open Freya
 open System.Text.RegularExpressions
 open FSharp.RDF
@@ -12,16 +13,16 @@ open Swensen.Unquote
 open compilation
 
 let matchingTarget =
-    { Id = Uri.from "http://nice.org.uk/ns/target1"
-      ProvId = Uri.from "http://nice.org.uk/qualitystandards/resource"
-      Path = Path.from "qualitystandards/standard_1/statement_23.md"
-      Content = "" }
+  { Id = Uri.from "http://nice.org.uk/ns/target1"
+    ProvId = Uri.from "http://nice.org.uk/qualitystandards/resource"
+    Path = Path.from "qualitystandards/standard_1/statement_23.md"
+    Content = "" }
 
 let nonMatchingTarget =
-    { Id = Uri.from "http://nice.org.uk/ns/target1"
-      ProvId = Uri.from "http://nice.org.uk/qualitystandards/resource"
-      Path = Path.from "qualitystandards/lol/standard_23.md"
-      Content = "" }
+  { Id = Uri.from "http://nice.org.uk/ns/target1"
+    ProvId = Uri.from "http://nice.org.uk/qualitystandards/resource"
+    Path = Path.from "qualitystandards/lol/standard_23.md"
+    Content = "" }
 
 let prov = """@base <http://nice.org.uk/ns/compilation#>.
 
@@ -36,6 +37,7 @@ let prov = """@base <http://nice.org.uk/ns/compilation#>.
 <http://nice.org.uk/ns/prov/commit#999586c1dfe8a71c6cbf6c129f404c5642ff31bd>
   a prov:Commit;
   compilation:path "qualitystandards/standard_1/statement_23.md";
+  prov:startedAtTime "2015-02-23T12:12:47.259270+00:00"^^xsd:dateTime;
   cnt:chars "Some content"^^xsd:string;
   prov:specializationOf <http://nice.org.uk/ns/prov/new.md>;
   prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
@@ -44,6 +46,7 @@ let prov = """@base <http://nice.org.uk/ns/compilation#>.
 <http://nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd>
   a prov:Commit;
   prov:informedBy <http://nice.org.uk/ns/prov/commit#999586c1dfe8a71c6cbf6c129f404c5642ff31bd> ;
+  prov:startedAtTime "2015-02-23T12:12:47.259270+00:00"^^xsd:dateTime;
   compilation:path "qualitystandards/standard_1/statement_23.md";
   cnt:chars "Some content"^^xsd:string;
   prov:specializationOf <http://nice.org.uk/ns/prov/new.md>;
@@ -69,37 +72,38 @@ let prov = """@base <http://nice.org.uk/ns/compilation#>.
   prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
   prov:wasGeneratedBy <http://nice.org.uk/ns/prov/commit/c47800c>.
 """
+
 open FSharp.RDF
 open resource
+
 let fromType u g = fromObject u g |> List.collect (function
                                        | R(S s, _) -> fromSubject s g)
 
-
-let loadProvenance g  =
+let loadProvenance g =
   let uses = prefixes.prov + "uses" |> Uri.from
   let commit = prefixes.prov + "uses" |> Uri.from
   let specialisationOf = prefixes.prov + "specializationOf" |> Uri.from
   let informedBy = prefixes.prov + "informedBy" |> Uri.from
-  let startedAtTime = prefixes.prov + "startedAtTime" |> Uri.from;
+  let startedAtTime = prefixes.prov + "startedAtTime" |> Uri.from
   let chars = prefixes.cnt + "chars" |> Uri.from
   let path = prefixes.compilation + "path" |> Uri.from
   let id (R(S u, _)) = u
   let compilation = Uri.from (prefixes.compilation + "Compilation")
 
-  let getEndedAt = function
-      | FunctionalDataProperty startedAtTime xsd.datetimeoffset d -> d
-      | r -> failwith(sprintf "%A has no endedAtTime property" r)
+  let getEndedAt x =
+    printfn "endedad -  %A" x
+    match x with
+    | FunctionalDataProperty startedAtTime xsd.datetimeoffset d -> d
+    | _ -> failwith (sprintf "%A has no endedAtTime property" x)
 
-  let rec getCommits x = [
-      match x with
+  let rec getCommits x =
+    [ match x with
       | TraverseFunctional informedBy x ->
-        printfn "%A" x
-        yield {
-            Id = id x
-            When = getEndedAt x
-        }
-      | _ -> ()
-      ]
+        printfn "follow commit %A" x
+        yield { Id = id x
+                When = getEndedAt x }
+      | r -> printfn "no more commits %A" r ;() ]
+
   let getChars =
     function
     | FunctionalDataProperty chars xsd.string s -> s
@@ -112,7 +116,7 @@ let loadProvenance g  =
 
   let getSpecialisationOf =
     function
-    | FunctionalProperty specialisationOf (O(Node.Uri s,_)) -> s
+    | FunctionalProperty specialisationOf (O(Node.Uri s, _)) -> s
     | r -> failwith (sprintf "%A has no specialisationOf" r)
 
   let getUses = function
@@ -122,6 +126,8 @@ let loadProvenance g  =
             ProvId = id e
             Content = getChars e
             Path = getPath e |> Path.from } ]
+
+    | _ -> []
   match fromType compilation g with
   | [] -> failwith "Input contains no compilation resource"
   | c :: _ ->
@@ -129,6 +135,5 @@ let loadProvenance g  =
       Commits = getCommits c
       Targets = getUses c }
 
-
-let provM = graph.loadFormat graph.parse.ttl (graph.fromString prov) |> loadProvenance
-
+let provM =
+  graph.loadFormat graph.parse.ttl (graph.fromString prov) |> loadProvenance
