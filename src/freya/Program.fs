@@ -69,7 +69,7 @@ let compile pth m p d =
     | _ -> 0
 
 type Arguments =
-    | [<Mandatory>] Compilation of string
+    | Compilation of string
     | Provenence of string
     | Describe of string
     | Action of string
