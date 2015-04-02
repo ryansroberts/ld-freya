@@ -9,15 +9,48 @@ open Freya
 open Freya.compilation
 open Freya.tools
 
+type Delta =
+    { From : Uri
+      To : Uri
+      Path : Path }
+
+type OntologyVersion =
+    { Version : Uri
+      Path : Path }
+
+type CompilationOutput =
+    { Path : Path
+      Tip : OntologyVersion
+      WorkingArea : Delta }
+
+let fragment (Uri.Sys u) = u.Fragment
+let removeHash (s:string) =  s.Substring(1,(s.Length - 1))
+
+let deltafile prov =
+    let c = fragment (prov.Commits.Head.Id) |> removeHash
+    let c' = fragment (prov.Commits |> Seq.last).Id |> removeHash
+    sprintf "%s-%s" c c'
+
+let saveCompilation (p : Path) (prov : Provenance) (pr : Graph)
+      (r : ToolSuccess list) : unit =
+    let kbg = graph.empty (!"http://nice.org.uk/") []
+    for ({ Prov = px; Output = ox }) in r do
+      Assert.resources kbg ox |> ignore
+      Assert.resources pr px |> ignore
+    let d = deltafile prov
+    let kbn = (sprintf "%s/%s.ttl" (string p) d)
+    let prn = (sprintf "%s/%s.prov.ttl" (string p) d)
+    graph.format graph.write.ttl (graph.toFile kbn) kbg |> ignore
+    graph.format graph.write.ttl (graph.toFile prn) pr |> ignore
+
+
 let empty() = Graph(new VDS.RDF.Graph())
 let toFile (p) = new System.IO.StreamWriter(System.IO.File.OpenWrite p)
 let (++) a b = System.IO.Path.Combine(a, b)
-let fragment (Uri.Sys u) = u.Fragment
 
 let compile pth m p d =
     let pr = (loadProvenance p)
     let xe = makeAll m pr.Targets
-
     let failure =
       function
       | Failure(_) -> true
@@ -32,9 +65,10 @@ let compile pth m p d =
       1
     | [], x :: xs ->
       [ for (Success s) in x :: xs -> s ]
-      |> results.saveCompilation pth pr p
+      |> saveCompilation pth pr p
       |> ignore
       0
+    | _ -> 0
 
 type Arguments =
     | [<Mandatory>] Compilation of string

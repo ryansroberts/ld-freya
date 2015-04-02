@@ -8,7 +8,9 @@ open resource
 
 type Segment =
   | Segment of string
-
+  override x.ToString() =
+    let (Segment s) = x
+    s
 type Path =
   | Path of Segment list
 
@@ -139,14 +141,19 @@ module compilation =
     let parent = Uri.from (prefixes.compilation + "parent")
     let expression = Uri.from (prefixes.compilation + "expression")
     let represents = Uri.from (prefixes.compilation + "represents")
-    let compilation = Uri.from (prefixes.compilation + "Compilation")
+    let compilation = Uri.from ("http://nice.org.uk/ns/compilation#Compilation")
 
-  let fromType u g = fromObject u g |> List.collect (function
-                                         | R(S s, _) -> fromSubject s g)
+
+  let uriNode (Sys u) (Graph g) = g.CreateUriNode(u)
+
+  let fromPredicateObject p o (Graph g) = seq {
+    for s in g.GetTriplesWithPredicateObject(uriNode p (Graph g), uriNode o (Graph g)) do
+      yield! g.GetTriplesWithSubject(s.Subject);
+    }
+  let fromType = triple.fromDouble fromPredicateObject (Uri.from "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 
   let loadMake g =
     let xf = fromType filePattern g
-
     let getExpression =
       function
       | FunctionalDataProperty expression xsd.string ex -> Expression(Regex ex)
