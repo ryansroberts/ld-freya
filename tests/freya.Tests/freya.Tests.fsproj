@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>freya.Tests</RootNamespace>
     <AssemblyName>freya.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
     <Name>freya.Tests</Name>
     <TargetFrameworkProfile />
@@ -148,7 +148,6 @@
   <ItemGroup>
     <Reference Include="FSharpx">
       <HintPath>..\..\packages\FSharpx\lib\FSharpx.dll</HintPath>
-      <Private>True</Private>
       <Paket>True</Paket>
     </Reference>
   </ItemGroup>
