@@ -31,12 +31,11 @@ let deltafile prov =
     let c' = fragment (prov.Commits |> Seq.last).Id |> removeHash
     sprintf "%s-%s" c c'
 
-let saveCompilation (p : Path) (prov : Provenance) (pr : Graph)
-      (r : ToolSuccess list) : unit =
+let saveCompilation p prov pr r : unit =
     let kbg = graph.empty (!"http://nice.org.uk/") []
-    for ({ Prov = px; Output = ox }) in r do
-      Assert.resources kbg ox |> ignore
-      Assert.resources pr px |> ignore
+    for xe,xo in r do
+      Assert.resources kbg xo |> ignore
+      Assert.resources pr xe |> ignore
     let d = deltafile prov
     let kbn = (sprintf "%s/%s.ttl" (string p) d)
     let prn = (sprintf "%s/%s.prov.ttl" (string p) d)
@@ -44,27 +43,26 @@ let saveCompilation (p : Path) (prov : Provenance) (pr : Graph)
     graph.format graph.write.ttl (graph.toFile prn) pr |> ignore
 
 
-let empty() = Graph(new VDS.RDF.Graph())
 let toFile (p) = new System.IO.StreamWriter(System.IO.File.OpenWrite p)
 let (++) a b = System.IO.Path.Combine(a, b)
 
 let compile pth m p d =
     let pr = (loadProvenance p)
-    let xe = makeAll m pr.Targets
-    let failure =
-      function
-      | Failure(_) -> true
-      | _ -> false
-    match List.partition failure xe with
+    let xr = makeAll m pr.Targets
+    let byFailure = function | Failure(_) -> true | _ -> false
+    let result = List.map ( function | Success s -> s | Failure f -> f  )
+
+    let (xf,xs) = List.partition byFailure xr
+
+    match (result xf),(result xs)  with
     | x :: xs, _ ->
-      [ for (Failure { Prov = px }) in x :: xs do
-          yield! px ]
+      [ for (xe,_) in x :: xs do yield! xe ]
       |> Assert.resources p
       |> graph.format graph.write.ttl System.Console.Error
       |> ignore
       1
     | [], x :: xs ->
-      [ for (Success s) in x :: xs -> s ]
+      [ for s in x :: xs -> s ]
       |> saveCompilation pth pr p
       |> ignore
       0

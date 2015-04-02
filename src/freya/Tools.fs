@@ -8,11 +8,8 @@ open compilation
 
 module tools =
   let content (c : ToolMatch) =
-    Success
-      { Prov = []
-        Output =
-          [ owl.individual c.Target.Id [ c.Represents ]
-              [ dataProperty !"cnt:chars" (c.Target.Content ^^ xsd.string) ] ] }
+    Success ([], [ owl.individual c.Target.Id [ c.Represents ]
+                  [ dataProperty !"cnt:chars" (c.Target.Content ^^ xsd.string) ] ])
 
   let exec t =
     match t with
@@ -22,7 +19,7 @@ module tools =
     match xtm with
     | [ x ] ->
       [ for tl in x.Tools -> x |> exec tl ]
-    | x :: xs -> [ Failure { Prov = [] } ]
+    | x :: xs -> [ Failure ([],[])  ]
     | [] -> []
 
   let make xrp t =

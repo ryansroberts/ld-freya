@@ -76,16 +76,11 @@ type ToolMatch =
 
 open Store
 
-type ToolFailure =
-  { Prov : Resource list }
-
-type ToolSuccess =
-  { Prov : Resource list
-    Output : Resource list }
+type ToolOutput = (Resource list * Resource list)
 
 type ToolExecution =
-  | Failure of ToolFailure
-  | Success of ToolSuccess
+  | Failure of ToolOutput
+  | Success of ToolOutput
 
 module compilation =
   let matchesExpression (s, g) =

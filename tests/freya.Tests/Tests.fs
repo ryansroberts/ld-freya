@@ -138,6 +138,6 @@ let res = makeAll [rp] provM.Targets
 [<Fact>]
 let ``Execute specified tools on compilation targets to produce ontology`` () =
   test <@
-  let x = match res with | [Success({Prov=_;Output=x})] -> x
+  let x = match res with | [Success(_,x)] -> x
   not(List.isEmpty x)
 @>
