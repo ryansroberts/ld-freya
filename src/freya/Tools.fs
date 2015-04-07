@@ -23,9 +23,11 @@ module tools =
     | [] -> []
 
   let make xrp t =
-    xrp
-    |> List.map (toolsFor t)
-    |> List.choose id
-    |> execMatches
+    let matched = xrp
+                    |> List.map (toolsFor t)
+                    |> List.choose id
+
+    matched |> List.iter (fun tm -> printfn "Applying %A to %s" tm.Tools (string tm.Target.Path))
+    execMatches matched
 
   let makeAll xrp xt = xt |> List.collect (make xrp)

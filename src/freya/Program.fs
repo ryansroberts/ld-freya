@@ -39,6 +39,7 @@ let saveCompilation p prov pr r : unit =
     let d = deltafile prov
     let kbn = (sprintf "%s/%s.ttl" (string p) d)
     let prn = (sprintf "%s/%s.prov.ttl" (string p) d)
+    printfn "Writing compilation to %s and prov to %s" kbn prn
     graph.format graph.write.ttl (graph.toFile kbn) kbg |> ignore
     graph.format graph.write.ttl (graph.toFile prn) pr |> ignore
 
@@ -51,6 +52,8 @@ let compile pth m p d =
     let xr = makeAll m pr.Targets
     let byFailure = function | Failure(_) -> true | _ -> false
     let result = List.map ( function | Success s -> s | Failure f -> f  )
+
+    pr.Targets |> List.iter (fun t -> printfn "Compiling: %s" (string t.Path))
 
     let (xf,xs) = List.partition byFailure xr
 
