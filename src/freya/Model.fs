@@ -1,10 +1,10 @@
 namespace Freya
 
 open VDS.RDF
-open FSharpx
 open System.Text.RegularExpressions
 open FSharp.RDF
 open resource
+open ExtCore
 
 type Segment =
   | Segment of string
@@ -15,7 +15,7 @@ type Path =
   | Path of Segment list
 
   static member from s =
-    Strings.split '/' s
+    String.split [|'/'|] s
     |> Array.map Segment
     |> Array.toList
     |> Path.Path
@@ -44,8 +44,8 @@ type Provenance =
     Targets : Target list }
 
 type Tool =
-  | Process of string * string
   | Content
+  | YamlMetadataAnnotation
 
 type Expression =
   | Expression of System.Text.RegularExpressions.Regex
@@ -73,10 +73,10 @@ type ToolMatch =
     Represents : Uri
     Tools : Tool list
     Captured : Capture list }
+  override x.ToString () =
+    sprintf "%s is %s compiled by %A with %A" (string x.Target.Path) (string x.Represents) (x.Tools) (x.Captured)
 
-open Store
-
-type ToolOutput = (Resource list * Resource list)
+type ToolOutput = (Statement list * Resource list)
 
 type ToolExecution =
   | Failure of ToolOutput
@@ -235,3 +235,37 @@ module compilation =
       { Id = id c
         Commits = getCommits c
         Targets = getUses c }
+
+module Tracing =
+  open Assertion
+  open rdf
+  type Location =
+    | Location of (Path * int option * int option)
+  let fileLocation p = Location (p,None,None)
+  let lineLocation p l = Location (p,Some l,None)
+  let charlocation p l c = Location (p,Some l, Some c)
+
+  let ifSome f x = [
+    match x with
+    | Some x -> yield f x
+    | _ -> ()
+  ]
+
+  let message t s (Location(Path p,line,char)) =
+
+    let position = List.concat [
+          [a !"compilation:Position"
+           dataProperty !"compilation:path" ((string p)^^xsd.string)]
+          ifSome (fun l -> dataProperty !"compilation:charPosition" ((string l)^^xsd.string)) char
+          ifSome (fun l -> dataProperty !"compilation:charPosition" ((string l)^^xsd.string)) char                    ]
+
+    blank !"compilation:message"
+        [ a t
+          dataProperty !"rdfs:label" (s^^xsd.string)
+          blank !"compilation:position" position
+        ]
+
+  let warn = message !"compilation:Warning"
+  let info = message !"compilation:Information"
+  let error = message !"compilation:Error"
+

@@ -1,9 +1,11 @@
 source https://nuget.org/api/v2
 
+nuget ExtCore
 nuget FSharp.Data
 nuget FSharp.Formatting
 nuget Nuget.CommandLine
 nuget FAKE
+nuget SharpYaml
 nuget SourceLink.Fake
 nuget UnionArgParser
 nuget FSharp.RDF

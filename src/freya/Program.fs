@@ -53,6 +53,8 @@ let compile pth m p d =
     let byFailure = function | Failure(_) -> true | _ -> false
     let result = List.map ( function | Success s -> s | Failure f -> f  )
 
+    printfn "Tool configuration %A" m
+
     pr.Targets |> List.iter (fun t -> printfn "Compiling: %s" (string t.Path))
 
     let (xf,xs) = List.partition byFailure xr
