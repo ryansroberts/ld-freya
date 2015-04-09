@@ -5,7 +5,6 @@ open System
 open SharpYaml.Serialization
 open SharpYaml.Serialization.Serializers
 open System.Collections.Generic
-open ExtCore
 
 [<RequireQualifiedAccess>]
 module ValueParser =
@@ -31,9 +30,18 @@ module ValueParser =
         (x, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal))
 
   let (|Uri|_|) (text : string) =
-    match Uri.IsWellFormedUriString ( text,UriKind.Absolute ) with
-      | true -> Some(System.Uri text)
-      | _ -> None
+    [ "http"; "https"; "ftp"; "ftps"; "sftp"; "amqp" ] |> List.tryPick (fun x ->
+                                                            if text.Trim()
+                                                                   .StartsWith(x
+                                                                               + ":",
+                                                                               StringComparison.InvariantCultureIgnoreCase) then
+                                                              match System.Uri.TryCreate
+                                                                      (text,
+                                                                       UriKind.Absolute) with
+                                                              | true, uri ->
+                                                                Some uri
+                                                              | _ -> None
+                                                            else None)
 
 module YamlParser =
   type Scalar =

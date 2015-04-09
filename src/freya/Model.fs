@@ -49,7 +49,6 @@ type Provenance =
 type Tool =
   | Content
   | YamlMetadata
-  | MarkdownExtractor of MarkdownExtractor
 
 type Expression =
   | Expression of System.Text.RegularExpressions.Regex
