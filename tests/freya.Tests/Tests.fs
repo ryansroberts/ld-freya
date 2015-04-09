@@ -138,6 +138,38 @@ let res = makeAll [rp] provM.Targets
 [<Fact>]
 let ``Execute specified tools on compilation targets to produce ontology`` () =
   test <@
-  let x = match res with | [Success(_,x)] -> x
+  let x = match res with | [Success(_,x,_)] -> x
   not(List.isEmpty x)
 @>
+
+let matchingYamlTarget = {
+      Id = Uri.from "http://nice.org.uk/ns/target1"
+      ProvId = Uri.from "http://nice.org.uk/qualitystandards/resource"
+      Path = Path.from "qualitystandards/standard_1/statement_23.md"
+      Content = """
+```
+prefix:
+  property:
+     - "Value 1"
+     - "Value 2"
+```
+#Some title
+
+Hey this is markdown
+      """ }
+
+let tm = { Target = matchingYamlTarget
+           Represents = (Uri.from "http://nice.org.uk/ns/qualitystandard#QualityStatement")
+           Tools = [ Content ]
+           Captured =[] }
+
+
+
+open resource
+[<Fact>]
+let ``Extract arbitrary statements from YAML metadata`` () =
+  match tools.yamlMetadata tm with
+    | Success(xl,r::xr,t) ->
+      match r with
+        | DataProperty (Uri.from "prefix:property") xsd.string [v1;v2] ->
+          [v1;v2] =? ["Value 1";"Value 2"]

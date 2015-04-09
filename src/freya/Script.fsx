@@ -1,139 +1,121 @@
 #r "../../packages/dotNetRDF/lib/net40/dotNetRDF.dll"
 #r "../../packages/VDS.Common/lib/net40-client/VDS.Common.dll"
-#r "../../packages/FSharpx.Core/lib/40/FSharpx.Core.dll"
 #r "../../packages/FSharp.RDF/lib/net40/FSharp.RDF.dll"
 #r "../../packages/Unquote/lib/net40/Unquote.dll"
-#load "Model.fs"
-#load "Tools.fs"
+#r "../../packages/FSharp.Formatting/lib/net40/FSharp.Markdown.dll"
+#r "../../packages/SharpYaml/lib/SharpYaml.dll"
+#r "../../packages/ExtCore/lib/net40/ExtCore.dll"
 
-open Freya
+#load "Model.fs"
+#load "Yaml.fs"
+
 open System.Text.RegularExpressions
 open FSharp.RDF
 open Swensen.Unquote
-open compilation
+open FSharp.Markdown
 
-let matchingTarget =
-  { Id = Uri.from "http://nice.org.uk/ns/target1"
-    ProvId = Uri.from "http://nice.org.uk/qualitystandards/resource"
-    Path = Path.from "qualitystandards/standard_1/statement_23.md"
-    Content = "" }
+let document = """
+```
+      prefix1:
+         :property1
+            - "Value 1"
+            - "Value 2"
+```
+# F# Hello world
+Hello world in [F#](http://fsharp.net) looks like this:
 
-let nonMatchingTarget =
-  { Id = Uri.from "http://nice.org.uk/ns/target1"
-    ProvId = Uri.from "http://nice.org.uk/qualitystandards/resource"
-    Path = Path.from "qualitystandards/lol/standard_23.md"
-    Content = "" }
+    printfn "Hello world!"
 
-let prov = """@base <http://nice.org.uk/ns/compilation#>.
+For more see [fsharp.org][fsorg].
 
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
-@prefix prov: <http://www.w3.org/ns/prov#>.
-@prefix owl: <http://www.w3.org/2002/07/owl#>.
-@prefix compilation: <http://nice.org.uk/ns/compilation#>.
-@prefix cnt: <http://www.w3.org/2011/content#>.
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+  [fsorg]: http://fsharp.org "The F# organization." """
+let parsed = Markdown.Parse(document)
 
-<http://nice.org.uk/ns/prov/commit#999586c1dfe8a71c6cbf6c129f404c5642ff31bd>
-  a prov:Commit;
-  compilation:path "qualitystandards/standard_1/statement_23.md";
-  prov:startedAtTime "2015-02-23T12:12:47.259270+00:00"^^xsd:dateTime;
-  cnt:chars "Some content"^^xsd:string;
-  prov:specializationOf <http://nice.org.uk/ns/prov/new.md>;
-  prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
-  prov:wasGeneratedBy <http://nice.org.uk/ns/prov/commit/c47800c>.
+parsed.Paragraphs
 
-<http://nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd>
-  a prov:Commit;
-  prov:informedBy <http://nice.org.uk/ns/prov/commit#999586c1dfe8a71c6cbf6c129f404c5642ff31bd> ;
-  prov:startedAtTime "2015-02-23T12:12:47.259270+00:00"^^xsd:dateTime;
-  compilation:path "qualitystandards/standard_1/statement_23.md";
-  cnt:chars "Some content"^^xsd:string;
-  prov:specializationOf <http://nice.org.uk/ns/prov/new.md>;
-  prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
-  prov:wasGeneratedBy <http://nice.org.uk/ns/prov/commit/c47800c>.
-
-<http://nice.org.uk/ns/compilation#compilation_2015-02-23T12:12:47.2583040+00:00>
-  a compilation:Compilation;
-  rdfs:label "Change this to a compilation message that is actualy useful to somebody";
-  prov:informedBy <http://nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd>;
-  prov:qualifiedAssociation [a prov:Association ;
-                             prov:agent <http://nice.org.uk/ns/prov#user/ryanroberts> ;
-                             prov:hadRole "initiator"];
-  prov:startedAtTime "2015-02-23T12:12:47.259270+00:00"^^xsd:dateTime;
-  prov:uses <http://nice.org.uk/ns/prov/entity#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.md>;
-  prov:wasAssociatedWith <http://nice.org.uk/ns/prov/user/ryanroberts>.
-
-<http://nice.org.uk/ns/prov/entity#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd/new.md>
-  a prov:Entity;
-  compilation:path "qualitystandards/standard_1/statement_23.md";
-  cnt:chars "Some content"^^xsd:string;
-  prov:specializationOf <http://nice.org.uk/ns/prov/new.md>;
-  prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
-  prov:wasGeneratedBy <http://nice.org.uk/ns/prov/commit/c47800c>.
+let y = """
+qs:
+  context:
+    - "qualitystandard:Concept_Id"
+    - "qualitystandard:AnotherConcept_Id"
+dc:
+  title:
+    - "Some title text"
 """
 
-open FSharp.RDF
-open resource
+Freya.YamlParser.parse y
 
-let fromType u g = fromObject u g |> List.collect (function
-                                       | R(S s, _) -> fromSubject s g)
 
-let loadProvenance g =
-  let uses = prefixes.prov + "uses" |> Uri.from
-  let commit = prefixes.prov + "uses" |> Uri.from
-  let specialisationOf = prefixes.prov + "specializationOf" |> Uri.from
-  let informedBy = prefixes.prov + "informedBy" |> Uri.from
-  let startedAtTime = prefixes.prov + "startedAtTime" |> Uri.from
-  let chars = prefixes.cnt + "chars" |> Uri.from
-  let path = prefixes.compilation + "path" |> Uri.from
-  let id (R(S u, _)) = u
-  let compilation = Uri.from (prefixes.compilation + "Compilation")
+open Freya
+open Tracing
+open Assertion
+type YNode = Freya.YamlParser.Node
 
-  let getEndedAt x =
-    printfn "endedad -  %A" x
-    match x with
-    | FunctionalDataProperty startedAtTime xsd.datetimeoffset d -> d
-    | _ -> failwith (sprintf "%A has no endedAtTime property" x)
+open YamlParser
 
-  let rec getCommits x =
-    [ match x with
-      | TraverseFunctional informedBy x ->
-        printfn "follow commit %A" x
-        yield { Id = id x
-                When = getEndedAt x }
-      | r -> printfn "no more commits %A" r ;() ]
+let yamlMetadataAnnotation m =
+    let translate = function
+      | YNode.Map xs ->
+        [ for (prefix, YNode.Map xs') in xs do
+            for (property, List xs'') in xs' do
+              for (Scalar n) in xs'' do
+                let predicate = P(!(sprintf "%s:%s" prefix property))
+                match n with
+                | Scalar.String s ->
+                  yield (predicate, O(Node.Literal(Literal.String s), lazy []))
+                | Scalar.Uri u -> yield (predicate, O(Node.from u, lazy [])) ]
 
-  let getChars =
-    function
-    | FunctionalDataProperty chars xsd.string s -> s
-    | r -> failwith (sprintf "%A has no content property" r)
+    let yamlToStatements y =
+      try
+        printfn "%s" y
+        Success
+          ([ info "Extracting metadata from yaml codeblock"
+               (fileLocation m.Target.Path) ],
+           [ rdf.resource m.Target.Id ( translate ( parse y ) )  ])
+      with e ->
+        Success
+          ([ warn (sprintf "Failed to parse yaml: \r %s \r %s" y e.Message )
+               (fileLocation m.Target.Path) ], [])
 
-  let getPath =
-    function
-    | FunctionalDataProperty path xsd.string s -> s
-    | r -> failwith (sprintf "%A has no path property" r)
+    let md = Markdown.Parse m.Target.Content
+    match md.Paragraphs with
+    | CodeBlock(yaml, _, _) :: _ -> yamlToStatements yaml
+    | _ ->
+      Success
+        ([ warn "No metadata block at start of file"
+             (fileLocation m.Target.Path) ], [])
 
-  let getSpecialisationOf =
-    function
-    | FunctionalProperty specialisationOf (O(Node.Uri s, _)) -> s
-    | r -> failwith (sprintf "%A has no specialisationOf" r)
+let matchingTarget = {
+      Id = Uri.from "http://nice.org.uk/ns/target1"
+      ProvId = Uri.from "http://nice.org.uk/qualitystandards/resource"
+      Path = Path.from "qualitystandards/standard_1/statement_23.md"
+      Content = """
+```
+prefix1:
+  property1:
+     - "Value 1"
+     - "Value 2"
+```
+#Some title
 
-  let getUses = function
-    | Traverse uses xe ->
-      [ for e in xe ->
-          { Id = getSpecialisationOf e
-            ProvId = id e
-            Content = getChars e
-            Path = getPath e |> Path.from } ]
+Hey this is markdown 
+      """ }
 
-    | _ -> []
-  match fromType compilation g with
-  | [] -> failwith "Input contains no compilation resource"
-  | c :: _ ->
-    { Id = id c
-      Commits = getCommits c
-      Targets = getUses c }
+let tm = { Target = matchingTarget
+           Represents = (Uri.from "http://nice.org.uk/ns/qualitystandard#QualityStatement")
+           Tools = [ Content ]
+           Captured =
+             [ ("QualityStandardId", "1")
+               ("QualityStatementId", "23") ] }
 
-let provM =
-  graph.loadFormat graph.parse.ttl (graph.fromString prov) |> loadProvenance
+
+let s = match yamlMetadataAnnotation tm with
+  | Success(xw,xr) ->
+    let sb = System.Text.StringBuilder ()
+    let g = (graph.empty (!"http://nice.org.uk/ns/qualitystandard") [] )
+    xr
+    |> Assert.resources g
+    |> graph.format (graph.write.ttl) (graph.toString sb)
+    |> ignore
+
+    sb.ToString()

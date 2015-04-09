@@ -1,2 +1,5 @@
 UnionArgParser
 FSharp.Rdf
+FSharp.Formatting
+SharpYaml
+ExtCore
