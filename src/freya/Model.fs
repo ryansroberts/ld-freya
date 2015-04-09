@@ -11,11 +11,12 @@ type Segment =
   override x.ToString() =
     let (Segment s) = x
     s
+
 type Path =
   | Path of Segment list
 
   static member from s =
-    String.split [|'/'|] s
+    String.split [| '/' |] s
     |> Array.map Segment
     |> Array.toList
     |> Path.Path
@@ -23,6 +24,7 @@ type Path =
   override x.ToString() =
     match x with
     | Path xs -> System.String.Join("/", xs)
+
 
 [<AutoOpen>]
 module path =
@@ -45,7 +47,7 @@ type Provenance =
 
 type Tool =
   | Content
-  | YamlMetadataAnnotation
+  | YamlMetadata
 
 type Expression =
   | Expression of System.Text.RegularExpressions.Regex
@@ -73,10 +75,11 @@ type ToolMatch =
     Represents : Uri
     Tools : Tool list
     Captured : Capture list }
-  override x.ToString () =
-    sprintf "%s is %s compiled by %A with %A" (string x.Target.Path) (string x.Represents) (x.Tools) (x.Captured)
+  override x.ToString() =
+    sprintf "%s is %s compiled by %A with %A" (string x.Target.Path)
+      (string x.Represents) (x.Tools) (x.Captured)
 
-type ToolOutput = (Statement list * Resource list)
+type ToolOutput = Statement list * Resource list * Target
 
 type ToolExecution =
   | Failure of ToolOutput
@@ -138,17 +141,22 @@ module compilation =
     let represents = Uri.from (prefixes.compilation + "represents")
     let compilation = Uri.from ("http://nice.org.uk/ns/compilation#Compilation")
 
-
   let uriNode (Sys u) (Graph g) = g.CreateUriNode(u)
 
-  let fromPredicateObject p o (Graph g) = seq {
-    for s in g.GetTriplesWithPredicateObject(uriNode p (Graph g), uriNode o (Graph g)) do
-      yield! g.GetTriplesWithSubject(s.Subject);
+  let fromPredicateObject p o (Graph g) =
+    seq {
+      for s in g.GetTriplesWithPredicateObject
+                 (uriNode p (Graph g), uriNode o (Graph g)) do
+        yield! g.GetTriplesWithSubject(s.Subject)
     }
-  let fromType = triple.fromDouble fromPredicateObject (Uri.from "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+
+  let fromType =
+    triple.fromDouble fromPredicateObject
+      (Uri.from "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 
   let loadMake g =
     let xf = fromType filePattern g
+    let fragment (Uri.Sys u) = u.Fragment
     let getExpression =
       function
       | FunctionalDataProperty expression xsd.string ex -> Expression(Regex ex)
@@ -163,6 +171,16 @@ module compilation =
       function
       | TraverseFunctional parent p -> p
       | fp -> failwith (sprintf "%A has no parent" fp)
+
+    let getTools =
+      function
+      | Property tool tx -> [
+        for (O(Uri u,_)) in tx do
+          match fragment u with
+          | "#Content" -> yield Content
+          | "#YamlMetadata" -> yield YamlMetadata
+        ]
+      | tp -> failwithf "%A has no configured tools" tp
 
     let id (R(S u, _)) = u
 
@@ -221,7 +239,8 @@ module compilation =
       | FunctionalProperty specialisationOf (O(Node.Uri s, _)) -> s
       | r -> failwith (sprintf "%A has no specialisationOf" r)
 
-    let getUses = function
+    let getUses =
+      function
       | Traverse uses xe ->
         [ for e in xe ->
             { Id = getSpecialisationOf e
@@ -229,6 +248,7 @@ module compilation =
               Content = getChars e
               Path = getPath e |> Path.from } ]
       | _ -> []
+
     match fromType compilation g with
     | [] -> failwith "Input contains no compilation resource"
     | c :: _ ->
@@ -239,33 +259,38 @@ module compilation =
 module Tracing =
   open Assertion
   open rdf
+
   type Location =
     | Location of (Path * int option * int option)
-  let fileLocation p = Location (p,None,None)
-  let lineLocation p l = Location (p,Some l,None)
-  let charlocation p l c = Location (p,Some l, Some c)
 
-  let ifSome f x = [
-    match x with
-    | Some x -> yield f x
-    | _ -> ()
-  ]
+  let fileLocation p = Location(p, None, None)
+  let lineLocation p l = Location(p, Some l, None)
+  let charlocation p l c = Location(p, Some l, Some c)
 
-  let message t s (Location(Path p,line,char)) =
+  let ifSome f x =
+    [ match x with
+      | Some x -> yield f x
+      | _ -> () ]
 
-    let position = List.concat [
-          [a !"compilation:Position"
-           dataProperty !"compilation:path" ((string p)^^xsd.string)]
-          ifSome (fun l -> dataProperty !"compilation:charPosition" ((string l)^^xsd.string)) char
-          ifSome (fun l -> dataProperty !"compilation:charPosition" ((string l)^^xsd.string)) char                    ]
+  let message t s (Location(Path p, line, char)) =
+    let position =
+      List.concat
+        [ [ a !"compilation:Position"
+            dataProperty !"compilation:path" ((string p) ^^ xsd.string) ]
 
-    blank !"compilation:message"
-        [ a t
-          dataProperty !"rdfs:label" (s^^xsd.string)
-          blank !"compilation:position" position
-        ]
+          ifSome
+            (fun l ->
+            dataProperty !"compilation:charPosition" ((string l) ^^ xsd.string))
+            char
+
+          ifSome
+            (fun l ->
+            dataProperty !"compilation:charPosition" ((string l) ^^ xsd.string))
+            char ]
+    blank !"compilation:message" [ a t
+                                   dataProperty !"rdfs:label" (s ^^ xsd.string)
+                                   blank !"compilation:position" position ]
 
   let warn = message !"compilation:Warning"
   let info = message !"compilation:Information"
   let error = message !"compilation:Error"
-
