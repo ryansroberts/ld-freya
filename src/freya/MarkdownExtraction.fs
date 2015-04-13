@@ -5,30 +5,24 @@ open FSharp.Markdown
 open System.Text
 
 
-(*
+    ( *
 
 
-   # Some heading
+    #Some heading
 
-   Paragraph Text 1
+    Paragraph Text 1
 
-   Paragraph Text 2
+    Paragraph Text 2
 
-   "#[Some heading]" = Heading [Span "Some"  Span "heading"]
-   *)
-(*
-   let spansAsText =
+    "#[Some heading]" = Heading[Span "Some"
+        Span "heading"] * )
 
-     List.map string
+module MarkdownExtraction =
+    let spansAsText = List.map string >> List.fold(+)
+""
 
-
-   type SpanSelector =
-     | Regex of Span list -> bool
-   with static member from s =
-     (fun xs ->
-      xs |> List.fold (string) >> (+))
+type SpanSelector = | Regex of(Span list - > bool)
+with static member from s = ()
 
 
-   type ParagraphSelector =
-     | Heading of SpanSelector
-*)
+type ParagraphSelector = | Heading of SpanSelector
