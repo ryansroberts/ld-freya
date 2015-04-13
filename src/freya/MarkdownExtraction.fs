@@ -5,9 +5,8 @@ open FSharp.Markdown
 open System.Text
 
 
-    ( *
 
-
+(*
     #Some heading
 
     Paragraph Text 1
@@ -26,3 +25,4 @@ with static member from s = ()
 
 
 type ParagraphSelector = | Heading of SpanSelector
+*)
