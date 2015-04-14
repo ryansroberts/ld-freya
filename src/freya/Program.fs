@@ -29,13 +29,13 @@ let deltafile prov =
   let c = fragment (prov.Commits.Head.Id) |> removeHash
   let c' = fragment (prov.Commits |> Seq.last).Id |> removeHash
   sprintf "%s-%s" c c'
-
+//this is shit
 let saveCompilation p prov pr (xt:ToolOutput list) : unit =
   let kbg = graph.empty (!"http://nice.org.uk/") []
   let toResources id = rdf.resource id
-  for xe, xo , t in xt do
-    Assert.resources kbg [toResources t.Id xe] |> ignore
-    Assert.resources pr xo |> ignore
+  for provStatements, extracted , t in xt do
+    Assert.resources kbg extracted |> ignore
+    Assert.resources pr [toResources t.ProvId provStatements] |> ignore
   let d = deltafile prov
   let kbn = (sprintf "%s/%s.ttl" (string p) d)
   let prn = (sprintf "%s/%s.prov.ttl" (string p) d)
