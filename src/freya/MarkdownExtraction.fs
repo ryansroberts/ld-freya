@@ -14,15 +14,42 @@ open System.Text
     Paragraph Text 2
 
     "#[Some heading]" = Heading[Span "Some"
-        Span "heading"] * )
+        Span "heading"] *)
 
+(*
 module MarkdownExtraction =
-    let spansAsText = List.map string >> List.fold(+)
-""
 
-type SpanSelector = | Regex of(Span list - > bool)
-with static member from s = ()
+  type Axis =
+    | Block
 
+  type SpanSelector =
+    | Regex of System.Text.RegularExpressions.Regex
 
-type ParagraphSelector = | Heading of SpanSelector
+  type Selector =
+    | Heading of SpanSelector
+
+  type Expression =
+    | Selection of Selector * Axis
+    | Sequence of Expression * Expression
+
+  type blockSelection = Paragraph list -> Paragraph list
+
+  let evaluateSS = function
+    | Regex r -> (fun xs ->
+                  let spansAsText = List.map string >> List.fold (+) ""
+                  if (r.IsMatch (spansAsText xs)) then xs else []
+                 )
+
+  let evaluateA = function
+    | Block -> (fun xs -> xs)
+
+  let evaluateS = function
+    | Heading ss -> (fun xs ->
+                     match evaluateSS ss xs with
+                     | x::xs -> xs | _ -> []
+                     )
+
+  let evaluateE = function
+    | Selection s,a -> evaluateS s >> evaluateA a
+    | Sequence a,b -> evaluateS a >> evaluateS b
 *)
