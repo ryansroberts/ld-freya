@@ -29,6 +29,7 @@ let deltafile prov =
   let c = fragment (prov.Commits.Head.Id) |> removeHash
   let c' = fragment (prov.Commits |> Seq.last).Id |> removeHash
   sprintf "%s-%s" c c'
+
 //this is shit
 let saveCompilation p prov pr (xt:ToolOutput list) : unit =
   let kbg = graph.empty (!"http://nice.org.uk/") []

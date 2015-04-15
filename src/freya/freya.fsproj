@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -39,9 +39,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="GuardedAwaitObservable.fs" />
     <Compile Include="Model.fs" />
     <Compile Include="MarkdownExtraction.fs" />
     <Compile Include="Yaml.fs" />
+    <Compile Include="Pandoc.fs" />
     <Compile Include="Tools.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
