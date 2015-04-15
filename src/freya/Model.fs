@@ -80,7 +80,12 @@ type ToolMatch =
     sprintf "%s is %s compiled by %A with %A" (string x.Target.Path)
       (string x.Represents) (x.Tools) (x.Captured)
 
-type ToolOutput = Statement list * Resource list * Target
+type ToolOutput = {
+  Provenence : Statement list
+  Extracted : Resource list
+  Target : Target
+  }
+
 
 type ToolExecution =
   | Failure of ToolOutput
@@ -180,6 +185,7 @@ module compilation =
           match fragment u with
           | "#Content" -> yield Content
           | "#YamlMetadata" -> yield YamlMetadata
+          | _ -> ()
         ]
       | tp -> failwithf "%A has no configured tools" tp
 
@@ -188,7 +194,7 @@ module compilation =
     let getFilePattern f =
       { Id = id f
         Expression = getExpression f
-        Tools = [ Content ]
+        Tools = getTools f
         Represents = getRepresents f }
 
     let rec getDirectoryPath d : DirectoryPattern list =
@@ -199,8 +205,7 @@ module compilation =
         yield { Id = id d
                 Expression = getExpression d } ]
 
-    [ for f in xf ->
-        ResourcePath(getDirectoryPath (getParent f), getFilePattern f) ]
+    [ for f in xf -> ResourcePath(getDirectoryPath (getParent f), getFilePattern f) ]
 
   let loadProvenance g =
     let uses = prefixes.prov + "uses" |> Uri.from

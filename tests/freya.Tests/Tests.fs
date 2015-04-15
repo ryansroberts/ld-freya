@@ -31,22 +31,20 @@ let qsCompilation = """
   rdf:type owl:Ontology ;
   owl:imports <http://nice.org.uk/ns/compilation> .
 
-
 <http://nice.org.uk/ns/compilation#QualityStandards>
   rdf:type <http://nice.org.uk/ns/compilation#DirectoryPattern> ,
   owl:NamedIndividual ;
   <http://nice.org.uk/ns/compilation#expression> "qualitystandards"^^xsd:string ;
   <http://nice.org.uk/ns/compilation#parent> <http://nice.org.uk/ns/compilation#Root> .
 
-
 :QualityStatement
   rdf:type <http://nice.org.uk/ns/compilation#FilePattern> ,
   owl:NamedIndividual ;
   <http://nice.org.uk/ns/compilation#expression> "statement_(?<QualityStatementId>.*).md"^^xsd:string ;
   <http://nice.org.uk/ns/compilation#tool> <http://nice.org.uk/ns/compilation#Content> ;
+  <http://nice.org.uk/ns/compilation#tool> <http://nice.org.uk/ns/compilation#YamlMetadata> ;
   <http://nice.org.uk/ns/compilation#represents> <http://nice.org.uk/ns/qualitystandard#QualityStatement>;
   <http://nice.org.uk/ns/compilation#parent> <http://nice.org.uk/ns/compilation#QualityStandard> .
-
 
 <http://nice.org.uk/ns/compilation#QualityStandard>
   rdf:type <http://nice.org.uk/ns/compilation#DirectoryPattern> ,
@@ -63,9 +61,10 @@ let rp = loadMake g |> List.head
 let ``Tools fail to match unless correctly configured``() =
   test <@ toolsFor nonMatchingTarget rp = None @>
 let ``Match provenence entities to compilation tools``() =
+  printf "Tools - %A" ( toolsFor matchingTarget rp  ) |> id
   test <@ toolsFor matchingTarget rp = Some({ Target = matchingTarget
                                               Represents = (Uri.from "http://nice.org.uk/ns/qualitystandard#QualityStatement")
-                                              Tools = [ Content ]
+                                              Tools = [ Content;YamlMetadata]
                                               Captured =
                                                 [ ("QualityStandardId", "1")
                                                   ("QualityStatementId", "23") ] }) @>
@@ -138,7 +137,7 @@ let res = makeAll [rp] provM.Targets
 [<Fact>]
 let ``Execute specified tools on compilation targets to produce ontology`` () =
   test <@
-  let x = match res with | [Success(_,x,_)] -> x
+  let x = match res with | [Success({Provenence=_;Extracted=x;Target=_});_] -> x
   not(List.isEmpty x)
 @>
 
@@ -169,7 +168,7 @@ open resource
 [<Fact>]
 let ``Extract arbitrary statements from YAML metadata`` () =
   match tools.yamlMetadata tm with
-    | Success(xl,r::xr,t) ->
+    | Success({Provenence=xe;Extracted=r::rx;Target=t}) ->
       match r with
         | DataProperty (Uri.from "prefix:property") xsd.string [v1;v2] ->
           [v1;v2] =? ["Value 1";"Value 2"]

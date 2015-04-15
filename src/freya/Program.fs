@@ -33,7 +33,7 @@ let deltafile prov =
 let saveCompilation p prov pr (xt:ToolOutput list) : unit =
   let kbg = graph.empty (!"http://nice.org.uk/") []
   let toResources id = rdf.resource id
-  for provStatements, extracted , t in xt do
+  for {Provenence=provStatements;Extracted=extracted;Target=t} in xt do
     Assert.resources kbg extracted |> ignore
     Assert.resources pr [toResources t.ProvId provStatements] |> ignore
   let d = deltafile prov
@@ -64,7 +64,7 @@ let compile pth m p d =
   let (xf, xs) = List.partition byFailure xr
   match (result xf), (result xs) with
   | x :: xs, _ ->
-    [ for (xe, _,t) in x :: xs -> rdf.resource t.Id xe ]
+    [ for ({Provenence=xe;Extracted=_;Target=t}) in x :: xs -> rdf.resource t.Id xe ]
     |> Assert.resources p
     |> graph.format graph.write.ttl System.Console.Error
     |> ignore
