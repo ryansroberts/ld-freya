@@ -8,10 +8,13 @@ open System.Collections.Generic
 open Nessos.UnionArgParser
 open ExtCore
 open System.Threading.Tasks
+open FSharp.RDF
+open resource
+open Freya.Tracing
 
 module Pandoc =
 
-  let inline awaitPlainTask (task: Task) = 
+  let inline awaitPlainTask (task: Task) =
         // rethrow exception from preceding task if it fauled
         let continuation (t : Task) : unit =
             match t.IsFaulted with
@@ -41,6 +44,7 @@ module Pandoc =
 
     proc.Start() |> ignore
     startedProcesses.Add(proc.Id, proc.StartTime) |> ignore
+    printfn "%A" startedProcesses
 
   let asyncShellExec (args : ExecParams) =
     async {
@@ -64,15 +68,18 @@ module Pandoc =
         proc.BeginOutputReadLine()
         proc.BeginErrorReadLine()
         let! copy = async {
-          match args.StdIn with
-          | Some x -> do! x.CopyToAsync proc.StandardInput.BaseStream |> awaitPlainTask
+        match args.StdIn with
+          | Some x ->
+            try
+             do! x.CopyToAsync proc.StandardInput.BaseStream |> awaitPlainTask
+            with | _ -> () //Process may have exited before we pipe to it
           | _ -> ()
           }
 
         // attaches handler to Exited event, enables raising events, then awaits event
         // the event gets triggered even if process has already finished
-        let! _ = Async.GuardedAwaitObservable proc.Exited (fun _ -> proc.EnableRaisingEvents <- true)
-        return (proc.ExitCode,stdout,stderr)
+        let! _ = Freya.Async.GuardedAwaitObservable proc.Exited (fun _ -> proc.EnableRaisingEvents <- true)
+        return (proc.ExitCode,!stdout,!stderr)
     }
 
   type PandocArgs =
@@ -99,3 +106,40 @@ module Pandoc =
     interface IArgParserTemplate with
       member s.Usage = "" //Only using for IPC
 
+  type ConversionArgs = {
+    Output : Freya.Path
+    WorkingDir : Freya.Path
+  }
+
+  type PandocConversion =
+    | Docx
+    | Pdf
+    | HtmlFragment
+    | HtmlDocument
+
+
+  let convertResources r xr = function 
+    | (p,conv) ->
+    let parser = UnionArgParser.Create<PandocArgs>()
+    let args = [From "markdown"
+                To (string p)
+                Output (string conv.Output)
+                Smart
+                Normalize
+                Self_Contained
+                ]
+
+    async {
+       match r with
+       | FunctionalDataProperty (Uri.from "content:chars") (xsd.string) content ->
+        printfn "Match content"
+        let! (exit,stdout,stderr) = asyncShellExec {
+            Program = "pandoc"
+            WorkingDirectory = string (conv.WorkingDir)
+            CommandLine = parser.PrintCommandLine args  |> String.concat ""
+            StdIn = new MemoryStream(System.Text.Encoding.UTF8.GetBytes content) :> Stream |> Some
+            }
+
+        let prov = match exit with | 0 -> info | _ -> error
+        return prov (sprintf "Pandoc conversion: \r %s \r %s" (String.concat "" stdout)  (String.concat "" stderr) ) (resourceLocation r)
+    }

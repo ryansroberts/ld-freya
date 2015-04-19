@@ -267,21 +267,23 @@ module Tracing =
   open rdf
 
   type Location =
-    | Location of (Path * int option * int option)
+    | File of (Path * int option * int option)
+    | Resource of Uri
 
-  let fileLocation p = Location(p, None, None)
-  let lineLocation p l = Location(p, Some l, None)
-  let charlocation p l c = Location(p, Some l, Some c)
+  let fileLocation p = File(p, None, None)
+  let lineLocation p l = File(p, Some l, None)
+  let charlocation p l c = File(p, Some l, Some c)
+  let resourceLocation r = Resource (resourceId r)
 
-  let ifSome f x =
+  let private ifSome f x =
     [ match x with
       | Some x -> yield f x
       | _ -> () ]
 
-  let message t s (Location(Path p, line, char)) =
-    let position =
+  let private position = function
+    | (File(Path p, line, char)) ->
       List.concat
-        [ [ a !"compilation:Position"
+        [ [ a !"compilation:InFile"
             dataProperty !"compilation:path" ((string p) ^^ xsd.string) ]
 
           ifSome
@@ -293,9 +295,13 @@ module Tracing =
             (fun l ->
             dataProperty !"compilation:charPosition" ((string l) ^^ xsd.string))
             char ]
-    blank !"compilation:message" [ a t
-                                   dataProperty !"rdfs:label" (s ^^ xsd.string)
-                                   blank !"compilation:position" position ]
+
+        | Resource uri -> [ a !"compilation:FromResource"
+                            objectProperty !"compilation:source" uri]
+
+  let message t s p = blank !"compilation:message" [a t
+                                                    dataProperty !"rdfs:label" (s ^^ xsd.string)
+                                                    blank !"compilation:position" (position p)]
 
   let warn = message !"compilation:Warning"
   let info = message !"compilation:Information"

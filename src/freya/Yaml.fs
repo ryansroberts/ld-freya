@@ -30,18 +30,9 @@ module ValueParser =
         (x, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal))
 
   let (|Uri|_|) (text : string) =
-    [ "http"; "https"; "ftp"; "ftps"; "sftp"; "amqp" ] |> List.tryPick (fun x ->
-                                                            if text.Trim()
-                                                                   .StartsWith(x
-                                                                               + ":",
-                                                                               StringComparison.InvariantCultureIgnoreCase) then
-                                                              match System.Uri.TryCreate
-                                                                      (text,
-                                                                       UriKind.Absolute) with
-                                                              | true, uri ->
-                                                                Some uri
-                                                              | _ -> None
-                                                            else None)
+    match Uri.IsWellFormedUriString(text,UriKind.RelativeOrAbsolute) with
+      | true -> Some (System.Uri ( text,UriKind.RelativeOrAbsolute ))
+      | _ -> None
 
 module YamlParser =
   type Scalar =

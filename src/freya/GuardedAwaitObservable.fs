@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module internal Freya.GuardedAwaitObservable
+module Freya.Async
 
 // from https://github.com/fsprojects/fsharpx/blob/f99a8f669ab49166c854c479d17c3add2b39f8d7/src/FSharpx.Core/Observable.fs
 open System
@@ -14,10 +14,9 @@ let synchronize f =
         if ctx <> null && ctx <> nctx then ctx.Post((fun _ -> g()), null)
         else g())
 
-type Microsoft.FSharp.Control.Async with
-    /// Behaves like AwaitObservable, but calls the specified guarding function
-    /// after a subscriber is registered with the observable.
-    static member GuardedAwaitObservable (ev1 : IObservable<'T1>) guardFunction =
+/// Behaves like AwaitObservable, but calls the specified guarding function
+/// after a subscriber is registered with the observable.
+let GuardedAwaitObservable (ev1 : IObservable<'T1>) guardFunction =
         let removeObj : IDisposable option ref = ref None
         let removeLock = new obj()
         let setRemover r = lock removeLock (fun () -> removeObj := Some r)

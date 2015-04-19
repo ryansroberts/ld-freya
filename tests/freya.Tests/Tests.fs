@@ -151,6 +151,8 @@ prefix:
   property:
      - "Value 1"
      - "Value 2"
+  objectProperty:
+     - "prefix:fragment"
 ```
 #Some title
 
@@ -162,9 +164,8 @@ let tm = { Target = matchingYamlTarget
            Tools = [ Content ]
            Captured =[] }
 
-
-
 open resource
+
 [<Fact>]
 let ``Extract arbitrary statements from YAML metadata`` () =
   match tools.yamlMetadata tm with
@@ -172,3 +173,6 @@ let ``Extract arbitrary statements from YAML metadata`` () =
       match r with
         | DataProperty (Uri.from "prefix:property") xsd.string [v1;v2] ->
           [v1;v2] =? ["Value 1";"Value 2"]
+      match r with
+        | ObjectProperty (Uri.from "prefix:objectProperty") [x] ->
+          x =? Uri.from "prefix:fragment"
