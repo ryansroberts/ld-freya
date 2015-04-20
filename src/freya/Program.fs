@@ -106,6 +106,6 @@ let main argv =
     printfn """Usage: freya [options]
                 %s""" (parser.Usage())
     exit 1
-  compile (args.GetResult <@ Output @> |> Path.from) makeOntology
+  compile (args.GetResult <@ Output @> |> toPath) makeOntology
     (args.GetResult <@ Provenence @> |> graph.loadFrom)
     (args.GetResult <@ Output @>)

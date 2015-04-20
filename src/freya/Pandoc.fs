@@ -43,13 +43,14 @@ module Pandoc =
         proc.StartInfo.FileName <- "mono"
 
     proc.Start() |> ignore
-    startedProcesses.Add(proc.Id, proc.StartTime) |> ignore
-    printfn "%A" startedProcesses
+    startedProcesses.Add(proc.Id, (proc.StartTime)) |> ignore
 
   let asyncShellExec (args : ExecParams) =
     async {
         let stdout = ref []
         let stderr = ref []
+
+        printfn "%A" args.CommandLine
         if String.IsNullOrEmpty args.Program then invalidArg "args" "You must specify a program to run!"
         let info =
             ProcessStartInfo
@@ -71,7 +72,8 @@ module Pandoc =
         match args.StdIn with
           | Some x ->
             try
-             do! x.CopyToAsync proc.StandardInput.BaseStream |> awaitPlainTask
+              do! x.CopyToAsync proc.StandardInput.BaseStream |> awaitPlainTask
+              do  proc.StandardInput.Close()
             with | _ -> () //Process may have exited before we pipe to it
           | _ -> ()
           }
@@ -87,7 +89,9 @@ module Pandoc =
     | To of string
     | Output of string
     | Data_Dir of string
+    | Working_Directory of string
     | Smart
+    | Latex_Engine of string
     | Filter of string
     | Normalize
     | Extract_Media
@@ -117,17 +121,42 @@ module Pandoc =
     | HtmlFragment
     | HtmlDocument
 
+  [<AutoOpen>]
+  module pandocconversion =
+    let mimeTypeDir = function
+      | Docx -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      | Pdf -> "application/pdf"
+      | HtmlFragment
+      | HtmlDocument -> "text/html"
 
-  let convertResources r xr = function 
+    let extension = function
+      | Docx -> "docx"
+      | Pdf -> "pdf"
+      | HtmlDocument
+      | HtmlFragment -> "html"
+
+
+  let convertResources r xr = function
     | (p,conv) ->
+
+    let fragment (Uri.Sys u) = u.Fragment.Substring(1,u.Fragment.Length - 1)
+    let file =
+      let fn = Freya.FullName(resourceId r |> fragment,extension p)
+      let p = conv.Output ++ (Freya.path.toPath (mimeTypeDir p))
+      p ++ fn
+
     let parser = UnionArgParser.Create<PandocArgs>()
     let args = [From "markdown"
-                To (string p)
-                Output (string conv.Output)
+                Output (string (ensurePathExists file))
                 Smart
                 Normalize
                 Self_Contained
-                ]
+                ] @
+                match p with
+                | Pdf -> [Latex_Engine "pdflatex"]
+                | HtmlDocument -> [Standalone;To "html5"]
+                | Docx -> [To "docx"]
+                | HtmlFragment -> [To "html5"]
 
     async {
        match r with
@@ -136,10 +165,11 @@ module Pandoc =
         let! (exit,stdout,stderr) = asyncShellExec {
             Program = "pandoc"
             WorkingDirectory = string (conv.WorkingDir)
-            CommandLine = parser.PrintCommandLine args  |> String.concat ""
+            CommandLine = parser.PrintCommandLine args  |> String.concat " "
             StdIn = new MemoryStream(System.Text.Encoding.UTF8.GetBytes content) :> Stream |> Some
             }
 
         let prov = match exit with | 0 -> info | _ -> error
+        printfn "Pandoc conversion %A %A" stderr stdout
         return prov (sprintf "Pandoc conversion: \r %s \r %s" (String.concat "" stdout)  (String.concat "" stderr) ) (resourceLocation r)
     }

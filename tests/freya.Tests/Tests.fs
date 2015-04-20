@@ -10,13 +10,13 @@ open tools
 let matchingTarget =
     { Id = Uri.from "http://nice.org.uk/ns/target1"
       ProvId = Uri.from "http://nice.org.uk/qualitystandards/resource"
-      Path = Path.from "qualitystandards/standard_1/statement_23.md"
+      Path = toPath "qualitystandards/standard_1/statement_23.md"
       Content = "" }
 
 let nonMatchingTarget =
     { Id = Uri.from "http://nice.org.uk/ns/target1"
       ProvId = Uri.from "http://nice.org.uk/qualitystandards/resource"
-      Path = Path.from "qualitystandards/lol/standard_23.md"
+      Path = toPath "qualitystandards/lol/standard_23.md"
       Content = "" }
 
 let qsCompilation = """
@@ -144,7 +144,7 @@ let ``Execute specified tools on compilation targets to produce ontology`` () =
 let matchingYamlTarget = {
       Id = Uri.from "http://nice.org.uk/ns/target1"
       ProvId = Uri.from "http://nice.org.uk/qualitystandards/resource"
-      Path = Path.from "qualitystandards/standard_1/statement_23.md"
+      Path = toPath "qualitystandards/standard_1/statement_23.md"
       Content = """
 ```
 prefix:

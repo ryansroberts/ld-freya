@@ -8,6 +8,7 @@
 #r "../../packages/UnionArgParser/lib/net40/UnionArgParser.dll"
 
 #load "Model.fs"
+open Freya.path
 #load "Yaml.fs"
 #load "GuardedAwaitObservable.fs"
 #load "Pandoc.fs"
@@ -18,15 +19,17 @@ open Assertion
 open rdf
 let r = owl.individual !"http://nice.org.uk/things#1" [] [
          dataProperty !("content:chars") ( """
-         # Hi I am markdown
+# Hi I am markdown
 
-         Text etc
-         """^^xsd.string)
+Text etc
+"""^^xsd.string)
      ]
 
 
+[Pandoc.Pdf;Pandoc.HtmlDocument;Pandoc.Docx]
+|> List.map (fun o->
 async {
-  let! res =  Pandoc.convertResources r [] (Pandoc.HtmlFragment,{Output = Path.from ".";WorkingDir = Path.from "."})
-  printfn "%A" res
-} |> Async.RunSynchronously
+  let! (_,O (m,p)) =  Pandoc.convertResources r [] (o,{Output = toPath __SOURCE_DIRECTORY__;WorkingDir = toPath __SOURCE_DIRECTORY__})
+  printfn "%A %A" m p.Value
+}) |> Async.Parallel |> Async.RunSynchronously
 

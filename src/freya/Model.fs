@@ -14,21 +14,37 @@ type Segment =
 
 type Path =
   | Path of Segment list
-
-  static member from s =
-    String.split [| '/' |] s
-    |> Array.map Segment
-    |> Array.toList
-    |> Path.Path
-
+  with
+  static member (++) ((Path a),(Path b)) = Path ( a @ b)
+  static member (++) (p,f) = File (p,f)
   override x.ToString() =
-    match x with
-    | Path xs -> System.String.Join("/", xs)
+      match x with
+      | Path xs -> System.String.Join("/", xs)
 
+and FileName = string
+and Extension = string
+and FullName =
+  | FullName of (FileName * Extension)
+
+and File =
+  | File of Path * FullName
+  with override x.ToString () =
+    match x with
+    | File(p,FullName(f,e)) -> sprintf "%s/%s.%s" (string p) f e
 
 [<AutoOpen>]
 module path =
-  let (++) (Path a) (Path b) = a @ b
+  let ensurePathExists (File (p,f)) =
+    let d = System.IO.DirectoryInfo(string p)
+    d.Create();
+    File(p,f)
+
+  let toPath s =
+      String.split [| '/' |] s
+      |> Array.map Segment
+      |> Array.toList
+      |> Path.Path
+
 
 type Target =
   { Id : Uri
@@ -252,7 +268,7 @@ module compilation =
             { Id = getSpecialisationOf e
               ProvId = id e
               Content = getChars e
-              Path = getPath e |> Path.from } ]
+              Path = getPath e |> toPath} ]
       | _ -> []
 
     match fromType compilation g with
