@@ -5,7 +5,7 @@ open FSharp.RDF
 open Xunit
 open Swensen.Unquote
 open compilation
-open tools
+open Tools
 
 let matchingTarget =
     { Id = Uri.from "http://nice.org.uk/ns/target1"
@@ -64,7 +64,7 @@ let ``Match provenence entities to compilation tools``() =
   printf "Tools - %A" ( toolsFor matchingTarget rp  ) |> id
   test <@ toolsFor matchingTarget rp = Some({ Target = matchingTarget
                                               Represents = (Uri.from "http://nice.org.uk/ns/qualitystandard#QualityStatement")
-                                              Tools = [ Content;YamlMetadata]
+                                              Tools = [ SemanticExtractor(Content);SemanticExtractor(YamlMetadata)]
                                               Captured =
                                                 [ ("QualityStandardId", "1")
                                                   ("QualityStatementId", "23") ] }) @>
@@ -137,7 +137,7 @@ let res = makeAll [rp] provM.Targets
 [<Fact>]
 let ``Execute specified tools on compilation targets to produce ontology`` () =
   test <@
-  let x = match res with | [Success({Provenence=_;Extracted=x;Target=_});_] -> x
+  let x = match res with | PipelineExecution.Success(t,{Provenence=_;Extracted=x;}) -> x
   not(List.isEmpty x)
 @>
 
@@ -161,15 +161,16 @@ Hey this is markdown
 
 let tm = { Target = matchingYamlTarget
            Represents = (Uri.from "http://nice.org.uk/ns/qualitystandard#QualityStatement")
-           Tools = [ Content ]
+           Tools = [ SemanticExtractor(Content) ]
            Captured =[] }
 
 open resource
 
 [<Fact>]
 let ``Extract arbitrary statements from YAML metadata`` () =
-  match tools.yamlMetadata tm with
-    | Success({Provenence=xe;Extracted=r::rx;Target=t}) ->
+  let r = Tools.yamlMetadata (PipelineStep (tm,[]))  |> Async.RunSynchronously
+  match r with
+    | PipelineStep(t,[ToolExecution.Success{Provenence=xe;Extracted=r::rx}]) ->
       match r with
         | DataProperty (Uri.from "prefix:property") xsd.string [v1;v2] ->
           [v1;v2] =? ["Value 1";"Value 2"]

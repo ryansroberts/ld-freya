@@ -17,19 +17,25 @@ open Freya
 open FSharp.RDF
 open Assertion
 open rdf
-let r = owl.individual !"http://nice.org.uk/things#1" [] [
-         dataProperty !("content:chars") ( """
-# Hi I am markdown
 
-Text etc
-"""^^xsd.string)
-     ]
+let xr = [1..10]
+         |> List.map (fun i ->
+                owl.individual !(sprintf "http://nice.org.uk/things#%d" i) [] [
+                        dataProperty !("content:chars") ( """
+                # Hi I am markdown
 
+                Text etc
+                """^^xsd.string)
+                    ]
+         )
 
+#time
 [Pandoc.Pdf;Pandoc.HtmlDocument;Pandoc.Docx]
-|> List.map (fun o->
+|> List.collect (fun t -> List.map ( fun r -> (r,t) ) xr )
+|> List.map (fun (r,o) ->
 async {
   let! (_,O (m,p)) =  Pandoc.convertResources r [] (o,{Output = toPath __SOURCE_DIRECTORY__;WorkingDir = toPath __SOURCE_DIRECTORY__})
-  printfn "%A %A" m p.Value
-}) |> Async.Parallel |> Async.RunSynchronously
+  return (m,p.Value)
+  })
+|> Async.Parallel |> Async.RunSynchronously
 

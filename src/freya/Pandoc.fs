@@ -50,7 +50,6 @@ module Pandoc =
         let stdout = ref []
         let stderr = ref []
 
-        printfn "%A" args.CommandLine
         if String.IsNullOrEmpty args.Program then invalidArg "args" "You must specify a program to run!"
         let info =
             ProcessStartInfo
@@ -115,12 +114,6 @@ module Pandoc =
     WorkingDir : Freya.Path
   }
 
-  type PandocConversion =
-    | Docx
-    | Pdf
-    | HtmlFragment
-    | HtmlDocument
-
   [<AutoOpen>]
   module pandocconversion =
     let mimeTypeDir = function
@@ -161,7 +154,6 @@ module Pandoc =
     async {
        match r with
        | FunctionalDataProperty (Uri.from "content:chars") (xsd.string) content ->
-        printfn "Match content"
         let! (exit,stdout,stderr) = asyncShellExec {
             Program = "pandoc"
             WorkingDirectory = string (conv.WorkingDir)
@@ -170,6 +162,5 @@ module Pandoc =
             }
 
         let prov = match exit with | 0 -> info | _ -> error
-        printfn "Pandoc conversion %A %A" stderr stdout
         return prov (sprintf "Pandoc conversion: \r %s \r %s" (String.concat "" stdout)  (String.concat "" stderr) ) (resourceLocation r)
     }

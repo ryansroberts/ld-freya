@@ -61,10 +61,22 @@ type Provenance =
     Commits : Commit list
     Targets : Target list }
 
-
-type Tool =
+type SemanticExtractor =
   | Content
   | YamlMetadata
+
+type MarkdownConvertor =
+  | HtmlDocument
+  | HtmlFragment
+  | Docx
+  | Pdf
+
+type KnowledgeBaseProcessor =
+  | MarkdownConvertor of MarkdownConvertor
+
+type Tool =
+  | KnowledgeBaseProcessor of KnowledgeBaseProcessor
+  | SemanticExtractor of SemanticExtractor
 
 type Expression =
   | Expression of System.Text.RegularExpressions.Regex
@@ -99,13 +111,37 @@ type ToolMatch =
 type ToolOutput = {
   Provenence : Statement list
   Extracted : Resource list
-  Target : Target
   }
-
 
 type ToolExecution =
   | Failure of ToolOutput
   | Success of ToolOutput
+
+type PipelineStep =
+  | PipelineStep of (ToolMatch * ToolExecution list)
+
+type PipelineExecution =
+  | Failure of Target * ToolOutput
+  | Success of Target * ToolOutput
+
+module pipeline =
+  let succeed p e = ToolExecution.Success({Provenence=p;Extracted=e})
+  let fail p  = ToolExecution.Failure({Provenence=p;Extracted=[]})
+
+  //Make a useful result type from a sequence of pipeline steps
+  //Actually this is horrible, need to generalise success and failure before it multiplies out of control
+  let result (PipelineStep(m,xe:ToolExecution list) ) =
+    let output = function
+      | ToolExecution.Failure x -> x
+      | ToolExecution.Success x -> x
+    let output = List.map output xe
+    let r = {
+      Provenence=List.collect (fun {Provenence=p;Extracted=_} -> p) output
+      Extracted=List.collect (fun {Provenence=_;Extracted=e} -> e) output
+      }
+    match List.exists (function | ToolExecution.Success _ -> true | _ -> false) xe with
+    | true -> PipelineExecution.Success (m.Target,r)
+    | false -> PipelineExecution.Failure (m.Target,r)
 
 module compilation =
   let matchesExpression (s, g) =
@@ -199,8 +235,8 @@ module compilation =
       | Property tool tx -> [
         for (O(Uri u,_)) in tx do
           match fragment u with
-          | "#Content" -> yield Content
-          | "#YamlMetadata" -> yield YamlMetadata
+          | "#Content" -> yield (SemanticExtractor Content)
+          | "#YamlMetadata" -> yield (SemanticExtractor Content)
           | _ -> ()
         ]
       | tp -> failwithf "%A has no configured tools" tp
