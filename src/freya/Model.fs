@@ -14,37 +14,37 @@ type Segment =
 
 type Path =
   | Path of Segment list
-  with
-  static member (++) ((Path a),(Path b)) = Path ( a @ b)
-  static member (++) (p,f) = File (p,f)
+  static member (++) ((Path a), (Path b)) = Path(a @ b)
+  static member (++) (p, f) = File(p, f)
   override x.ToString() =
-      match x with
-      | Path xs -> System.String.Join("/", xs)
+    match x with
+    | Path xs -> System.String.Join("/", xs)
 
 and FileName = string
+
 and Extension = string
+
 and FullName =
   | FullName of (FileName * Extension)
 
 and File =
   | File of Path * FullName
-  with override x.ToString () =
+  override x.ToString() =
     match x with
-    | File(p,FullName(f,e)) -> sprintf "%s/%s.%s" (string p) f e
+    | File(p, FullName(f, e)) -> sprintf "%s/%s.%s" (string p) f e
 
 [<AutoOpen>]
 module path =
-  let ensurePathExists (File (p,f)) =
+  let ensurePathExists (File(p, f)) =
     let d = System.IO.DirectoryInfo(string p)
-    d.Create();
-    File(p,f)
+    d.Create()
+    File(p, f)
 
   let toPath s =
-      String.split [| '/' |] s
-      |> Array.map Segment
-      |> Array.toList
-      |> Path.Path
-
+    String.split [| '/' |] s
+    |> Array.map Segment
+    |> Array.toList
+    |> Path.Path
 
 type Target =
   { Id : Uri
@@ -108,10 +108,9 @@ type ToolMatch =
     sprintf "%s is %s compiled by %A with %A" (string x.Target.Path)
       (string x.Represents) (x.Tools) (x.Captured)
 
-type ToolOutput = {
-  Provenence : Statement list
-  Extracted : Resource list
-  }
+type ToolOutput =
+  { Provenence : Statement list
+    Extracted : Resource list }
 
 type ToolExecution =
   | Failure of ToolOutput
@@ -125,23 +124,34 @@ type PipelineExecution =
   | Success of Target * ToolOutput
 
 module pipeline =
-  let succeed p e = ToolExecution.Success({Provenence=p;Extracted=e})
-  let fail p  = ToolExecution.Failure({Provenence=p;Extracted=[]})
+  let succeed p e =
+    ToolExecution.Success({ Provenence = p
+                            Extracted = e })
+
+  let fail p =
+    ToolExecution.Failure({ Provenence = p
+                            Extracted = [] })
 
   //Make a useful result type from a sequence of pipeline steps
   //Actually this is horrible, need to generalise success and failure before it multiplies out of control
-  let result (PipelineStep(m,xe:ToolExecution list) ) =
-    let output = function
+  let result (PipelineStep(m, xe : ToolExecution list)) =
+    let output =
+      function
       | ToolExecution.Failure x -> x
       | ToolExecution.Success x -> x
+
     let output = List.map output xe
-    let r = {
-      Provenence=List.collect (fun {Provenence=p;Extracted=_} -> p) output
-      Extracted=List.collect (fun {Provenence=_;Extracted=e} -> e) output
-      }
-    match List.exists (function | ToolExecution.Success _ -> true | _ -> false) xe with
-    | true -> PipelineExecution.Success (m.Target,r)
-    | false -> PipelineExecution.Failure (m.Target,r)
+
+    let r =
+      { Provenence =
+          List.collect (fun { Provenence = p; Extracted = _ } -> p) output
+        Extracted =
+          List.collect (fun { Provenence = _; Extracted = e } -> e) output }
+    match List.exists (function
+            | ToolExecution.Success _ -> true
+            | _ -> false) xe with
+    | true -> PipelineExecution.Success(m.Target, r)
+    | false -> PipelineExecution.Failure(m.Target, r)
 
 module compilation =
   let matchesExpression (s, g) =
@@ -215,6 +225,7 @@ module compilation =
   let loadMake g =
     let xf = fromType filePattern g
     let fragment (Uri.Sys u) = u.Fragment
+
     let getExpression =
       function
       | FunctionalDataProperty expression xsd.string ex -> Expression(Regex ex)
@@ -235,26 +246,26 @@ module compilation =
     //For now we simply sort SemanticExtractors before KnowledgeBaseProcessors
     let orderTools =
       List.sortWith (fun x x' ->
-                     | SemanticExtractor _, KnowledgeBaseProcessor _ -> -1
-                     | KnowledgeBaseProcessor _, SemanticExtractor _ -> 1
-                     | _ -> 0)
+        match x, x' with
+        | SemanticExtractor _, KnowledgeBaseProcessor _ -> -1
+        | KnowledgeBaseProcessor _, SemanticExtractor _ -> 1
+        | _ -> 0)
 
     let getTools =
       function
-      | Property tool tx -> [
-        for (O(Uri u,_)) in tx do
-          match fragment u with
-          | "#Content" -> yield (SemanticExtractor Content)
-          | "#YamlMetadata" -> yield (SemanticExtractor Content)
-          | "#HtmlDocument" -> yield (KnowledgeBaseProcessor (MarkdownConvertor HtmlDocument))
-          | "#HtmlFragment" -> yield (KnowledgeBaseProcessor (MarkdownConvertor HtmlFragment))
-          | "#Docx" -> yield (KnowledgeBaseProcessor(MarkdownConvertor(Docx)))
-          | "#Pdf" -> yield (KnowledgeBaseProcessor(MarkdownConvertor(Pdf)))
-          | _ -> ()
-        ]
+      | Property tool tx ->
+        [ for (O(Uri u, _)) in tx do
+            match fragment u with
+            | "#Content" -> yield (SemanticExtractor Content)
+            | "#YamlMetadata" -> yield (SemanticExtractor Content)
+            | "#HtmlDocument" ->
+              yield (KnowledgeBaseProcessor(MarkdownConvertor HtmlDocument))
+            | "#HtmlFragment" ->
+              yield (KnowledgeBaseProcessor(MarkdownConvertor HtmlFragment))
+            | "#Docx" -> yield (KnowledgeBaseProcessor(MarkdownConvertor(Docx)))
+            | "#Pdf" -> yield (KnowledgeBaseProcessor(MarkdownConvertor(Pdf)))
+            | _ -> () ]
       | tp -> failwithf "%A has no configured tools" tp
-
-    let id (R(S u, _)) = u
 
     let getFilePattern f =
       { Id = id f
@@ -270,7 +281,8 @@ module compilation =
         yield { Id = id d
                 Expression = getExpression d } ]
 
-    [ for f in xf -> ResourcePath(getDirectoryPath (getParent f), getFilePattern f) ]
+    [ for f in xf ->
+        ResourcePath(getDirectoryPath (getParent f), getFilePattern f) ]
 
   let loadProvenance g =
     let uses = prefixes.prov + "uses" |> Uri.from
@@ -317,7 +329,7 @@ module compilation =
             { Id = getSpecialisationOf e
               ProvId = id e
               Content = getChars e
-              Path = getPath e |> toPath} ]
+              Path = getPath e |> toPath } ]
       | _ -> []
 
     match fromType compilation g with
@@ -338,14 +350,15 @@ module Tracing =
   let fileLocation p = File(p, None, None)
   let lineLocation p l = File(p, Some l, None)
   let charlocation p l c = File(p, Some l, Some c)
-  let resourceLocation r = Resource (resourceId r)
+  let resourceLocation r = Resource(resourceId r)
 
   let private ifSome f x =
     [ match x with
       | Some x -> yield f x
       | _ -> () ]
 
-  let private position = function
+  let private position =
+    function
     | (File(Path p, line, char)) ->
       List.concat
         [ [ a !"compilation:InFile"
@@ -360,13 +373,14 @@ module Tracing =
             (fun l ->
             dataProperty !"compilation:charPosition" ((string l) ^^ xsd.string))
             char ]
+    | Resource uri ->
+      [ a !"compilation:FromResource"
+        objectProperty !"compilation:source" uri ]
 
-        | Resource uri -> [ a !"compilation:FromResource"
-                            objectProperty !"compilation:source" uri]
-
-  let message t s p = blank !"compilation:message" [a t
-                                                    dataProperty !"rdfs:label" (s ^^ xsd.string)
-                                                    blank !"compilation:position" (position p)]
+  let message t s p =
+    blank !"compilation:message" [ a t
+                                   dataProperty !"rdfs:label" (s ^^ xsd.string)
+                                   blank !"compilation:position" (position p) ]
 
   let warn = message !"compilation:Warning"
   let info = message !"compilation:Information"

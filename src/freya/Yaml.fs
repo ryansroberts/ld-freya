@@ -30,9 +30,9 @@ module ValueParser =
         (x, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal))
 
   let (|Uri|_|) (text : string) =
-    match Uri.IsWellFormedUriString(text,UriKind.RelativeOrAbsolute) with
-      | true -> Some (System.Uri ( text,UriKind.RelativeOrAbsolute ))
-      | _ -> None
+    match Uri.IsWellFormedUriString(text, UriKind.RelativeOrAbsolute) with
+    | true -> Some(System.Uri(text, UriKind.RelativeOrAbsolute))
+    | _ -> None
 
 module YamlParser =
   type Scalar =

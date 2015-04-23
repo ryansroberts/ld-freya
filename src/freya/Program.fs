@@ -31,14 +31,12 @@ let deltafile prov =
   sprintf "%s-%s" c c'
 
 //this is shit
-let saveCompilation p prov pr (t,xt) : unit =
+let saveCompilation p prov pr (t, xt) : unit =
   let kbg = graph.empty (!"http://nice.org.uk/") []
   let toResources id = rdf.resource id
-
-  let {Provenence=provStatements;Extracted=extracted} = xt
+  let { Provenence = provStatements; Extracted = extracted } = xt
   Assert.resources kbg extracted |> ignore
-  Assert.resources pr [toResources t.ProvId provStatements] |> ignore
-
+  Assert.resources pr [ toResources t.ProvId provStatements ] |> ignore
   let d = deltafile prov
   let kbn = (sprintf "%s/%s.ttl" (string p) d)
   let prn = (sprintf "%s/%s.prov.ttl" (string p) d)
@@ -51,17 +49,16 @@ let (++) a b = System.IO.Path.Combine(a, b)
 
 let compile pth m p d =
   let pr = (loadProvenance p)
-
   printfn "Tool configuration %A" m
   match makeAll m pr.Targets with
-    | PipelineExecution.Success (t,xt) ->
-      saveCompilation pth pr p (t,xt)
-      exit 0
-    | PipelineExecution.Failure (t,{Provenence=prov;Extracted=_}) ->
-      Assert.resources p [rdf.resource t.Id prov]
-      |> graph.format graph.write.ttl System.Console.Error
-      |> ignore
-      exit 1
+  | PipelineExecution.Success(t, xt) ->
+    saveCompilation pth pr p (t, xt)
+    exit 0
+  | PipelineExecution.Failure(t, { Provenence = prov; Extracted = _ }) ->
+    Assert.resources p [ rdf.resource t.Id prov ]
+    |> graph.format graph.write.ttl System.Console.Error
+    |> ignore
+    exit 1
 
 type Arguments =
   | Compilation of string
