@@ -64,7 +64,7 @@ let ``Match provenence entities to compilation tools``() =
   printf "Tools - %A" ( toolsFor matchingTarget rp  ) |> id
   test <@ toolsFor matchingTarget rp = Some({ Target = matchingTarget
                                               Represents = (Uri.from "http://nice.org.uk/ns/qualitystandard#QualityStatement")
-                                              Tools = [ SemanticExtractor(Content);SemanticExtractor(YamlMetadata)]
+                                              Tools = [SemanticExtractor(YamlMetadata);SemanticExtractor(Content)]
                                               Captured =
                                                 [ ("QualityStandardId", "1")
                                                   ("QualityStatementId", "23") ] }) @>

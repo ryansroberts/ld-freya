@@ -236,6 +236,7 @@ module compilation =
     let orderTools =
       List.sortWith (fun x x' ->
                      match x,x' with
+                     | SemanticExtractor(Content) , SemanticExtractor _ -> -1
                      | SemanticExtractor _, KnowledgeBaseProcessor _ -> -1
                      | KnowledgeBaseProcessor _, SemanticExtractor _ -> 1
                      | _ -> 0)
