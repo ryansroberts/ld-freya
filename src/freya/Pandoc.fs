@@ -167,7 +167,7 @@ module Pandoc =
                                             StdIn =
                                               new MemoryStream(System.Text.Encoding.UTF8.GetBytes
                                                                  content) :> Stream
-                                              |> Some }
+                                            |> Some }
           let prov =
             match exit with
             | 0 -> info
@@ -176,4 +176,5 @@ module Pandoc =
                    (sprintf "Pandoc conversion: \r %s \r %s"
                       (String.concat "" stdout) (String.concat "" stderr))
                    (resourceLocation r)
+        | _ -> return error (sprintf "No content statement - failed to convert %A" r ) (resourceLocation r)
       }
