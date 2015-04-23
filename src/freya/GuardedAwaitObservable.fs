@@ -19,7 +19,7 @@ let synchronize f =
 let GuardedAwaitObservable (ev1 : IObservable<'T1>) guardFunction =
   let removeObj : IDisposable option ref = ref None
   let removeLock = new obj()
-  let setRemover r = lock removeLock (fun () -> removeObj := Sr)
+  let setRemover r = lock removeLock (fun () -> removeObj := Some r)
 
   let remove() =
     lock removeLock (fun () ->
