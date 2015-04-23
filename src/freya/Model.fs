@@ -246,7 +246,7 @@ module compilation =
         for (O(Uri u,_)) in tx do
           match fragment u with
           | "#Content" -> yield (SemanticExtractor Content)
-          | "#YamlMetadata" -> yield (SemanticExtractor Content)
+          | "#YamlMetadata" -> yield (SemanticExtractor YamlMetadata)
           | "#HtmlDocument" -> yield (KnowledgeBaseProcessor (MarkdownConvertor HtmlDocument))
           | "#HtmlFragment" -> yield (KnowledgeBaseProcessor (MarkdownConvertor HtmlFragment))
           | "#Docx" -> yield (KnowledgeBaseProcessor(MarkdownConvertor(Docx)))
