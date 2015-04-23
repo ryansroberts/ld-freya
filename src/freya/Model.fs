@@ -230,6 +230,15 @@ module compilation =
       | TraverseFunctional parent p -> p
       | fp -> failwith (sprintf "%A has no parent" fp)
 
+    //We should start inferring the compilation ontology so it's possible to
+    //specify dependencies with inherited properties
+    //For now we simply sort SemanticExtractors before KnowledgeBaseProcessors
+    let orderTools =
+      List.sortWith (fun x x' ->
+                     | SemanticExtractor _, KnowledgeBaseProcessor _ -> -1
+                     | KnowledgeBaseProcessor _, SemanticExtractor _ -> 1
+                     | _ -> 0)
+
     let getTools =
       function
       | Property tool tx -> [
@@ -237,6 +246,10 @@ module compilation =
           match fragment u with
           | "#Content" -> yield (SemanticExtractor Content)
           | "#YamlMetadata" -> yield (SemanticExtractor Content)
+          | "#HtmlDocument" -> yield (KnowledgeBaseProcessor (MarkdownConvertor HtmlDocument))
+          | "#HtmlFragment" -> yield (KnowledgeBaseProcessor (MarkdownConvertor HtmlFragment))
+          | "#Docx" -> yield (KnowledgeBaseProcessor(MarkdownConvertor(Docx)))
+          | "#Pdf" -> yield (KnowledgeBaseProcessor(MarkdownConvertor(Pdf)))
           | _ -> ()
         ]
       | tp -> failwithf "%A has no configured tools" tp
@@ -246,7 +259,7 @@ module compilation =
     let getFilePattern f =
       { Id = id f
         Expression = getExpression f
-        Tools = getTools f
+        Tools = getTools f |> orderTools
         Represents = getRepresents f }
 
     let rec getDirectoryPath d : DirectoryPattern list =
