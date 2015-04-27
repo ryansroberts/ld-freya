@@ -242,7 +242,7 @@ Target "Release" (fun _ ->
 
 Target "BuildPackage" (fun _ ->
   let n = Environment.GetEnvironmentVariable "DRONE_BUILD_NUMBER"
-  let v = sprintf "1.0.%s" n
+  let v = sprintf "1.2.%s" n
   [
    ("mono",".paket/paket.exe pack output . version " + v)
    ("mono",sprintf ".paket/paket.exe push apikey f3709835-b06d-444a-87dc-18786597f812 url https://www.nuget.org file NICE.Freya.%s.nupkg" v)
