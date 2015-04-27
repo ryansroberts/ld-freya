@@ -76,7 +76,7 @@ module Tools =
   let convertMarkdownS t m xr =
     match xr with
     | r :: xr -> async { let! prov = convertResources r [] t
-                         return pipeline.succeed [ prov ] [r] }
+                         return pipeline.succeed [ prov ] [ r ] }
     | [] -> async { return pipeline.fail [] }
 
   let convertMarkdown t =
