@@ -105,12 +105,11 @@ module Tools =
     xrp
     |> List.map (toolsFor t)
     |> List.choose id
-    |> List.head
-    |> execMatches
+    |> List.map execMatches
 
   let makeAll xrp xt =
     xt
-    |> List.map (make xrp)
+    |> List.collect (make xrp)
     |> Async.Parallel
     |> Async.RunSynchronously
     |> Array.last

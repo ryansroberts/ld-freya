@@ -219,9 +219,6 @@ module compilation =
         yield! g.GetTriplesWithSubject(s.Subject)
     }
 
-  let fromType =
-    triple.fromDouble fromPredicateObject
-      (Uri.from "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 
   let loadMake g =
     let xf = fromType filePattern g

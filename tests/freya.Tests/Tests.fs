@@ -65,7 +65,7 @@ let ``Match provenence entities to compilation tools``() =
                                                 [ ("QualityStandardId", "1")
                                                   ("QualityStatementId", "23") ] }) @>
 
-let prov = """@base <compilation:>.
+let prov = """@base <http://nice.org.uk/ns/compilation>.
 
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -95,7 +95,7 @@ let prov = """@base <compilation:>.
   prov:wasGeneratedBy <http://nice.org.uk/ns/prov/commit/c47800c>.
 
 <http://nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00>
-  a compilation:Compilation;
+  a <http://nice.org.uk/ns/compilation#Compilation> ;
   rdfs:label "Change this to a compilation message that is actualy useful to somebody";
   prov:informedBy <http://nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd>;
   prov:qualifiedAssociation [a prov:Association ;
