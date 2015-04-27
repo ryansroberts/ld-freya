@@ -309,7 +309,7 @@ module compilation =
     let getChars =
       function
       | FunctionalDataProperty chars xsd.string s -> s
-      | r -> failwith (sprintf "%A has no content property" r)
+      | r -> ""
 
     let getPath =
       function
