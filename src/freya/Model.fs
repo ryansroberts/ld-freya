@@ -190,13 +190,13 @@ module compilation =
 
   [<AutoOpen>]
   module compilationuris =
-    let directoryPattern = Uri.from (prefixes.compilation + "DirectoryPattern")
-    let filePattern = Uri.from (prefixes.compilation + "FilePattern")
-    let tool = Uri.from (prefixes.compilation + "tool")
-    let root = Uri.from (prefixes.compilation + "Root")
-    let parent = Uri.from (prefixes.compilation + "parent")
-    let expression = Uri.from (prefixes.compilation + "expression")
-    let represents = Uri.from (prefixes.compilation + "represents")
+    let directoryPattern = Uri.from ("http://nice.org.uk/ns/compilation#DirectoryPattern")
+    let filePattern = Uri.from ("http://nice.org.uk/ns/compilation#FilePattern")
+    let tool = Uri.from ("http://nice.org.uk/ns/compilation#tool")
+    let root = Uri.from ("http://nice.org.uk/ns/compilation#Root")
+    let parent = Uri.from ("http://nice.org.uk/ns/compilation#parent")
+    let expression = Uri.from ("http://nice.org.uk/ns/compilation#expression")
+    let represents = Uri.from ("http://nice.org.uk/ns/compilation#represents")
     let compilation = Uri.from ("http://nice.org.uk/ns/compilation#Compilation")
 
   let uriNode (Sys u) (Graph g) = g.CreateUriNode(u)

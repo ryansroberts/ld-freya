@@ -27,30 +27,26 @@ let qsCompilation = """
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @base <http://nice.org.uk/ns/compilation/> .
 
-<http://nice.org.uk/ns/compilation/>
-  rdf:type owl:Ontology ;
-  owl:imports <http://nice.org.uk/ns/compilation> .
-
-<http://nice.org.uk/ns/compilation#QualityStandards>
-  rdf:type <http://nice.org.uk/ns/compilation#DirectoryPattern> ,
+:QualityStandards
+  rdf:type :DirectoryPattern ,
   owl:NamedIndividual ;
-  <http://nice.org.uk/ns/compilation#expression> "qualitystandards"^^xsd:string ;
-  <http://nice.org.uk/ns/compilation#parent> <http://nice.org.uk/ns/compilation#Root> .
+  :expression "qualitystandards"^^xsd:string ;
+  :parent :Root .
 
 :QualityStatement
-  rdf:type <http://nice.org.uk/ns/compilation#FilePattern> ,
+  rdf:type :FilePattern,
   owl:NamedIndividual ;
-  <http://nice.org.uk/ns/compilation#expression> "statement_(?<QualityStatementId>.*).md"^^xsd:string ;
-  <http://nice.org.uk/ns/compilation#tool> <http://nice.org.uk/ns/compilation#Content> ;
-  <http://nice.org.uk/ns/compilation#tool> <http://nice.org.uk/ns/compilation#YamlMetadata> ;
-  <http://nice.org.uk/ns/compilation#represents> <http://nice.org.uk/ns/qualitystandard#QualityStatement>;
-  <http://nice.org.uk/ns/compilation#parent> <http://nice.org.uk/ns/compilation#QualityStandard> .
+  :expression "statement_(?<QualityStatementId>.*).md"^^xsd:string ;
+  :tool :Content ;
+  :tool :YamlMetadata ;
+  :represents :QualityStatement;
+  :parent :QualityStandard .
 
-<http://nice.org.uk/ns/compilation#QualityStandard>
-  rdf:type <http://nice.org.uk/ns/compilation#DirectoryPattern> ,
+:QualityStandard
+  rdf:type :DirectoryPattern ,
            owl:NamedIndividual ;
-  <http://nice.org.uk/ns/compilation#expression> "standard_(?<QualityStandardId>.*)"^^xsd:string ;
-  <http://nice.org.uk/ns/compilation#parent> <http://nice.org.uk/ns/compilation#QualityStandards> .
+  :expression "standard_(?<QualityStandardId>.*)"^^xsd:string ;
+  :parent :QualityStandards .
 
 """
 
@@ -69,7 +65,7 @@ let ``Match provenence entities to compilation tools``() =
                                                 [ ("QualityStandardId", "1")
                                                   ("QualityStatementId", "23") ] }) @>
 
-let prov = """@base <http://nice.org.uk/ns/compilation#>.
+let prov = """@base <compilation:>.
 
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -98,7 +94,7 @@ let prov = """@base <http://nice.org.uk/ns/compilation#>.
   prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
   prov:wasGeneratedBy <http://nice.org.uk/ns/prov/commit/c47800c>.
 
-<http://nice.org.uk/ns/compilation#compilation_2015-02-23T12:12:47.2583040+00:00>
+<http://nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00>
   a compilation:Compilation;
   rdfs:label "Change this to a compilation message that is actualy useful to somebody";
   prov:informedBy <http://nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd>;
@@ -123,7 +119,7 @@ let provM = graph.loadFormat graph.parse.ttl (graph.fromString prov) |> loadProv
 [<Fact>]
 let ``Translate provenence to compilation targets`` () =
 
-  provM.Id =? Uri.from "http://nice.org.uk/ns/compilation#compilation_2015-02-23T12:12:47.2583040+00:00"
+  provM.Id =? Uri.from "http://nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
   provM.Commits =?     [{Id = (Uri.from "http://nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd")
                          When = "2015-02-23T12:12:47.259270+00:00"}
                         {Id = (Uri.from "http://nice.org.uk/ns/prov/commit#999586c1dfe8a71c6cbf6c129f404c5642ff31bd")
