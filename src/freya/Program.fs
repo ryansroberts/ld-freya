@@ -7,6 +7,7 @@ open Assertion
 open Freya
 open Freya.compilation
 open Freya.Tools
+open System.IO
 
 type Delta =
   { From : Uri
@@ -43,6 +44,7 @@ let saveCompilation p prov pr (t, xt) : unit =
   printfn "Writing compilation to %s and prov to %s" kbn prn
   graph.format graph.write.ttl (graph.toFile kbn) kbg |> ignore
   graph.format graph.write.ttl (graph.toFile prn) pr |> ignore
+  graph.format graph.write.ttl (StreamWriter(System.Console.OpenStandardOutput())) pr |> ignore
 
 let toFile (p) = new System.IO.StreamWriter(System.IO.File.OpenWrite p)
 let (++) a b = System.IO.Path.Combine(a, b)
