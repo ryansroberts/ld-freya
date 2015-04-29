@@ -70,7 +70,7 @@ type Arguments =
     member s.Usage =
       match s with
       | Compilation e -> "Path or url of compilation ontology"
-      | Provenence t -> "Path or url to input provenance"
+      | Provenence t -> "Path or url to input provenance, if not specified prov is read from stdin"
       | Describe t -> "Display actions available at path"
       | Action t -> "Perform the specified action"
       | Output t -> "Directory to save compilaton output"
@@ -89,6 +89,10 @@ let main argv =
     printfn """Usage: freya [options]
                 %s""" (parser.Usage())
     exit 1
+
+  let prov = match args.TryGetResult <@ Provenence @> with
+             | Some p -> p |> graph.loadFrom
+             | _ -> graph.loadFormat (graph.parse.ttl) (System.IO.StreamReader(System.Console.OpenStandardInput()))
   compile (args.GetResult <@ Output @> |> toPath) makeOntology
-    (args.GetResult <@ Provenence @> |> graph.loadFrom)
+    (prov)
     (args.GetResult <@ Output @>)

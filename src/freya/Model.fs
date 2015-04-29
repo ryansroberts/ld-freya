@@ -219,7 +219,6 @@ module compilation =
         yield! g.GetTriplesWithSubject(s.Subject)
     }
 
-
   let loadMake g =
     let xf = fromType filePattern g
     let fragment (Uri.Sys u) = u.Fragment
