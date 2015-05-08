@@ -78,7 +78,7 @@ let prov = """@base <http://nice.org.uk/ns/compilation>.
 <http://nice.org.uk/ns/prov/commit#999586c1dfe8a71c6cbf6c129f404c5642ff31bd>
   a prov:Commit;
   compilation:path "qualitystandards/standard_1/statement_24.md";
-  cnt:chars "Some content"^^xsd:string;
+  compilation:location <file:///NICE.Freya.exe>;
   prov:specializationOf <http://nice.org.uk/ns/prov/new2.md>;
   prov:startedAtTime "2015-02-23T12:12:47.259270+00:00"^^xsd:dateTime;
   prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
@@ -88,7 +88,7 @@ let prov = """@base <http://nice.org.uk/ns/compilation>.
   a prov:Commit;
   prov:informedBy <http://nice.org.uk/ns/prov/commit#999586c1dfe8a71c6cbf6c129f404c5642ff31bd> ;
   compilation:path "qualitystandards/standard_1/statement_23.md";
-  cnt:chars "Some content"^^xsd:string;
+  compilation:location <file:///NICE.Freya.exe>;
   prov:startedAtTime "2015-02-23T12:12:47.259270+00:00"^^xsd:dateTime;
   prov:specializationOf <http://nice.org.uk/ns/prov/new.md>;
   prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
@@ -108,7 +108,7 @@ let prov = """@base <http://nice.org.uk/ns/compilation>.
 <http://nice.org.uk/ns/prov/entity#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd>
   a prov:Entity;
   compilation:path "qualitystandards/standard_1/statement_23.md";
-  cnt:chars "Some content"^^xsd:string;
+  compilation:location <file:///NICE.Freya.exe>;
   prov:specializationOf <http://nice.org.uk/ns/prov/new.md>;
   prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
   prov:wasGeneratedBy <http://nice.org.uk/ns/prov/commit/c47800c>.
@@ -132,10 +132,8 @@ let ``Translate provenence to compilation targets`` () =
 let res = makeAll [rp] provM.Targets
 [<Fact>]
 let ``Execute specified tools on compilation targets to produce ontology`` () =
-  test <@
-  let x = match res with | PipelineExecution.Success(t,{Provenence=_;Extracted=x;}) -> x
-  not(List.isEmpty x)
-@>
+  let x = match res with [|PipelineExecution.Success(t,{Provenence=_;Extracted=x;})|] -> x
+  x <>? []
 
 let matchingYamlTarget = {
       Id = Uri.from "http://nice.org.uk/ns/target1"

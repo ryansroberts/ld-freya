@@ -112,5 +112,4 @@ module Tools =
     |> List.collect (make xrp)
     |> Async.Parallel
     |> Async.RunSynchronously
-    |> Array.last
-    |> pipeline.result
+    |> Array.map pipeline.result

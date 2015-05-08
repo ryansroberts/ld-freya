@@ -124,6 +124,16 @@ type PipelineExecution =
   | Success of Target * ToolOutput
 
 module pipeline =
+
+  let prov = function
+    | Failure(t,{Provenence=x;Extracted=_})
+    | Success(t,{Provenence=x;Extracted=_}) -> Assertion.rdf.resource t.Id x
+
+  let extracted = function
+    | Failure(_,{Provenence=_;Extracted=x})
+    | Success(_,{Provenence=_;Extracted=x}) -> x
+
+
   let succeed p e =
     ToolExecution.Success({ Provenence = p
                             Extracted = e })
@@ -282,13 +292,16 @@ module compilation =
     [ for f in xf ->
         ResourcePath(getDirectoryPath (getParent f), getFilePattern f) ]
 
+  let scheme (Uri.Sys u) = u.Scheme
+  let uripath (Uri.Sys u) = u.PathAndQuery
+
   let loadProvenance g =
     let uses = prefixes.prov + "uses" |> Uri.from
     let commit = prefixes.prov + "uses" |> Uri.from
     let specialisationOf = prefixes.prov + "specializationOf" |> Uri.from
     let informedBy = prefixes.prov + "informedBy" |> Uri.from
     let startedAtTime = prefixes.prov + "startedAtTime" |> Uri.from
-    let chars = prefixes.cnt + "chars" |> Uri.from
+    let location = prefixes.compilation + "location" |> Uri.from
     let path = prefixes.compilation + "path" |> Uri.from
     let id (R(S u, _)) = u
 
@@ -305,9 +318,15 @@ module compilation =
           yield! getCommits x
         | _ -> () ]
 
-    let getChars =
+    let getContent =
       function
-      | FunctionalDataProperty chars xsd.string s -> s
+      | FunctionalObjectProperty location l  ->
+        try
+            match (scheme l) with
+            | "http" | "https" -> FSharp.Data.Http.RequestString (string l)
+            | "file" -> System.IO.File.ReadAllText (uripath l)
+        with
+        | e -> ""
       | r -> ""
 
     let getPath =
@@ -326,7 +345,7 @@ module compilation =
         [ for e in xe ->
             { Id = getSpecialisationOf e
               ProvId = id e
-              Content = getChars e
+              Content = getContent e
               Path = getPath e |> toPath } ]
       | _ -> []
 

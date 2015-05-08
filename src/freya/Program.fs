@@ -31,36 +31,32 @@ let deltafile prov =
   let c' = fragment (prov.Commits |> Seq.last).Id |> removeHash
   sprintf "%s-%s" c c'
 
-//this is shit
-let saveCompilation p prov pr (t, xt) : unit =
-  let kbg = graph.empty (!"http://nice.org.uk/") []
-  let toResources id = rdf.resource id
-  let { Provenence = provStatements; Extracted = extracted } = xt
-  Assert.resources kbg extracted |> ignore
-  Assert.resources pr [ toResources t.ProvId provStatements ] |> ignore
-  let d = deltafile prov
-  let kbn = (sprintf "%s/%s.ttl" (string p) d)
-  let prn = (sprintf "%s/%s.prov.ttl" (string p) d)
-  printfn "Writing compilation to %s and prov to %s" kbn prn
-  graph.format graph.write.ttl (graph.toFile kbn) kbg |> ignore
-  graph.format graph.write.ttl (graph.toFile prn) pr |> ignore
-  graph.format graph.write.ttl (StreamWriter(System.Console.OpenStandardOutput())) pr |> ignore
-
 let toFile (p) = new System.IO.StreamWriter(System.IO.File.OpenWrite p)
 let (++) a b = System.IO.Path.Combine(a, b)
 
+let hasFailure = Array.exists (function | (Failure _) -> true | _ -> false)
+
+let domainSpaces = []
+
 let compile pth m p d =
-  let pr = (loadProvenance p)
+  let prg = (loadProvenance p)
   printfn "Tool configuration %A" m
-  match makeAll m pr.Targets with
-  | PipelineExecution.Success(t, xt) ->
-    saveCompilation pth pr p (t, xt)
-    exit 0
-  | PipelineExecution.Failure(t, { Provenence = prov; Extracted = _ }) ->
-    Assert.resources p [ rdf.resource t.Id prov ]
-    |> graph.format graph.write.ttl System.Console.Error
-    |> ignore
-    exit 1
+  let xs =  makeAll m prg.Targets
+
+  Assert.resources p ( xs |> Seq.map pipeline.prov |> List.ofSeq ) |> ignore
+
+  graph.format graph.write.ttl (new StreamWriter(System.Console.OpenStandardOutput())) p |> ignore
+  match hasFailure xs with
+    | true -> exit 1
+    | false ->
+      let kbg = graph.empty (!"https://nice.org.uk") domainSpaces
+      let rx = Seq.collect pipeline.extracted xs |> List.ofSeq
+      Assert.resources kbg rx |> ignore
+
+      let d = deltafile prg
+      graph.format graph.write.ttl (graph.toFile (sprintf "%s/%s.prov.ttl" (string pth)d)) kbg |> ignore
+      graph.format graph.write.ttl (graph.toFile (sprintf "%s/%s.ttl" (string pth) d)) kbg |> ignore
+      exit 0
 
 type Arguments =
   | Compilation of string

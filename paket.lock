@@ -6,12 +6,12 @@ NUGET
       Newtonsoft.Json (>= 6.0.8) - framework: portable-net40+sl40+win+wp80+MonoAndroid10+MonoTouch10, >= net35, >= net35, >= net40, >= net40
       VDS.Common (1.5.0) - framework: portable-net40+sl40+win+wp80+MonoAndroid10+MonoTouch10, >= net35, >= net35, >= net40, >= net40
     ExtCore (0.8.45)
-    FAKE (3.29.7)
+    FAKE (3.30.2)
     FSharp.Compiler.Service (0.0.87)
     FSharp.Data (2.2.0)
       Zlib.Portable (>= 1.10.0) - framework: portable-net40+sl50+wp80+win80
-    FSharp.Formatting (2.9.2)
-      FSharp.Compiler.Service (0.0.87)
+    FSharp.Formatting (2.9.4)
+      FSharp.Compiler.Service (>= 0.0.87)
       FSharpVSPowerTools.Core (1.8.0)
     FSharp.RDF (1.0.41)
       FSharpx.Core
@@ -32,7 +32,7 @@ NUGET
       Microsoft.Net.Http
     SharpYaml (1.2.0)
     SourceLink.Fake (0.5.0)
-    UnionArgParser (0.8.6)
+    UnionArgParser (0.8.7)
     Unquote (2.2.2)
     VDS.Common (1.5.0) - framework: portable-net40+sl40+win+wp80+MonoAndroid10+MonoTouch10, >= net35, >= net35, >= net40, >= net40
     xunit (1.9.2)
@@ -41,5 +41,5 @@ NUGET
 GITHUB
   remote: fsharp/FAKE
   specs:
-    modules/Octokit/Octokit.fsx (be9abcd85ce67d148c548820e86bbfd54b9b6778)
+    modules/Octokit/Octokit.fsx (aeca22431512eabfbe2f4b0f3dcfd2790f0aaf1d)
       Octokit

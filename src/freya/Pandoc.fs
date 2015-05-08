@@ -173,7 +173,7 @@ module Pandoc =
             | 0 -> info
             | _ -> error
           return prov
-                   (sprintf "Pandoc conversion: \r %s \r %s"
+                   (sprintf "Pandoc conversion \r %s \r %s"
                       (String.concat "" stdout) (String.concat "" stderr))
                    (resourceLocation r)
         | _ ->
