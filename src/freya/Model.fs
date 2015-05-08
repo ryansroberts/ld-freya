@@ -164,6 +164,9 @@ module pipeline =
     | false -> PipelineExecution.Failure(m.Target, r)
 
 module compilation =
+
+  let mutable loader = System.IO.File.ReadAllText
+
   let matchesExpression (s, g) =
     seq {
       match g, s with
@@ -321,12 +324,10 @@ module compilation =
     let getContent =
       function
       | FunctionalObjectProperty location l  ->
-        try
-            match (scheme l) with
-            | "http" | "https" -> FSharp.Data.Http.RequestString (string l)
-            | "file" -> System.IO.File.ReadAllText (uripath l)
-        with
-        | e -> e.Message
+        match (scheme l) with
+        | "http" | "https" -> FSharp.Data.Http.RequestString (string l)
+        | "file" -> loader (uripath l)
+        | _ -> ""
       | r -> ""
 
     let getPath =

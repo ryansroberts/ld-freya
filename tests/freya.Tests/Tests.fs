@@ -53,6 +53,8 @@ let qsCompilation = """
 let g = graph.loadFormat graph.parse.ttl (graph.fromString qsCompilation)
 let rp = loadMake g |> List.head
 
+loader <- (fun s -> "")
+
 [<Fact>]
 let ``Tools fail to match unless correctly configured``() =
   test <@ toolsFor nonMatchingTarget rp = None @>
@@ -78,7 +80,7 @@ let prov = """@base <http://nice.org.uk/ns/compilation>.
 <http://nice.org.uk/ns/prov/commit#999586c1dfe8a71c6cbf6c129f404c5642ff31bd>
   a prov:Commit;
   compilation:path "qualitystandards/standard_1/statement_24.md";
-  compilation:location <file:///NICE.Freya.exe>;
+  compilation:location <file:///testrepo/content.md>;
   prov:specializationOf <http://nice.org.uk/ns/prov/new2.md>;
   prov:startedAtTime "2015-02-23T12:12:47.259270+00:00"^^xsd:dateTime;
   prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
@@ -88,7 +90,7 @@ let prov = """@base <http://nice.org.uk/ns/compilation>.
   a prov:Commit;
   prov:informedBy <http://nice.org.uk/ns/prov/commit#999586c1dfe8a71c6cbf6c129f404c5642ff31bd> ;
   compilation:path "qualitystandards/standard_1/statement_23.md";
-  compilation:location <file:///NICE.Freya.exe>;
+  compilation:location <file:///testrepo/content.md>;
   prov:startedAtTime "2015-02-23T12:12:47.259270+00:00"^^xsd:dateTime;
   prov:specializationOf <http://nice.org.uk/ns/prov/new.md>;
   prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
@@ -108,7 +110,7 @@ let prov = """@base <http://nice.org.uk/ns/compilation>.
 <http://nice.org.uk/ns/prov/entity#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd>
   a prov:Entity;
   compilation:path "qualitystandards/standard_1/statement_23.md";
-  compilation:location <file:///NICE.Freya.exe>;
+  compilation:location <file:///testrepo/content.md>;
   prov:specializationOf <http://nice.org.uk/ns/prov/new.md>;
   prov:wasAttributedTo <http://nice.org.uk/ns/prov/user/schacon@gmail.com>;
   prov:wasGeneratedBy <http://nice.org.uk/ns/prov/commit/c47800c>.
@@ -127,7 +129,7 @@ let ``Translate provenence to compilation targets`` () =
   provM.Targets =? [{Id = Uri.from "http://nice.org.uk/ns/prov/new.md"
                      ProvId = Uri.from "http://nice.org.uk/ns/prov/entity#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
                      Path = Path [Segment "qualitystandards"; Segment "standard_1"; Segment "statement_23.md"]
-                     Content = """Could not find file "/NICE.Freya.exe"."""}]
+                     Content = ""}]
 
 let res = makeAll [rp] provM.Targets
 [<Fact>]
