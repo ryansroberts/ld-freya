@@ -127,7 +127,7 @@ let ``Translate provenence to compilation targets`` () =
   provM.Targets =? [{Id = Uri.from "http://nice.org.uk/ns/prov/new.md"
                      ProvId = Uri.from "http://nice.org.uk/ns/prov/entity#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
                      Path = Path [Segment "qualitystandards"; Segment "standard_1"; Segment "statement_23.md"]
-                     Content = ""}]
+                     Content = """Could not find file "/NICE.Freya.exe"."""}]
 
 let res = makeAll [rp] provM.Targets
 [<Fact>]

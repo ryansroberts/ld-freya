@@ -326,7 +326,7 @@ module compilation =
             | "http" | "https" -> FSharp.Data.Http.RequestString (string l)
             | "file" -> System.IO.File.ReadAllText (uripath l)
         with
-        | e -> ""
+        | e -> e.Message
       | r -> ""
 
     let getPath =
