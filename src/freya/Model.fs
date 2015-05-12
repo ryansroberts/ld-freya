@@ -305,7 +305,7 @@ module compilation =
     let specialisationOf = prefixes.prov + "specializationOf" |> Uri.from
     let informedBy = prefixes.prov + "informedBy" |> Uri.from
     let startedAtTime = prefixes.prov + "startedAtTime" |> Uri.from
-    let location = prefixes.compilation + "location" |> Uri.from
+    let content = prefixes.compilation + "content" |> Uri.from
     let path = prefixes.compilation + "path" |> Uri.from
     let id (R(S u, _)) = u
 
@@ -324,12 +324,12 @@ module compilation =
 
     let getContent =
       function
-      | FunctionalObjectProperty location l  ->
+      | FunctionalObjectProperty content l  ->
         match (scheme l) with
         | "http" | "https" -> FSharp.Data.Http.RequestString (string l)
         | "file" -> loader (uripath l)
         | _ -> failwithf "Cannot load content from %s" (string l)
-      | r -> failwithf "%A has no location property" r
+      | r -> failwithf "%A has no content property" r
 
     let getPath =
       function
