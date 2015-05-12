@@ -170,6 +170,7 @@ module compilation =
   let matchesExpression (s, g) =
     seq {
       match g, s with
+      | _, Segment "*" -> yield Some (Matches [])
       | Expression re, Segment s ->
         match re.Match s with
         | m when m.Length <> 0 ->
@@ -327,8 +328,8 @@ module compilation =
         match (scheme l) with
         | "http" | "https" -> FSharp.Data.Http.RequestString (string l)
         | "file" -> loader (uripath l)
-        | _ -> ""
-      | r -> ""
+        | _ -> failwithf "Cannot load content from %s" (string l)
+      | r -> failwithf "%A has no location property" r
 
     let getPath =
       function
