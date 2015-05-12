@@ -54,7 +54,7 @@ let compile pth m p d =
       Assert.resources kbg rx |> ignore
 
       let d = deltafile prg
-      graph.format graph.write.ttl (graph.toFile (sprintf "%s/%s.prov.ttl" (string pth)d)) kbg |> ignore
+      graph.format graph.write.ttl (graph.toFile (sprintf "%s/%s.prov.ttl" (string pth)d)) p |> ignore
       graph.format graph.write.ttl (graph.toFile (sprintf "%s/%s.ttl" (string pth) d)) kbg |> ignore
       exit 0
 
