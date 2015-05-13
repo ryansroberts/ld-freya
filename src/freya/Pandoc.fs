@@ -149,7 +149,7 @@ module Pandoc =
           Normalize
           Self_Contained ]
         @ match p with
-          | Pdf -> [ Latex_Engine "pdflatex" ]
+          | Pdf -> [ Latex_Engine "xelatex" ]
           | HtmlDocument ->
             [ Standalone
               To "html5" ]
