@@ -10,7 +10,6 @@ open Nessos.UnionArgParser
 open ExtCore
 open System.Threading.Tasks
 open FSharp.RDF
-open resource
 open Freya.Tracing
 
 module Pandoc =
@@ -130,21 +129,37 @@ module Pandoc =
       | Pdf -> "pdf"
       | HtmlDocument | HtmlFragment -> "html"
 
+  let private parser = UnionArgParser.Create<PandocArgs>()
 
+  open Assertion
+  open Assertion.rdf
+  open FSharp.RDF.resource
   let convertResources r xr = function
     | (p, conv) ->
       let fragment (Uri.Sys u) = u.Fragment.Substring(1, u.Fragment.Length - 1)
-
-      let file =
+      let file root =
         let fn = Freya.FullName(resourceId r |> fragment, extension p)
-        let p = conv.Output ++ (Freya.path.toPath (mimeTypeDir p))
-        p ++ fn
+        root ++ (Freya.path.toPath (mimeTypeDir p)) ++ fn
 
-      let parser = UnionArgParser.Create<PandocArgs>()
+      let generatedBy =
+        match p with
+          | Pdf -> !"compilation:Pdf"
+          | HtmlDocument -> !"compilation:HtmlDocument"
+          | Docx -> !"compilation:Docx"
+          | HtmlFragment -> !"compilation:HtmlFragment"
+      let generationProv =
+        blank !"prov:hadGeneration" [
+          a !"prov:Generation"
+          a !"prov:InstantaneousEvent"
+          dataProperty !"prov:atTime" (DateTimeOffset.Now^^xsd.datetime)
+          objectProperty !"prov:activity" generatedBy
+          objectProperty !"prov:specialisationOf" !("http://ld.nice.org.uk/" + string (file (Freya.Path [])))
+        ]
+
 
       let args =
         [ From "markdown"
-          Output(string (ensurePathExists file))
+          Output(string (ensurePathExists (file conv.Output)))
           Smart
           Normalize
           Self_Contained ]
@@ -157,7 +172,7 @@ module Pandoc =
           | HtmlFragment -> [ To "html5" ]
       async {
         match r with
-        | FunctionalDataProperty (Uri.from "cnt:chars") (xsd.string) content ->
+        | FunctionalDataProperty (Uri.from "cnt:chars") (FSharp.RDF.xsd.string) content ->
           let! (exit, stdout, stderr) = asyncShellExec
                                           { Program = "pandoc"
                                             WorkingDirectory =

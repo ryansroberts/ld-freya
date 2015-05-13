@@ -14,7 +14,7 @@ let descriptionOf = function
     Tools = xt
     Represents = rep
     }) -> [
-    rdf.resource
+      rdf.resource
     ]
 
 let describe xr (Path xs) =
