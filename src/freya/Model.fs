@@ -215,14 +215,16 @@ module compilation =
   [<AutoOpen>]
   module compilationuris =
     let directoryPattern =
-      Uri.from ("http://nice.org.uk/ns/compilation#DirectoryPattern")
-    let filePattern = Uri.from ("http://nice.org.uk/ns/compilation#FilePattern")
-    let tool = Uri.from ("http://nice.org.uk/ns/compilation#tool")
-    let root = Uri.from ("http://nice.org.uk/ns/compilation#Root")
-    let parent = Uri.from ("http://nice.org.uk/ns/compilation#parent")
-    let expression = Uri.from ("http://nice.org.uk/ns/compilation#expression")
-    let represents = Uri.from ("http://nice.org.uk/ns/compilation#represents")
-    let compilation = Uri.from ("http://nice.org.uk/ns/compilation#Compilation")
+      Uri.from ("http://ld.nice.org.uk/ns/compilation#DirectoryPattern")
+    let filePattern = Uri.from ("http://ld.nice.org.uk/ns/compilation#FilePattern")
+    let tool = Uri.from ("http://ld.nice.org.uk/ns/compilation#tool")
+    let root = Uri.from ("http://ld.nice.org.uk/ns/compilation#Root")
+    let parent = Uri.from ("http://ld.nice.org.uk/ns/compilation#parent")
+    let expression = Uri.from ("http://ld.nice.org.uk/ns/compilation#expression")
+    let represents = Uri.from ("http://ld.nice.org.uk/ns/compilation#represents")
+    let compilation = Uri.from ("http://ld.nice.org.uk/ns/compilation#Compilation")
+    let content = Uri.from ("http://ld.nice.org.uk/ns/compilation#content")
+    let path = Uri.from ("http://ld.nice.org.uk/ns/compilation#path")
 
   let uriNode (Sys u) (Graph g) = g.CreateUriNode(u)
 
@@ -305,8 +307,6 @@ module compilation =
     let specialisationOf = prefixes.prov + "specializationOf" |> Uri.from
     let informedBy = prefixes.prov + "informedBy" |> Uri.from
     let startedAtTime = prefixes.prov + "startedAtTime" |> Uri.from
-    let content = prefixes.compilation + "content" |> Uri.from
-    let path = prefixes.compilation + "path" |> Uri.from
     let id (R(S u, _)) = u
 
     let getEndedAt =
