@@ -1,7 +1,7 @@
 namespace Freya
 module Commands =
-open compilation
 open FSharp.RDF
+open Freya.compilation
 open Assertion
 type Command =
   | Describe of Path
@@ -13,7 +13,9 @@ let descriptionOf = function
     Expression = e
     Tools = xt
     Represents = rep
-    }) -> []
+    }) -> [
+    rdf.resource
+    ]
 
 let describe xr (Path xs) =
   xr |> Seq.map

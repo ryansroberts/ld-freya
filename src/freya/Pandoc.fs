@@ -130,6 +130,7 @@ module Pandoc =
       | Pdf -> "pdf"
       | HtmlDocument | HtmlFragment -> "html"
 
+
   let convertResources r xr = function
     | (p, conv) ->
       let fragment (Uri.Sys u) = u.Fragment.Substring(1, u.Fragment.Length - 1)
@@ -168,15 +169,16 @@ module Pandoc =
                                               new MemoryStream(System.Text.Encoding.UTF8.GetBytes
                                                                  content) :> Stream
                                               |> Some }
-          let prov =
+          let log =
             match exit with
             | 0 -> info
             | _ -> error
-          return prov
+          return [log
                    (sprintf "Pandoc conversion \r %s \r %s"
                       (String.concat "" stdout) (String.concat "" stderr))
                    (resourceLocation r)
+                 ]
         | _ ->
-          return error (sprintf "No content statement - failed to convert %A" r)
-                   (resourceLocation r)
+          return [error (sprintf "No content statement - failed to convert %A" r)
+                   (resourceLocation r)]
       }

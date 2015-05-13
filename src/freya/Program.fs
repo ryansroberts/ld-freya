@@ -69,7 +69,7 @@ type Arguments =
       match s with
       | Compilation e -> "Path or url of compilation ontology"
       | Provenence t -> "Path or url to input provenance, if not specified prov is read from stdin"
-      | Describe t -> "Display actions available at path"
+      | Describe p -> "Display actions available at path"
       | Action t -> "Perform the specified action"
       | Output t -> "Directory to save compilaton output"
 

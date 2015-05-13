@@ -5,7 +5,6 @@ open FSharp.Markdown
 open Assertion
 open rdf
 open owl
-open compilation
 open Tracing
 open YamlParser
 
@@ -76,7 +75,7 @@ module Tools =
   let convertMarkdownS t m xr =
     match xr with
     | r :: xr -> async { let! prov = convertResources r [] t
-                         return pipeline.succeed [ prov ] [ r ] }
+                         return pipeline.succeed prov [ r ] }
     | [] -> async { return pipeline.fail [] }
 
   let convertMarkdown t =
@@ -103,7 +102,7 @@ module Tools =
 
   let make xrp t =
     xrp
-    |> List.map (toolsFor t)
+    |> List.map (compilation.toolsFor t)
     |> List.choose id
     |> List.map execMatches
 
