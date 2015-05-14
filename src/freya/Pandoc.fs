@@ -156,7 +156,6 @@ module Pandoc =
           objectProperty !"prov:specialisationOf" !("http://ld.nice.org.uk/" + string (file (Freya.Path [])))
         ]
 
-
       let args =
         [ From "markdown"
           Output(string (ensurePathExists (file conv.Output)))
@@ -192,6 +191,7 @@ module Pandoc =
                    (sprintf "Pandoc conversion \r %s \r %s"
                       (String.concat "" stdout) (String.concat "" stderr))
                    (resourceLocation r)
+                  generationProv
                  ]
         | _ ->
           return [error (sprintf "No content statement - failed to convert %A" r)
