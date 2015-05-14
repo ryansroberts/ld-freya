@@ -173,3 +173,17 @@ let ``Extract arbitrary statements from YAML metadata`` () =
       match r with
         | ObjectProperty (Uri.from "prefix:objectProperty") [x] ->
           x =? Uri.from "prefix:fragment"
+
+open Commands
+open Freya
+open Assertion
+open rdf
+[<Fact>]
+let ``Getting a description of a filepath`` () =
+  let [qs] = describe [rp] (Path.from "qualitystandards/*") |> Seq.toList
+  qs =? resource !"http://ld.nice.org.uk/command" [
+         a !"http://ld.nice.org.uk/ns/compilation/Command"
+         objectProperty !"compilation:represents" !"http://ld.nice.org.uk/ns/compilation#QualityStatement"
+         objectProperty !"compilation:tool" !"compilation:Content"
+         objectProperty !"compilation:tool" !"compilation:YamlMetadata"
+        ]

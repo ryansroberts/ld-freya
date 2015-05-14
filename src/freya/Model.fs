@@ -19,6 +19,11 @@ type Path =
   override x.ToString() =
     match x with
     | Path xs -> System.String.Join("/", xs)
+  static member from s =
+    String.split [|'/'|] s
+    |> Array.map Segment
+    |> List.ofArray
+    |> Path
 
 and FileName = string
 
@@ -64,12 +69,22 @@ type Provenance =
 type SemanticExtractor =
   | Content
   | YamlMetadata
+  override x.ToString () =
+    match x with
+      | Content -> "Content"
+      | YamlMetadata -> "YamlMetadata"
 
 type MarkdownConvertor =
   | HtmlDocument
   | HtmlFragment
   | Docx
   | Pdf
+  override x.ToString() =
+    match x with
+    | HtmlDocument -> "HtmlDocument"
+    | HtmlFragment -> "HtmlFragment"
+    | Docx -> "Docx"
+    | Pdf -> "Pdf"
 
 type KnowledgeBaseProcessor =
   | MarkdownConvertor of MarkdownConvertor
@@ -77,6 +92,11 @@ type KnowledgeBaseProcessor =
 type Tool =
   | KnowledgeBaseProcessor of KnowledgeBaseProcessor
   | SemanticExtractor of SemanticExtractor
+  with static member toUri =
+    let inline uri x = Uri.from (sprintf "compilation:%s" (string x))
+    function
+    | KnowledgeBaseProcessor x -> uri x
+    | SemanticExtractor x -> uri x
 
 type Expression =
   | Expression of System.Text.RegularExpressions.Regex
