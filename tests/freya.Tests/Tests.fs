@@ -6,6 +6,7 @@ open Xunit
 open Swensen.Unquote
 open compilation
 open Tools
+open TestSupport
 
 let matchingTarget =
     { Id = Uri.from "http://ld.nice.org.uk/ns/target1"
@@ -40,6 +41,7 @@ let qsCompilation = """
   :tool :Content ;
   :tool :YamlMetadata ;
   :represents :QualityStatement;
+  :template "A template";
   :parent :QualityStandard .
 
 :QualityStandard
@@ -50,7 +52,7 @@ let qsCompilation = """
 
 """
 
-let g = graph.loadFormat graph.parse.ttl (graph.fromString qsCompilation)
+let g = Graph.loadTtl (fromString qsCompilation)
 let rp = loadMake g |> List.head
 
 loader <- (fun s -> "")
@@ -116,17 +118,19 @@ let prov = """@base <http://ld.nice.org.uk/ns/compilation>.
   prov:wasGeneratedBy <http://ld.nice.org.uk/ns/prov/commit/c47800c>.
 """
 
-let provM = graph.loadFormat graph.parse.ttl (graph.fromString prov) |> loadProvenance
+let provM = Graph.loadTtl (graph.fromString prov) |> loadProvenance
 
 [<Fact>]
 let ``Translate provenence to compilation targets`` () =
 
   provM.Id =? Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
-  provM.Commits =?     [{Id = (Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd")
+  let commits = provM.Commits |> List.ofSeq
+  let targets = provM.Targets |> List.ofSeq
+  commits       =?     [{Id = (Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd")
                          When = "2015-02-23T12:12:47.259270+00:00"}
                         {Id = (Uri.from "http://ld.nice.org.uk/ns/prov/commit#999586c1dfe8a71c6cbf6c129f404c5642ff31bd")
                          When = "2015-02-23T12:12:47.259270+00:00"}]
-  provM.Targets =? [{Id = Uri.from "http://ld.nice.org.uk/ns/prov/new.md"
+  targets       =? [{Id = Uri.from "http://ld.nice.org.uk/ns/prov/new.md"
                      ProvId = Uri.from "http://ld.nice.org.uk/ns/prov/entity#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
                      Path = Path [Segment "qualitystandards"; Segment "standard_1"; Segment "statement_23.md"]
                      Content = ""}]
@@ -134,7 +138,7 @@ let ``Translate provenence to compilation targets`` () =
 let res = makeAll [rp] provM.Targets
 [<Fact>]
 let ``Execute specified tools on compilation targets to produce ontology`` () =
-  let x = match res with [|PipelineExecution.Success(t,{Provenence=_;Extracted=x;})|] -> x
+  let x = match res with [|PipelineExecution.Success(t,{Provenance=_;Extracted=x;})|] -> x
   x <>? []
 
 let matchingYamlTarget = {
@@ -161,12 +165,11 @@ let tm = { Target = matchingYamlTarget
            Captured =[] }
 
 open resource
-
 [<Fact>]
 let ``Extract arbitrary statements from YAML metadata`` () =
   let r = Tools.yamlMetadata (PipelineStep (tm,[]))  |> Async.RunSynchronously
   match r with
-    | PipelineStep(t,[ToolExecution.Success{Provenence=xe;Extracted=r::rx}]) ->
+    | PipelineStep(t,[ToolExecution.Success{Provenance=xe;Extracted=r::rx}]) ->
       match r with
         | DataProperty (Uri.from "prefix:property") xsd.string [v1;v2] ->
           [v1;v2] =? ["Value 1";"Value 2"]
@@ -178,12 +181,22 @@ open Commands
 open Freya
 open Assertion
 open rdf
+
 [<Fact>]
 let ``Getting a description of a filepath`` () =
-  let [qs] = describe [rp] (Path.from "qualitystandards/*") |> Seq.toList
-  qs =? resource !"http://ld.nice.org.uk/command" [
+  let qs = describe [rp] (Path.from "qualitystandards/*") |> Seq.toList
+  let g = Graph.empty !"http://ld.nice.org.uk" []
+  let g' = Graph.empty !"http://ld.nice.org.uk" []
+  [rdf.resource !"http://ld.nice.org.uk/command" [
          a !"http://ld.nice.org.uk/ns/compilation/Command"
          objectProperty !"compilation:represents" !"http://ld.nice.org.uk/ns/compilation#QualityStatement"
          objectProperty !"compilation:tool" !"compilation:Content"
          objectProperty !"compilation:tool" !"compilation:YamlMetadata"
-        ]
+         ]]
+  |> Assert.graph g
+  |> ignore
+
+  Assert.graph g qs |> ignore
+
+  graphsAreSame g g
+  

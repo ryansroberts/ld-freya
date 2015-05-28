@@ -11,7 +11,7 @@ nuget UnionArgParser
 nuget FSharp.RDF
 nuget xunit 1.9.2
 nuget xunit.runners 1.9.2
-nuget Unquote
+nuget Unquote 2.2.2
 nuget FSharp.Compiler.Service 0.0.87
 
 github fsharp/FAKE modules/Octokit/Octokit.fsx

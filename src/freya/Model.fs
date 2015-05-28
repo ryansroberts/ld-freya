@@ -16,11 +16,13 @@ type Path =
   | Path of Segment list
   static member (++) ((Path a), (Path b)) = Path(a @ b)
   static member (++) (p, f) = File(p, f)
+
   override x.ToString() =
     match x with
     | Path xs -> System.String.Join("/", xs)
+
   static member from s =
-    String.split [|'/'|] s
+    String.split [| '/' |] s
     |> Array.map Segment
     |> List.ofArray
     |> Path
@@ -63,16 +65,16 @@ type Commit =
 
 type Provenance =
   { Id : Uri
-    Commits : Commit list
-    Targets : Target list }
+    Commits : Commit seq
+    Targets : Target seq }
 
 type SemanticExtractor =
   | Content
   | YamlMetadata
-  override x.ToString () =
+  override x.ToString() =
     match x with
-      | Content -> "Content"
-      | YamlMetadata -> "YamlMetadata"
+    | Content -> "Content"
+    | YamlMetadata -> "YamlMetadata"
 
 type MarkdownConvertor =
   | HtmlDocument
@@ -92,7 +94,7 @@ type KnowledgeBaseProcessor =
 type Tool =
   | KnowledgeBaseProcessor of KnowledgeBaseProcessor
   | SemanticExtractor of SemanticExtractor
-  with static member toUri =
+  static member toUri =
     let inline uri x = Uri.from (sprintf "compilation:%s" (string x))
     function
     | KnowledgeBaseProcessor x -> uri x
@@ -109,6 +111,7 @@ type FilePattern =
   { Id : Uri
     Expression : Expression
     Tools : Tool list
+    Template : string option
     Represents : Uri }
 
 type Capture = string * string
@@ -129,7 +132,7 @@ type ToolMatch =
       (string x.Represents) (x.Tools) (x.Captured)
 
 type ToolOutput =
-  { Provenence : Statement list
+  { Provenance : Statement list
     Extracted : Resource list }
 
 type ToolExecution =
@@ -144,22 +147,25 @@ type PipelineExecution =
   | Success of Target * ToolOutput
 
 module pipeline =
-
-  let prov = function
-    | Failure(t,{Provenence=x;Extracted=_})
-    | Success(t,{Provenence=x;Extracted=_}) -> Assertion.rdf.resource t.Id x
-
-  let extracted = function
-    | Failure(_,{Provenence=_;Extracted=x})
-    | Success(_,{Provenence=_;Extracted=x}) -> x
-
+  let prov =
+    function
+    | Failure(t, { Provenance = x; Extracted = _ }) | Success(t,
+                                                              { Provenance = x;
+                                                                Extracted = _ }) ->
+      Assertion.rdf.resource t.Id x
+  let extracted =
+    function
+    | Failure(_, { Provenance = _; Extracted = x }) | Success(_,
+                                                              { Provenance = _;
+                                                                Extracted = x }) ->
+      x
 
   let succeed p e =
-    ToolExecution.Success({ Provenence = p
+    ToolExecution.Success({ Provenance = p
                             Extracted = e })
 
   let fail p =
-    ToolExecution.Failure({ Provenence = p
+    ToolExecution.Failure({ Provenance = p
                             Extracted = [] })
 
   //Make a useful result type from a sequence of pipeline steps
@@ -173,10 +179,10 @@ module pipeline =
     let output = List.map output xe
 
     let r =
-      { Provenence =
-          List.collect (fun { Provenence = p; Extracted = _ } -> p) output
+      { Provenance =
+          List.collect (fun { Provenance = p; Extracted = _ } -> p) output
         Extracted =
-          List.collect (fun { Provenence = _; Extracted = e } -> e) output }
+          List.collect (fun { Provenance = _; Extracted = e } -> e) output }
     match List.exists (function
             | ToolExecution.Success _ -> true
             | _ -> false) xe with
@@ -184,13 +190,12 @@ module pipeline =
     | false -> PipelineExecution.Failure(m.Target, r)
 
 module compilation =
-
   let mutable loader = System.IO.File.ReadAllText
 
   let matchesExpression (s, g) =
     seq {
       match g, s with
-      | _, Segment "*" -> yield Some (Matches [])
+      | _, Segment "*" -> yield Some(Matches [])
       | Expression re, Segment s ->
         match re.Match s with
         | m when m.Length <> 0 ->
@@ -236,13 +241,18 @@ module compilation =
   module compilationuris =
     let directoryPattern =
       Uri.from ("http://ld.nice.org.uk/ns/compilation#DirectoryPattern")
-    let filePattern = Uri.from ("http://ld.nice.org.uk/ns/compilation#FilePattern")
+    let filePattern =
+      Uri.from ("http://ld.nice.org.uk/ns/compilation#FilePattern")
     let tool = Uri.from ("http://ld.nice.org.uk/ns/compilation#tool")
+    let template = Uri.from ("http://ld.nice.org.uk/ns/compilation#template")
     let root = Uri.from ("http://ld.nice.org.uk/ns/compilation#Root")
     let parent = Uri.from ("http://ld.nice.org.uk/ns/compilation#parent")
-    let expression = Uri.from ("http://ld.nice.org.uk/ns/compilation#expression")
-    let represents = Uri.from ("http://ld.nice.org.uk/ns/compilation#represents")
-    let compilation = Uri.from ("http://ld.nice.org.uk/ns/compilation#Compilation")
+    let expression =
+      Uri.from ("http://ld.nice.org.uk/ns/compilation#expression")
+    let represents =
+      Uri.from ("http://ld.nice.org.uk/ns/compilation#represents")
+    let compilation =
+      Uri.from ("http://ld.nice.org.uk/ns/compilation#Compilation")
     let content = Uri.from ("http://ld.nice.org.uk/ns/compilation#content")
     let path = Uri.from ("http://ld.nice.org.uk/ns/compilation#path")
 
@@ -256,7 +266,7 @@ module compilation =
     }
 
   let loadMake g =
-    let xf = fromType filePattern g
+    let xf = Resource.fromType filePattern g
     let fragment (Uri.Sys u) = u.Fragment
 
     let getExpression =
@@ -301,10 +311,16 @@ module compilation =
             | _ -> () ]
       | tp -> failwithf "%A has no configured tools" tp
 
+    let getTemplate =
+      function
+      | FunctionalDataProperty template xsd.string t -> Some t
+      | _ -> None
+
     let getFilePattern f =
-      { Id = resourceId f
+      { Id = Resource.id f
         Expression = getExpression f
         Tools = getTools f |> orderTools
+        Template = getTemplate f
         Represents = getRepresents f }
 
     let rec getDirectoryPath d : DirectoryPattern list =
@@ -312,7 +328,7 @@ module compilation =
         | FunctionalProperty parent (O(Node.Uri r, _)) when r <> root ->
           yield! getDirectoryPath (getParent d)
         | _ -> ()
-        yield { Id = resourceId d
+        yield { Id = Resource.id d
                 Expression = getExpression d } ]
 
     [ for f in xf ->
@@ -334,19 +350,19 @@ module compilation =
       | FunctionalDataProperty startedAtTime xsd.string d -> d
       | r -> failwith (sprintf "%A has no startedAtTime property" r)
 
-    let rec getCommits x =
-      [ match x with
+    let rec getCommits x = seq {
+        match x with
         | TraverseFunctional informedBy x ->
           yield { Id = id x
                   When = getEndedAt x }
           yield! getCommits x
-        | _ -> () ]
+        | _ -> () }
 
     let getContent =
       function
-      | FunctionalObjectProperty content l  ->
+      | FunctionalObjectProperty content l ->
         match (scheme l) with
-        | "http" | "https" -> FSharp.Data.Http.RequestString (string l)
+        | "http" | "https" -> FSharp.Data.Http.RequestString(string l)
         | "file" -> loader (uripath l)
         | _ -> failwithf "Cannot load content from %s" (string l)
       | r -> failwithf "%A has no content property" r
@@ -364,14 +380,14 @@ module compilation =
     let getUses =
       function
       | Traverse uses xe ->
-        [ for e in xe ->
+        seq{ for e in xe ->
             { Id = getSpecialisationOf e
               ProvId = id e
               Content = getContent e
-              Path = getPath e |> toPath } ]
-      | _ -> []
+              Path = getPath e |> toPath } }
+      | _ -> Seq.empty
 
-    match fromType compilation g with
+    match Resource.fromType compilation g with
     | [] -> failwith "Input contains no compilation resource"
     | c :: _ ->
       { Id = id c
@@ -389,7 +405,7 @@ module Tracing =
   let fileLocation p = File(p, None, None)
   let lineLocation p l = File(p, Some l, None)
   let charlocation p l c = File(p, Some l, Some c)
-  let resourceLocation r = Resource(resourceId r)
+  let resourceLocation r = Resource(Resource.id r)
 
   let private ifSome f x =
     [ match x with

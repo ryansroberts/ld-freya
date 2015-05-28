@@ -5,11 +5,12 @@
 #r "../../Packages/FSharp.Data/lib/net40/FSharp.Data.dll"
 #r "../../Packages/FSharp.Formatting/lib/net40/FSharp.Markdown.dll"
 #r "../../Packages/SharpYaml/lib/SharpYaml.dll"
-
 #load "Model.fs"
 #load "Commands.fs"
+
 open FSharp.RDF
 open Freya.Commands
+
 let qsCompilation = """
 @prefix : <http://ld.nice.org.uk/ns/compilation#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
@@ -41,14 +42,12 @@ let qsCompilation = """
 
 """
 
-let from s =
-    String.split [|'/'|] s
-    |> Array.map Freya.Segment
-    |> List.ofArray
-    |> Freya.Path
-
+let from s = 
+  String.split [| '/' |] s
+  |> Array.map Freya.Segment
+  |> List.ofArray
+  |> Freya.Path
 
 let g = graph.loadFormat graph.parse.ttl (graph.fromString qsCompilation)
 let rp = Freya.compilation.loadMake g |> List.head
-
-let desc = describe [rp] (from "qualitystandards/*")
+let desc = describe [ rp ] (from "qualitystandards/*")

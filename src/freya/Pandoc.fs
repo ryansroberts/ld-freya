@@ -134,27 +134,31 @@ module Pandoc =
   open Assertion
   open Assertion.rdf
   open FSharp.RDF.resource
+
   let convertResources r xr = function
     | (p, conv) ->
       let fragment (Uri.Sys u) = u.Fragment.Substring(1, u.Fragment.Length - 1)
+
       let file root =
-        let fn = Freya.FullName(resourceId r |> fragment, extension p)
+        let fn = Freya.FullName(Resource.id r |> fragment, extension p)
         root ++ (Freya.path.toPath (mimeTypeDir p)) ++ fn
 
       let generatedBy =
         match p with
-          | Pdf -> !"compilation:Pdf"
-          | HtmlDocument -> !"compilation:HtmlDocument"
-          | Docx -> !"compilation:Docx"
-          | HtmlFragment -> !"compilation:HtmlFragment"
+        | Pdf -> !"compilation:Pdf"
+        | HtmlDocument -> !"compilation:HtmlDocument"
+        | Docx -> !"compilation:Docx"
+        | HtmlFragment -> !"compilation:HtmlFragment"
+
       let generationProv =
-        blank !"prov:hadGeneration" [
-          a !"prov:Generation"
-          a !"prov:InstantaneousEvent"
-          dataProperty !"prov:atTime" (DateTimeOffset.Now^^xsd.datetime)
-          objectProperty !"prov:activity" generatedBy
-          objectProperty !"prov:specialisationOf" !("http://ld.nice.org.uk/" + string (file (Freya.Path [])))
-        ]
+        blank !"prov:hadGeneration"
+          [ a !"prov:Generation"
+            a !"prov:InstantaneousEvent"
+            dataProperty !"prov:atTime" (DateTimeOffset.Now ^^ xsd.datetime)
+            objectProperty !"prov:activity" generatedBy
+
+            objectProperty !"prov:specialisationOf"
+              !("http://ld.nice.org.uk/" + string (file (Freya.Path []))) ]
 
       let args =
         [ From "markdown"
@@ -169,31 +173,32 @@ module Pandoc =
               To "html5" ]
           | Docx -> [ To "docx" ]
           | HtmlFragment -> [ To "html5" ]
+
       async {
         match r with
-        | FunctionalDataProperty (Uri.from "cnt:chars") (FSharp.RDF.xsd.string) content ->
-          let! (exit, stdout, stderr) = asyncShellExec
-                                          { Program = "pandoc"
-                                            WorkingDirectory =
-                                              string (conv.WorkingDir)
-                                            CommandLine =
-                                              parser.PrintCommandLine args
-                                              |> String.concat " "
-                                            StdIn =
-                                              new MemoryStream(System.Text.Encoding.UTF8.GetBytes
-                                                                 content) :> Stream
-                                              |> Some }
+        | FunctionalDataProperty (Uri.from "cnt:chars") (FSharp.RDF.xsd.string)
+          content ->
+          let! pd = asyncShellExec
+                      { Program = "pandoc"
+                        WorkingDirectory = string (conv.WorkingDir)
+                        CommandLine =
+                          parser.PrintCommandLine args |> String.concat " "
+                        StdIn =
+                          new MemoryStream(System.Text.Encoding.UTF8.GetBytes
+                                             content) :> Stream |> Some }
+                    |> Async.StartChild
+          let! (exit, stdout, stderr) = pd
           let log =
             match exit with
             | 0 -> info
             | _ -> error
-          return [log
-                   (sprintf "Pandoc conversion \r %s \r %s"
-                      (String.concat "" stdout) (String.concat "" stderr))
-                   (resourceLocation r)
-                  generationProv
-                 ]
+          return [ log
+                     (sprintf "Pandoc conversion \r %s \r %s"
+                        (String.concat "" stdout) (String.concat "" stderr))
+                     (resourceLocation r)
+                   generationProv ]
         | _ ->
-          return [error (sprintf "No content statement - failed to convert %A" r)
-                   (resourceLocation r)]
+          return [ error
+                     (sprintf "No content statement - failed to convert %A" r)
+                     (resourceLocation r) ]
       }

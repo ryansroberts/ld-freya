@@ -19,7 +19,7 @@ module Tools =
       let xr =
         xp
         |> List.map either
-        |> List.collect (fun { Provenence = _; Extracted = r } -> r)
+        |> List.collect (fun { Provenance = _; Extracted = r } -> r)
       let! res = f m xr
       return PipelineStep(m, res :: xp)
     }
@@ -108,7 +108,7 @@ module Tools =
 
   let makeAll xrp xt =
     xt
-    |> List.collect (make xrp)
+    |> Seq.collect (make xrp)
     |> Async.Parallel
     |> Async.RunSynchronously
     |> Array.map pipeline.result
