@@ -80,7 +80,7 @@ module Tools =
 
   let convertMarkdown t =
     step (convertMarkdownS (t,
-                            { Output = toPath "/git/.build"
+                            { Output = toPath "/artifacts/"
                               WorkingDir = toPath "." }))
 
   let exec =
