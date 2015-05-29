@@ -8,6 +8,7 @@ open Freya
 open Freya.compilation
 open Freya.Tools
 open System.IO
+open ExtCore
 
 type Delta =
   { From : Uri
@@ -27,10 +28,10 @@ let fragment (Uri.Sys u) = u.Fragment
 let removeHash (s : string) = s.Substring(1, (s.Length - 1))
 
 //This is a ..remarkably inefficient way of recovering the hashes
-let deltafile prov =
-  let c = fragment ((prov.Commits |> Seq.head ) .Id) |> removeHash
-  let c' = fragment (prov.Commits |> Seq.last).Id |> removeHash
-  sprintf "%s-%s" c c'
+let deltafile (prov:Provenance) =
+  prov.InformedBy
+  |> Seq.map ( fragment >> removeHash )
+  |> Seq.fold (+) ""
 
 let toFile (p) = new System.IO.StreamWriter(System.IO.File.OpenWrite p)
 let (++) a b = System.IO.Path.Combine(a, b)

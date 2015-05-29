@@ -199,4 +199,3 @@ let ``Getting a description of a filepath`` () =
   Assert.graph g qs |> ignore
 
   graphsAreSame g g
-  

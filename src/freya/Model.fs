@@ -66,7 +66,8 @@ type Commit =
 type Provenance =
   { Id : Uri
     Commits : Commit seq
-    Targets : Target seq }
+    Targets : Target seq
+    InformedBy : Uri seq}
 
 type SemanticExtractor =
   | Content
@@ -253,6 +254,7 @@ module compilation =
       Uri.from ("http://ld.nice.org.uk/ns/compilation#represents")
     let compilation =
       Uri.from ("http://ld.nice.org.uk/ns/compilation#Compilation")
+    let informedBy = Uri.from "prov:informedBy"
     let content = Uri.from ("http://ld.nice.org.uk/ns/compilation#content")
     let path = Uri.from ("http://ld.nice.org.uk/ns/compilation#path")
 
@@ -377,6 +379,10 @@ module compilation =
       | FunctionalProperty specialisationOf (O(Node.Uri s, _)) -> s
       | r -> failwith (sprintf "%A has no specialisationOf" r)
 
+    let getInformedBy = function
+      | ObjectProperty informedBy x -> x
+      | r -> failwith (sprintf "%A has no informedBy" r)
+
     let getUses =
       function
       | Traverse uses xe ->
@@ -392,7 +398,8 @@ module compilation =
     | c :: _ ->
       { Id = id c
         Commits = getCommits c
-        Targets = getUses c }
+        Targets = getUses c
+        InformedBy = getInformedBy c}
 
 module Tracing =
   open Assertion
