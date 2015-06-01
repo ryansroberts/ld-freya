@@ -1,14 +1,14 @@
 open VDS.RDF
 open VDS.RDF.Writing
 open VDS.RDF.Query
-open FSharp.RDF
 open Nessos.UnionArgParser
-open Assertion
 open Freya
 open Freya.compilation
 open Freya.Tools
 open System.IO
 open ExtCore
+
+open FSharp.RDF
 
 type Delta =
   { From : Uri
@@ -43,28 +43,38 @@ let hasFailure =
 
 let domainSpaces = []
 
+
+
 let compile pth m p d =
+  let map2 f g = Seq.map (fun x -> (f x,g x))
   let prg = (loadProvenance p)
   printfn "Tool configuration %A" m
-  let xs = makeAll m prg.Targets
-  Assert.triples p (xs
-                    |> Seq.map pipeline.prov
-                    |> List.ofSeq)
-  |> Graph.streamTtl p (toStream (System.Console.OpenStandardOutput()))
-  |> Seq.iter (fun _ -> ())
-  match hasFailure xs with
-  | true -> exit 1
+  let hasFailure = ref false
+  let d = deltafile prg
+  let kbg = Graph.empty (Uri.from "https://nice.org.uk") domainSpaces
+
+  let provStdio = Graph.streamTtl p (toStream(System.Console.OpenStandardOutput()))
+  let provFile  = Graph.streamTtl p (toFile (sprintf "%s/%s.prov.ttl" (string pth) d) :> System.IO.TextWriter)
+
+  makeAll m prg.Targets
+  |> Seq.map (function
+                | Failure (x,y) -> hasFailure :=  true; (Failure (x,y))
+                | x -> x)
+  |> map2 pipeline.prov pipeline.extracted
+  |> Seq.iter (fun (prov,extracted) ->
+               FSharp.RDF.Assertion.Assert.triples p [prov]
+               |> provStdio
+               |> provFile
+               |> ignore
+
+               FSharp.RDF.Assertion.Assert.graph kbg extracted
+               |> ignore
+               )
+  match !hasFailure with
+  | true -> 1
   | false ->
-    let kbg = Graph.empty (!"https://nice.org.uk") domainSpaces
-    let rx = Seq.collect pipeline.extracted xs |> List.ofSeq
-    Assert.graph kbg rx |> ignore
-    let d = deltafile prg
-    Graph.writeTtl
-      (toFile (sprintf "%s/%s.prov.ttl" (string pth) d) :> System.IO.TextWriter)
-      p
-    Graph.writeTtl
-      (toFile (sprintf "%s/%s.ttl" (string pth) d) :> System.IO.TextWriter) kbg
-    exit 0
+    Graph.writeTtl (toFile (sprintf "%s/%s.prov.ttl" (string pth) d) :> System.IO.TextWriter) kbg
+    0
 
 type Arguments =
   | Compilation of string

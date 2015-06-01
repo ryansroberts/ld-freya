@@ -23,9 +23,6 @@ module Commands =
            @ List.map
                (fun t -> objectProperty !"compilation:tool" (Tool.toUri t)) xt) ]
 
-  let action xr (CreateResource(uri,xp)) =
-    ()
-
   let describe xr (Path xs) =
     xr
     |> Seq.map (fun r ->
@@ -41,11 +38,20 @@ module Commands =
     |> Seq.collect descriptionOf
 
   let createResource xr (uri, xp) =
-    let hasRepresentation (ResourcePath(_, r)) =
-      if r.Represents = uri then Some r
+    let reifyRp rp =
+      globs rp
+      |> Seq.fold (fun a (Expression re) ->
+                   for n in re.GetGroupNames() do ()
+                   ""
+      ) ""
+
+    let hasRepresentation (ResourcePath(xs, r)) =
+      if r.Represents = uri then Some (ResourcePath(xs,r))
       else None
     match xr |> Seq.tryPick hasRepresentation with
-    | Some r -> Seq.empty
+    | Some r ->
+      let p = reifyRp r
+      Seq.empty
     | None -> Seq.empty
 
   let exec xr =

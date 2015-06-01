@@ -7,6 +7,8 @@ open rdf
 open owl
 open Tracing
 open YamlParser
+open ExtCore
+open ExtCore.Collections
 
 module Tools =
   let either =
@@ -106,9 +108,11 @@ module Tools =
     |> List.choose id
     |> List.map execMatches
 
+
+  open FSharp.Collections.ParallelSeq
+
   let makeAll xrp xt =
     xt
-    |> Seq.collect (make xrp)
-    |> Async.Parallel
-    |> Async.RunSynchronously
-    |> Array.map pipeline.result
+    |> PSeq.collect (make xrp)
+    |> PSeq.map Async.RunSynchronously
+    |> PSeq.map pipeline.result

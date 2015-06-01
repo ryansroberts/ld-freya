@@ -135,7 +135,7 @@ let ``Translate provenence to compilation targets`` () =
                      Path = Path [Segment "qualitystandards"; Segment "standard_1"; Segment "statement_23.md"]
                      Content = ""}]
 
-let res = makeAll [rp] provM.Targets
+let res = makeAll [rp] provM.Targets |> Array.ofSeq
 [<Fact>]
 let ``Execute specified tools on compilation targets to produce ontology`` () =
   let x = match res with [|PipelineExecution.Success(t,{Provenance=_;Extracted=x;})|] -> x

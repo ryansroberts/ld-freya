@@ -1,6 +1,7 @@
 source https://nuget.org/api/v2
 
 nuget ExtCore
+nuget FSharp.Collections.ParallelSeq
 nuget FSharp.Data
 nuget FSharp.Formatting
 nuget Nuget.CommandLine

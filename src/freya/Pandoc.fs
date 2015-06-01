@@ -67,16 +67,15 @@ module Pandoc =
       start proc
       proc.BeginOutputReadLine()
       proc.BeginErrorReadLine()
-      let! copy = async {
-                    match args.StdIn with
-                    | Some x ->
-                      try
-                        do! x.CopyToAsync proc.StandardInput.BaseStream
-                            |> awaitPlainTask
-                        do proc.StandardInput.Close()
-                      with _ -> () //Process may have exited before we pipe to it
-                    | _ -> ()
-                  }
+
+      match args.StdIn with
+      | Some x ->
+        try
+           x.CopyTo proc.StandardInput.BaseStream
+           proc.StandardInput.Close ()
+        with _ ->  ()
+      | None -> ()
+
       // attaches handler to Exited event, enables raising events, then awaits event
       // the event gets triggered even if process has already finished
       let! _ = Freya.Async.GuardedAwaitObservable proc.Exited
@@ -178,16 +177,13 @@ module Pandoc =
         match r with
         | FunctionalDataProperty (Uri.from "cnt:chars") (FSharp.RDF.xsd.string)
           content ->
-          let! pd = asyncShellExec
-                      { Program = "pandoc"
-                        WorkingDirectory = string (conv.WorkingDir)
-                        CommandLine =
-                          parser.PrintCommandLine args |> String.concat " "
-                        StdIn =
-                          new MemoryStream(System.Text.Encoding.UTF8.GetBytes
-                                             content) :> Stream |> Some }
-                    |> Async.StartChild
-          let! (exit, stdout, stderr) = pd
+          let! (exit,stdout,stderr) = asyncShellExec { Program = "pandoc"
+                                                       WorkingDirectory = string (conv.WorkingDir)
+                                                       CommandLine =
+                                                         parser.PrintCommandLine args |> String.concat " "
+                                                       StdIn =
+                                                         new MemoryStream(System.Text.Encoding.UTF8.GetBytes
+                                                         content) :> Stream |> Some }
           let log =
             match exit with
             | 0 -> info

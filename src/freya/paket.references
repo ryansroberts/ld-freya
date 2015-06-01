@@ -4,3 +4,4 @@ FSharp.Formatting
 SharpYaml
 ExtCore
 FSharp.Data
+FSharp.Collections.ParallelSeq

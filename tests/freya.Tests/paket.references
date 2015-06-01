@@ -1,3 +1,4 @@
 FSharp.Rdf
 xunit
 Unquote
+FSharp.Collections.ParallelSeq
