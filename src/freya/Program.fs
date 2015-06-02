@@ -44,10 +44,10 @@ let hasFailure =
 let domainSpaces = []
 
 
-
+open FSharp.Collections.ParallelSeq
 let compile pth m p d =
-  let map2 f g = Seq.map (fun x -> (f x,g x))
-  let prg = (loadProvenance p)
+  let map2 f g = PSeq.map (fun x -> (f x,g x))
+  let prg = loadProvenance p
   printfn "Tool configuration %A" m
   let hasFailure = ref false
   let d = deltafile prg
@@ -57,18 +57,19 @@ let compile pth m p d =
   let provFile  = Graph.streamTtl p (toFile (sprintf "%s/%s.prov.ttl" (string pth) d) :> System.IO.TextWriter)
 
   makeAll m prg.Targets
-  |> Seq.map (function
+  |> PSeq.map (function
                 | Failure (x,y) -> hasFailure :=  true; (Failure (x,y))
                 | x -> x)
   |> map2 pipeline.prov pipeline.extracted
-  |> Seq.iter (fun (prov,extracted) ->
-               FSharp.RDF.Assertion.Assert.triples p [prov]
-               |> provStdio
-               |> provFile
-               |> ignore
+  |> PSeq.iter (fun (prov,extracted) ->
+                printfn "Iter result"
+                FSharp.RDF.Assertion.Assert.triples p [prov]
+                |> provStdio
+                |> provFile
+                |> ignore
 
-               FSharp.RDF.Assertion.Assert.graph kbg extracted
-               |> ignore
+                FSharp.RDF.Assertion.Assert.graph kbg extracted
+                |> ignore
                )
   match !hasFailure with
   | true -> 1
