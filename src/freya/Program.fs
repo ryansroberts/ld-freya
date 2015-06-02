@@ -113,5 +113,5 @@ let main argv =
     match args.TryGetResult <@ Provenance @> with
     | Some p -> p |> Graph.loadFrom
     | _ -> Graph.loadTtl (fromStream (System.Console.OpenStandardInput()))
-  compile (args.GetResult <@ Output @> |> toPath) makeOntology (prov)
+  compile (args.GetResult <@ Output @> |> Path.from) makeOntology (prov)
     (args.GetResult <@ Output @>)

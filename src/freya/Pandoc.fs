@@ -11,6 +11,7 @@ open ExtCore
 open System.Threading.Tasks
 open FSharp.RDF
 open Freya.Tracing
+open Freya
 
 module Pandoc =
   let inline awaitPlainTask (task : Task) =
@@ -111,6 +112,7 @@ module Pandoc =
 
   type ConversionArgs =
     { Output : Freya.Path
+      Commit : string
       WorkingDir : Freya.Path }
 
   [<AutoOpen>]
@@ -140,7 +142,8 @@ module Pandoc =
 
       let file root =
         let fn = Freya.FullName(Resource.id r |> fragment, extension p)
-        root ++ (Freya.path.toPath (mimeTypeDir p)) ++ fn
+        root ++ (Path.from (mimeTypeDir p)) ++ (Path.from conv.Commit)  ++ fn
+
 
       let generatedBy =
         match p with
@@ -155,13 +158,12 @@ module Pandoc =
             a !"prov:InstantaneousEvent"
             dataProperty !"prov:atTime" (DateTimeOffset.Now ^^ xsd.datetime)
             objectProperty !"prov:activity" generatedBy
-
             objectProperty !"prov:specialisationOf"
               !("http://ld.nice.org.uk/" + string (file (Freya.Path []))) ]
 
       let args =
         [ From "markdown"
-          Output(string (ensurePathExists (file conv.Output)))
+          Output(string (Path.ensurePathExists (file conv.Output)))
           Smart
           Normalize
           Self_Contained ]
@@ -174,7 +176,10 @@ module Pandoc =
           | HtmlFragment -> [ To "html5" ]
 
       async {
-        match r with
+        if File.exists (file conv.Output) then
+        return [info (sprintf "Artifact already exists, skipping - %s" (file conv.Output |> string)) (resourceLocation r)]
+
+        else match r with
         | FunctionalDataProperty (Uri.from "cnt:chars") (FSharp.RDF.xsd.string)
           content ->
           let! (exit,stdout,stderr) = asyncShellExec { Program = "pandoc"

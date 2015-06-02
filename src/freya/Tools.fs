@@ -80,16 +80,20 @@ module Tools =
                          return pipeline.succeed prov [ r ] }
     | [] -> async { return pipeline.fail [] }
 
-  let convertMarkdown t =
-    step (convertMarkdownS (t,
-                            { Output = toPath "/artifacts/"
-                              WorkingDir = toPath "." }))
 
-  let exec =
+
+  let fragment (Uri.Sys u) = u.Fragment.Substring(1, u.Fragment.Length - 1)
+  let convertMarkdown x t =
+    step (convertMarkdownS (x,
+                            { Output = Path.from "/artifacts/"
+                              Commit = fragment t.Target.Commit
+                              WorkingDir = Path.from "." }))
+
+  let exec t =
     function
     | SemanticExtractor(Content) -> content
     | SemanticExtractor(YamlMetadata) -> yamlMetadata
-    | KnowledgeBaseProcessor(MarkdownConvertor x) -> convertMarkdown x
+    | KnowledgeBaseProcessor(MarkdownConvertor x) -> convertMarkdown x t
 
   let composeStep a b = (fun x -> async { let! r = a x
                                           return! b r })
@@ -98,7 +102,7 @@ module Tools =
   let execMatches x =
     async {
       return! (x.Tools
-               |> List.map exec
+               |> List.map (exec x)
                |> List.reduce composeStep) (PipelineStep(x, []))
     }
 

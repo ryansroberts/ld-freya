@@ -42,20 +42,26 @@ and File =
 
 [<AutoOpen>]
 module path =
-  let ensurePathExists (File(p, f)) =
-    let d = System.IO.DirectoryInfo(string p)
-    d.Create()
-    File(p, f)
 
-  let toPath s =
-    String.split [| '/' |] s
-    |> Array.map Segment
-    |> Array.toList
-    |> Path.Path
+  type Path with
+    static member ensurePathExists (File(p, f)) =
+        let d = System.IO.DirectoryInfo(string p)
+        d.Create()
+        File(p, f)
+
+    static member from s =
+        String.split [| '/' |] s
+        |> Array.map Segment
+        |> Array.toList
+        |> Path.Path
+
+  type File with
+    static member exists (f:File) = System.IO.File.Exists (string f)
 
 type Target =
   { Id : Uri
     ProvId : Uri
+    Commit : Uri
     Path : Path
     Content : string }
 
@@ -344,6 +350,7 @@ module compilation =
     let commit = prefixes.prov + "uses" |> Uri.from
     let specialisationOf = prefixes.prov + "specializationOf" |> Uri.from
     let informedBy = prefixes.prov + "informedBy" |> Uri.from
+    let wasGeneratedBy = prefixes.prov + "wasGeneratedBy" |> Uri.from
     let startedAtTime = prefixes.prov + "startedAtTime" |> Uri.from
     let id (R(S u, _)) = u
 
@@ -383,14 +390,19 @@ module compilation =
       | ObjectProperty informedBy x -> x
       | r -> failwith (sprintf "%A has no informedBy" r)
 
+    let getWasGeneratedBy = function
+      | FunctionalObjectProperty wasGeneratedBy x -> x
+      | r -> failwith (sprintf "%A has no wasGeneratedBy" r)
+
     let getUses =
       function
       | Traverse uses xe ->
         seq{ for e in xe ->
             { Id = getSpecialisationOf e
               ProvId = id e
+              Commit = getWasGeneratedBy e
               Content = getContent e
-              Path = getPath e |> toPath } }
+              Path = getPath e |> Path.from } }
       | _ -> Seq.empty
 
     match Resource.fromType compilation g with

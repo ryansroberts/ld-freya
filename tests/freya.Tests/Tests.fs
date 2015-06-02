@@ -11,13 +11,15 @@ open TestSupport
 let matchingTarget =
     { Id = Uri.from "http://ld.nice.org.uk/ns/target1"
       ProvId = Uri.from "http://ld.nice.org.uk/qualitystandards/resource"
-      Path = toPath "qualitystandards/standard_1/statement_23.md"
+      Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
+      Path = Path.from "qualitystandards/standard_1/statement_23.md"
       Content = "" }
 
 let nonMatchingTarget =
     { Id = Uri.from "http://ld.nice.org.uk/ns/target1"
       ProvId = Uri.from "http://ld.nice.org.uk/qualitystandards/resource"
-      Path = toPath "qualitystandards/lol/standard_23.md"
+      Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
+      Path = Path.from "qualitystandards/lol/standard_23.md"
       Content = "" }
 
 let qsCompilation = """
@@ -132,6 +134,7 @@ let ``Translate provenence to compilation targets`` () =
                          When = "2015-02-23T12:12:47.259270+00:00"}]
   targets       =? [{Id = Uri.from "http://ld.nice.org.uk/ns/prov/new.md"
                      ProvId = Uri.from "http://ld.nice.org.uk/ns/prov/entity#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
+                     Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit/c47800c"
                      Path = Path [Segment "qualitystandards"; Segment "standard_1"; Segment "statement_23.md"]
                      Content = ""}]
 
@@ -144,7 +147,8 @@ let ``Execute specified tools on compilation targets to produce ontology`` () =
 let matchingYamlTarget = {
       Id = Uri.from "http://ld.nice.org.uk/ns/target1"
       ProvId = Uri.from "http://ld.nice.org.uk/qualitystandards/resource"
-      Path = toPath "qualitystandards/standard_1/statement_23.md"
+      Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
+      Path = Path.from "qualitystandards/standard_1/statement_23.md"
       Content = """
 ```
 prefix:

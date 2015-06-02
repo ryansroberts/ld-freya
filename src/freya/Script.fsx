@@ -36,8 +36,8 @@ let xr = [ 1..10 ] |> List.map (fun i -> owl.individual
      async { 
        let! (_, O(m, p)) = Pandoc.convertResources r [] 
                              (o, 
-                              { Output = toPath __SOURCE_DIRECTORY__
-                                WorkingDir = toPath __SOURCE_DIRECTORY__ })
+                              { Output = from __SOURCE_DIRECTORY__
+                                WorkingDir = from __SOURCE_DIRECTORY__ })
        return (m, p.Value)
      })
 |> Async.Parallel
