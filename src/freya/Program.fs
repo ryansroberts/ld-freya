@@ -7,7 +7,6 @@ open Freya.compilation
 open Freya.Tools
 open System.IO
 open ExtCore
-
 open FSharp.RDF
 
 type Delta =
@@ -28,9 +27,9 @@ let fragment (Uri.Sys u) = u.Fragment
 let removeHash (s : string) = s.Substring(1, (s.Length - 1))
 
 //This is a ..remarkably inefficient way of recovering the hashes
-let deltafile (prov:Provenance) =
+let deltafile (prov : Provenance) =
   prov.InformedBy
-  |> Seq.map ( fragment >> removeHash )
+  |> Seq.map (fragment >> removeHash)
   |> Seq.fold (+) ""
 
 let toFile (p) = new System.IO.StreamWriter(System.IO.File.OpenWrite p)
@@ -43,38 +42,39 @@ let hasFailure =
 
 let domainSpaces = []
 
-
 open FSharp.Collections.ParallelSeq
+
 let compile pth m p d =
-  let map2 f g = PSeq.map (fun x -> (f x,g x))
+  let map2 f g = PSeq.map (fun x -> (f x, g x))
   let prg = loadProvenance p
-  printfn "Tool configuration %A" m
   let hasFailure = ref false
   let d = deltafile prg
-  let kbg = Graph.empty (Uri.from "https://nice.org.uk") domainSpaces
+  let kbg = Graph.empty (Uri.from "https://ld.nice.org.uk") domainSpaces
 
-  let provStdio = Graph.streamTtl p (toStream(System.Console.OpenStandardOutput()))
-  let provFile  = Graph.streamTtl p (toFile (sprintf "%s/%s.prov.ttl" (string pth) d) :> System.IO.TextWriter)
-
+  let provFn = sprintf "%s/%s.prov.ttl" (string pth) d
+  use provFile = toFile provFn :> System.IO.TextWriter
+  use kbgFile = toFile (sprintf "%s/%s.ttl" (string pth) d) :> System.IO.TextWriter
   makeAll m prg.Targets
   |> PSeq.map (function
-                | Failure (x,y) -> hasFailure :=  true; (Failure (x,y))
-                | x -> x)
+       | Failure(x, y) ->
+         hasFailure := true
+         (Failure(x, y))
+       | x -> x)
   |> map2 pipeline.prov pipeline.extracted
-  |> PSeq.iter (fun (prov,extracted) ->
-                printfn "Iter result"
-                FSharp.RDF.Assertion.Assert.triples p [prov]
-                |> provStdio
-                |> provFile
-                |> ignore
+  |> PSeq.iter (fun (prov, extracted) ->
+       FSharp.RDF.Assertion.Assert.graph p [ prov ] |> ignore
+       FSharp.RDF.Assertion.Assert.graph kbg extracted |> ignore)
 
-                FSharp.RDF.Assertion.Assert.graph kbg extracted
-                |> ignore
-               )
+  Graph.writeTtl provFile p
+
+  printfn "#Wrote provenance to: %s" provFn
   match !hasFailure with
-  | true -> 1
+  | true ->
+    printfn "#Build failed"
+    1
   | false ->
-    Graph.writeTtl (toFile (sprintf "%s/%s.prov.ttl" (string pth) d) :> System.IO.TextWriter) kbg
+    printfn "#Build successful"
+    Graph.writeTtl kbgFile kbg
     0
 
 type Arguments =

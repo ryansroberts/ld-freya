@@ -37,7 +37,6 @@ module Pandoc =
 
   let startedProcesses = HashSet()
 
-  /// [omit]
   let start (proc : Process) =
     if proc.StartInfo.FileName.ToLowerInvariant().EndsWith(".exe") then
       proc.StartInfo.Arguments <- "--debug \"" + proc.StartInfo.FileName + "\" "
@@ -68,15 +67,13 @@ module Pandoc =
       start proc
       proc.BeginOutputReadLine()
       proc.BeginErrorReadLine()
-
       match args.StdIn with
       | Some x ->
         try
-           x.CopyTo proc.StandardInput.BaseStream
-           proc.StandardInput.Close ()
-        with _ ->  ()
+          x.CopyTo proc.StandardInput.BaseStream
+          proc.StandardInput.Close()
+        with _ -> ()
       | None -> ()
-
       // attaches handler to Exited event, enables raising events, then awaits event
       // the event gets triggered even if process has already finished
       let! _ = Freya.Async.GuardedAwaitObservable proc.Exited
@@ -142,8 +139,7 @@ module Pandoc =
 
       let file root =
         let fn = Freya.FullName(Resource.id r |> fragment, extension p)
-        root ++ (Path.from (mimeTypeDir p)) ++ (Path.from conv.Commit)  ++ fn
-
+        root ++ (Path.from (mimeTypeDir p)) ++ (Path.from conv.Commit) ++ fn
 
       let generatedBy =
         match p with
@@ -158,8 +154,9 @@ module Pandoc =
             a !"prov:InstantaneousEvent"
             dataProperty !"prov:atTime" (DateTimeOffset.Now ^^ xsd.datetime)
             objectProperty !"prov:activity" generatedBy
+
             objectProperty !"prov:specialisationOf"
-              !("http://ld.nice.org.uk/" + string (file (Freya.Path []))) ]
+              !("http://ld.nice.org.uk/" + string (file conv.Output)) ]
 
       let args =
         [ From "markdown"
@@ -177,29 +174,35 @@ module Pandoc =
 
       async {
         if File.exists (file conv.Output) then
-        return [info (sprintf "Artifact already exists, skipping - %s" (file conv.Output |> string)) (resourceLocation r)]
-
-        else match r with
-        | FunctionalDataProperty (Uri.from "cnt:chars") (FSharp.RDF.xsd.string)
-          content ->
-          let! (exit,stdout,stderr) = asyncShellExec { Program = "pandoc"
-                                                       WorkingDirectory = string (conv.WorkingDir)
-                                                       CommandLine =
-                                                         parser.PrintCommandLine args |> String.concat " "
-                                                       StdIn =
-                                                         new MemoryStream(System.Text.Encoding.UTF8.GetBytes
-                                                         content) :> Stream |> Some }
-          let log =
-            match exit with
-            | 0 -> info
-            | _ -> error
-          return [ log
-                     (sprintf "Pandoc conversion \r %s \r %s"
-                        (String.concat "" stdout) (String.concat "" stderr))
-                     (resourceLocation r)
-                   generationProv ]
-        | _ ->
-          return [ error
-                     (sprintf "No content statement - failed to convert %A" r)
-                     (resourceLocation r) ]
+          return [ info
+                     (sprintf "Artifact already exists, skipping - %s"
+                        (file conv.Output |> string)) (resourceLocation r) ]
+        else
+          match r with
+          | FunctionalDataProperty (Uri.from "cnt:chars")
+            (FSharp.RDF.xsd.string) content ->
+            let! (exit, stdout, stderr) = asyncShellExec
+                                            { Program = "pandoc"
+                                              WorkingDirectory =
+                                                string (conv.WorkingDir)
+                                              CommandLine =
+                                                parser.PrintCommandLine args
+                                                |> String.concat " "
+                                              StdIn =
+                                                new MemoryStream(System.Text.Encoding.UTF8.GetBytes
+                                                                   content) :> Stream
+                                                |> Some }
+            let log =
+              match exit with
+              | 0 -> info
+              | _ -> error
+            return [ log
+                       (sprintf "Pandoc conversion \r %s \r %s"
+                          (String.concat "" stdout) (String.concat "" stderr))
+                       (resourceLocation r)
+                     generationProv ]
+          | _ ->
+            return [ error
+                       (sprintf "No content statement - failed to convert %A" r)
+                       (resourceLocation r) ]
       }
