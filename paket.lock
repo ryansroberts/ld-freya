@@ -14,7 +14,7 @@ NUGET
     FSharp.Formatting (2.9.6)
       FSharp.Compiler.Service (>= 0.0.87)
       FSharpVSPowerTools.Core (1.8.0)
-    FSharp.RDF (1.0.51)
+    FSharp.RDF (1.0.54)
       FSharpx.Core
       dotNetRDF
       json-ld.net

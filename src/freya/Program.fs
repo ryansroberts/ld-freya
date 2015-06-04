@@ -35,6 +35,7 @@ let compile pth m p d =
   let hasFailure = ref false
   let d = deltafile prg
   let kbg = Graph.empty (Uri.from "https://ld.nice.org.uk") domainSpaces
+            |> Graph.threadSafe
 
   let provFn = sprintf "%s/%s.prov.ttl" (string pth) d
   use provFile = toFile provFn :> System.IO.TextWriter
@@ -96,7 +97,10 @@ let main argv =
     exit 1
   let prov =
     match args.TryGetResult <@ Provenance @> with
-    | Some p -> p |> Graph.loadFrom
+    | Some p -> p
+                |> Graph.loadFrom
+                |> Graph.threadSafe
     | _ -> Graph.loadTtl (fromStream (System.Console.OpenStandardInput()))
+           |> Graph.threadSafe
   compile (args.GetResult <@ Output @> |> Path.from) makeOntology (prov)
     (args.GetResult <@ Output @>)

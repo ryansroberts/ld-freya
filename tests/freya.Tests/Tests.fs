@@ -149,7 +149,7 @@ let ``Execute specified tools on compilation targets to produce ontology`` () =
 
 let matchingYamlTarget = {
       Id = Uri.from "http://ld.nice.org.uk/ns/target1"
-      ProvId = Uri.from "http://ld.nice.org.uk/qualitystandards/resource"
+      ProvId = Uri.from "http://ld.nice.org.uk/qualitystandards/resource:version"
       Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
       Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
       Path = Path.from "qualitystandards/standard_1/statement_23.md"
@@ -177,13 +177,16 @@ open resource
 let ``Extract arbitrary statements from YAML metadata`` () =
   let r = Tools.yamlMetadata (PipelineStep (tm,[]))  |> Async.RunSynchronously
   match r with
-    | PipelineStep(t,[ToolExecution.Success{Provenance=xe;Extracted=r::rx}]) ->
+    | PipelineStep(t,[ToolExecution.Success{Provenance=[d;g];Extracted=r::rx}]) ->
       match r with
         | DataProperty (Uri.from "prefix:property") xsd.string [v1;v2] ->
           [v1;v2] =? ["Value 1";"Value 2"]
       match r with
         | ObjectProperty (Uri.from "prefix:objectProperty") [x] ->
           x =? Uri.from "prefix:fragment"
+      match d with
+        | ObjectProperty (Uri.from "prov:wasDerivedFrom") [x] ->
+          x =? matchingYamlTarget.ProvId
 
 open Commands
 open Freya

@@ -62,7 +62,7 @@ type Target =
   { Id : Uri
     ProvId : Uri
     Commit : Uri
-    Compilation: Uri
+    Compilation : Uri
     Path : Path
     Content : string }
 
@@ -142,7 +142,6 @@ type ToolMatch =
 type ToolOutput =
   { Provenance : Resource list //Blank nodes on compilation * new prov entries
     Extracted : Resource list }
-
 
 type ToolExecution =
   | Failure of ToolOutput
@@ -471,30 +470,41 @@ module Tracing =
 
   open System
 
-  let private generationId cmp tool = Uri.from ((string cmp) + tool)
+  let private generationId cmp tool =
+    Uri.from (sprintf "%s:%s" (string cmp) tool)
 
-  let toolProv tm id tool xs = [
-    rdf.resource id ([
-      a !"prov:Entity"
-      objectProperty !"prov:wasDerivedFrom" tm.Target.ProvId
-      blank !"prov:qualifiedDeriviation" [
-        a !"prov:Deriviation"
-        objectProperty !"prov:entity" tm.Target.ProvId
-        objectProperty !"prov:hadGeneration" (generationId tm.Target.Compilation tool)
-      ]
-    ])
-    rdf.resource (generationId tm.Target.Compilation tool) ([
-        a !"prov:Generation"
-        a !"prov:InstantaneousEvent"
-        objectProperty !"prov:wasGeneratedBy" tm.Target.Compilation
-        blank !"prov:qualifiedGeneration" [
-            a !"prov:Generation"
-            a !"prov:InstantaneousEvent"
-            dataProperty !"prov:atTime" (DateTimeOffset.Now^^xsd.datetime)
-            objectProperty !"prov:activity" tm.Target.Compilation
-            ]
-        ] @ xs)]
+  let toolProv tm id tool xs =
+    let genId = (generationId tm.Target.Compilation tool)
 
+    let derived =
+      rdf.resource id
+        [ a !"prov:Entity"
+          objectProperty !"prov:wasDerivedFrom" tm.Target.ProvId
+
+          blank !"prov:qualifiedDeriviation"
+            [ a !"prov:Deriviation"
+              objectProperty !"prov:entity" tm.Target.ProvId
+              objectProperty !"prov:hadGeneration" genId ] ]
+
+    let generation =
+      rdf.resource genId ([ a !"prov:Generation"
+                            a !"prov:InstantaneousEvent"
+
+                            objectProperty !"prov:wasGeneratedBy"
+                              tm.Target.Compilation
+
+                            blank !"prov:qualifiedGeneration"
+                              [ a !"prov:Generation"
+                                a !"prov:InstantaneousEvent"
+
+                                dataProperty !"prov:atTime"
+                                  (DateTimeOffset.Now ^^ xsd.datetime)
+
+                                objectProperty !"prov:activity"
+                                  tm.Target.Compilation ] ]
+                          @ xs)
+
+    [ derived; generation ]
 
   let semanticExtraction tm = toolProv tm tm.Target.Id
   let generatedResource = toolProv
