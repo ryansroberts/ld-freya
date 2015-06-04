@@ -9,8 +9,11 @@ open Tracing
 open YamlParser
 open ExtCore
 open ExtCore.Collections
+open System
 
 module Tools =
+
+
   let either =
     function
     | ToolExecution.Failure x -> x
@@ -30,7 +33,7 @@ module Tools =
     async
       {
       return pipeline.succeed
-               [ info "Apply content tool" (fileLocation m.Target.Path) ]
+               (semanticExtraction m "Content" [])
                [ owl.individual m.Target.Id [ m.Represents ]
                    [ dataProperty !"cnt:chars" (m.Target.Content ^^ xsd.string) ] ] }
   let content = step contentS
@@ -53,21 +56,22 @@ module Tools =
       let yamlToStatements y =
         try
           pipeline.succeed
-            [ info "Extracting metadata from yaml codeblock"
-                (fileLocation m.Target.Path) ]
+            (semanticExtraction m "YamlMetadata" [])
             [ rdf.resource m.Target.Id (translate (parse y)) ]
         with e ->
           pipeline.succeed
-            [ warn (sprintf "Failed to parse yaml: %s" e.Message)
-                (fileLocation m.Target.Path) ] []
+            (semanticExtraction m "YamlMetadata" [ warn (sprintf "Failed to parse yaml: %s" e.Message)
+              (fileLocation m.Target.Path) ])
+            []
 
       let md = Markdown.Parse m.Target.Content
       match md.Paragraphs with
       | CodeBlock(yaml, _, _) :: _ -> return yamlToStatements yaml
       | _ ->
         return pipeline.succeed
-                 [ warn "No metadata block at start of file"
-                     (fileLocation m.Target.Path) ] []
+                 (semanticExtraction m "YamlMetadata" [ warn "No metadata block at start of file"
+                   (fileLocation m.Target.Path) ])
+                 []
     }
 
   let yamlMetadata = step yamlMetadataS
@@ -85,7 +89,7 @@ module Tools =
   let convertMarkdown x t =
     step (convertMarkdownS (x,
                             { Output = Path.from "/artifacts/"
-                              Commit = fragment t.Target.Commit
+                              ToolMatch = t
                               WorkingDir = Path.from "." }))
 
   let exec t =

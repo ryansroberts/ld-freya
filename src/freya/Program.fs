@@ -9,24 +9,9 @@ open System.IO
 open ExtCore
 open FSharp.RDF
 
-type Delta =
-  { From : Uri
-    To : Uri
-    Path : Path }
-
-type OntologyVersion =
-  { Version : Uri
-    Path : Path }
-
-type CompilationOutput =
-  { Path : Path
-    Tip : OntologyVersion
-    WorkingArea : Delta }
-
 let fragment (Uri.Sys u) = u.Fragment
 let removeHash (s : string) = s.Substring(1, (s.Length - 1))
 
-//This is a ..remarkably inefficient way of recovering the hashes
 let deltafile (prov : Provenance) =
   prov.InformedBy
   |> Seq.map (fragment >> removeHash)
@@ -62,7 +47,7 @@ let compile pth m p d =
        | x -> x)
   |> map2 pipeline.prov pipeline.extracted
   |> PSeq.iter (fun (prov, extracted) ->
-       FSharp.RDF.Assertion.Assert.graph p [ prov ] |> ignore
+       FSharp.RDF.Assertion.Assert.graph p prov |> ignore
        FSharp.RDF.Assertion.Assert.graph kbg extracted |> ignore)
 
   Graph.writeTtl provFile p

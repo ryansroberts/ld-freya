@@ -109,7 +109,7 @@ module Pandoc =
 
   type ConversionArgs =
     { Output : Freya.Path
-      Commit : string
+      ToolMatch : ToolMatch
       WorkingDir : Freya.Path }
 
   [<AutoOpen>]
@@ -135,28 +135,23 @@ module Pandoc =
 
   let convertResources r xr = function
     | (p, conv) ->
+      let compilationMessages (x:Statement list) = (x,[])
       let fragment (Uri.Sys u) = u.Fragment.Substring(1, u.Fragment.Length - 1)
 
       let file root =
         let fn = Freya.FullName(Resource.id r |> fragment, extension p)
-        root ++ (Path.from (mimeTypeDir p)) ++ (Path.from conv.Commit) ++ fn
+        root ++
+             (Path.from (mimeTypeDir p)) ++
+             (Path.from (fragment conv.ToolMatch.Target.Commit )) ++
+             fn
 
       let generatedBy =
         match p with
-        | Pdf -> !"compilation:Pdf"
-        | HtmlDocument -> !"compilation:HtmlDocument"
-        | Docx -> !"compilation:Docx"
-        | HtmlFragment -> !"compilation:HtmlFragment"
+        | Pdf -> "Pdf"
+        | HtmlDocument -> "HtmlDocument"
+        | Docx -> "Docx"
+        | HtmlFragment -> "HtmlFragment"
 
-      let generationProv =
-        blank !"prov:hadGeneration"
-          [ a !"prov:Generation"
-            a !"prov:InstantaneousEvent"
-            dataProperty !"prov:atTime" (DateTimeOffset.Now ^^ xsd.datetime)
-            objectProperty !"prov:activity" generatedBy
-
-            objectProperty !"prov:specialisationOf"
-              !("http://ld.nice.org.uk/" + string (file conv.Output)) ]
 
       let args =
         [ From "markdown"
@@ -172,11 +167,9 @@ module Pandoc =
           | Docx -> [ To "docx" ]
           | HtmlFragment -> [ To "html5" ]
 
+      let resourceUri = Uri.from ("http://ld.nice.org.uk/" + (string (file conv.Output)))
       async {
-        if File.exists (file conv.Output) then
-          return [ info
-                     (sprintf "Artifact already exists, skipping - %s"
-                        (file conv.Output |> string)) (resourceLocation r) ]
+        if File.exists (file conv.Output) then return []
         else
           match r with
           | FunctionalDataProperty (Uri.from "cnt:chars")
@@ -196,13 +189,13 @@ module Pandoc =
               match exit with
               | 0 -> info
               | _ -> error
-            return [ log
+            return (generatedResource conv.ToolMatch resourceUri generatedBy [ log
                        (sprintf "Pandoc conversion \r %s \r %s"
                           (String.concat "" stdout) (String.concat "" stderr))
                        (resourceLocation r)
-                     generationProv ]
+                       ])
           | _ ->
-            return [ error
+            return (generatedResource conv.ToolMatch resourceUri generatedBy [ error
                        (sprintf "No content statement - failed to convert %A" r)
-                       (resourceLocation r) ]
+                       (resourceLocation r) ])
       }
