@@ -444,7 +444,7 @@ module Tracing =
     | (File(Path p, line, char)) ->
       List.concat
         [ [ a !"compilation:InFile"
-            dataProperty !"compilation:path" ((string p) ^^ xsd.string) ]
+            dataProperty !"compilation:path" ((string (Path p)) ^^ xsd.string) ]
 
           ifSome
             (fun l ->
@@ -471,10 +471,10 @@ module Tracing =
   open System
 
   let private generationId cmp tool =
-    Uri.from (sprintf "%s:%s" (string cmp) tool)
+    Uri.from (sprintf "%s-%s" (string cmp) tool)
 
   let toolProv tm id tool xs =
-    let genId = (generationId tm.Target.Compilation tool)
+    let genId = (generationId tm.Target.ProvId tool)
 
     let derived =
       rdf.resource id
