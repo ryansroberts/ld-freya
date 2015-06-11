@@ -6,11 +6,15 @@ open FSharp.RDF
 open resource
 open ExtCore
 
+
 type Segment =
   | Segment of string
   override x.ToString() =
     let (Segment s) = x
     s
+
+type SysPath = System.IO.Path
+type SysFile = System.IO.File
 
 type Path =
   | Path of Segment list
@@ -39,6 +43,16 @@ and File =
   override x.ToString() =
     match x with
     | File(p, FullName(f, e)) -> sprintf "%s/%s.%s" (string p) f e
+
+  static member from s =
+    File(SysPath.GetDirectoryName s |> Path.from,
+        FullName(SysPath.GetFileNameWithoutExtension s,SysPath.GetExtension s))
+
+  static member write s f = SysFile.WriteAllText(string f,s)
+
+[<AutoOpen>]
+module gubbins =
+  let inline (|?) (a: 'a option) b = if a.IsSome then a.Value else b
 
 [<AutoOpen>]
 module path =
@@ -109,7 +123,10 @@ type Tool =
     | SemanticExtractor x -> uri x
 
 type Expression =
-  | Expression of System.Text.RegularExpressions.Regex
+  | Seq of Expression list
+  | Wildcard of string
+  | Literal of string
+  | Variable of string
 
 type DirectoryPattern =
   { Id : Uri
@@ -197,6 +214,51 @@ module pipeline =
     | true -> PipelineExecution.Success(m.Target, r)
     | false -> PipelineExecution.Failure(m.Target, r)
 
+
+[<AutoOpen>]
+module expression =
+  open FParsec
+  let private str = pstring
+  let private pLiteral<'a> = many1Chars (choice [letter
+                                                 digit
+                                                 pchar '.'
+                                                 pchar '-'
+                                                 pchar '_'] ) |>> Literal
+  let private pVariable<'a> = between (str "$(") (str ")") ((many1Chars letter) |>> Variable)
+  let private pWildcard<'a> = str "*" |>> Wildcard
+  let private pExpressionC = choice [pWildcard;pVariable;pLiteral]
+  let private pSeq = many pExpressionC |>> Seq
+  let private pExpression = pSeq .>> eof
+  let private runParser str p =
+        match run p str with
+        | Success(result, _, _)   -> result
+        | Failure(errorMsg, _, _) -> failwithf "Failed to parse %s" errorMsg
+
+  type Expression with
+    static member parse s = runParser s pExpression
+    static member matcher r =
+      let rec matcher =
+        function
+        | Literal s -> s
+        | Wildcard _ -> ".*"
+        | Variable v -> (sprintf "(?<%s>.*)" v)
+        | Seq xs -> xs |> List.map matcher |> String.concat ""
+      let re = Regex(matcher r)
+      (fun s ->
+        match re.Match s with
+            | m when m.Length <> 0 ->
+              Some
+                (Matches
+                [ for g in re.GetGroupNames() |> Seq.filter ((<>) "0") ->
+                  (g, m.Groups.[g].Value) ])
+            | _ -> None)
+    static member reifier xs r =
+      let rec reifier = function
+                        | Literal s -> s
+                        | Wildcard _ -> "*"
+                        | Variable v -> xs |> List.find (snd >> ((=) v)) |> snd
+                        | Seq xs -> xs |> List.map reifier |> String.concat ""
+      reifier r
 module compilation =
   let mutable loader = System.IO.File.ReadAllText
 
@@ -204,14 +266,8 @@ module compilation =
     seq {
       match g, s with
       | _, Segment "*" -> yield Some(Matches [])
-      | Expression re, Segment s ->
-        match re.Match s with
-        | m when m.Length <> 0 ->
-          yield Some
-                  (Matches
-                     [ for g in re.GetGroupNames() |> Seq.filter ((<>) "0") ->
-                         (g, m.Groups.[g].Value) ])
-        | _ -> yield None
+      | ex,Segment s -> yield Expression.matcher ex s
+      | _ -> yield None
     }
 
   let globs rp =
@@ -280,7 +336,7 @@ module compilation =
 
     let getExpression =
       function
-      | FunctionalDataProperty expression xsd.string ex -> Expression(Regex ex)
+      | FunctionalDataProperty expression xsd.string ex -> Expression.parse ex
       | fp -> failwith (sprintf "%A expression is not a functional property" fp)
 
     let getRepresents =

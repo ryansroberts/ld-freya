@@ -35,23 +35,26 @@ module Commands =
     |> Seq.filter Option.isSome
     |> Seq.map Option.get
     |> Seq.collect descriptionOf
+    |> List.ofSeq
 
   let createResource xr (uri, xp) =
     let reifyRp rp =
-      globs rp |> Seq.fold (fun a (Expression re) ->
-                    for n in re.GetGroupNames() do
-                      ()
-                    "") ""
+      globs rp
+      |> Seq.map (Expression.reifier xp)
+      |> String.concat "/"
+      |> File.from
 
     let hasRepresentation (ResourcePath(xs, r)) =
       if r.Represents = uri then Some(ResourcePath(xs, r))
       else None
 
     match xr |> Seq.tryPick hasRepresentation with
-    | Some r ->
-      let p = reifyRp r
-      Seq.empty
-    | None -> Seq.empty
+    | Some (ResourcePath(xd,fp)) ->
+      reifyRp (ResourcePath(xd,fp))
+      |> File.write (fp.Template |? "")
+      [resource uri []]
+    | None -> [resource uri []]
+
 
   let exec xr =
     function

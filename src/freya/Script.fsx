@@ -6,39 +6,35 @@
 #r "../../packages/SharpYaml/lib/SharpYaml.dll"
 #r "../../packages/ExtCore/lib/net40/ExtCore.dll"
 #r "../../packages/UnionArgParser/lib/net40/UnionArgParser.dll"
-#load "Model.fs"
+#I "../../packages/FParsec/lib/net40-client/"
+#r "../../packages/FParsec/lib/net40-client/FParsec.dll"
+#r "../../packages/FParsec/lib/net40-client/FParsecCS.dll"
 
-open Freya.path
-
-#load "Yaml.fs"
-#load "GuardedAwaitObservable.fs"
-#load "Pandoc.fs"
-
-open Freya
 open FSharp.RDF
-open Assertion
-open rdf
+open FParsec
 
-let xr = [ 1..10 ] |> List.map (fun i -> owl.individual 
-                                           !(sprintf 
-                                               "http://nice.org.uk/things#%d" i) 
-                                           [] [ dataProperty !("content:chars") ("""
-                # Hi I am markdown
+type Expression =
+  | Seq of Expression list
+  | Wildcard of string
+  | Literal of string
+  | Variable of string
 
-                Text etc
-                """ ^^ xsd.string) ])
+let str = pstring
+let pLiteral<'a> = many1Chars letter |>> Literal
+let pVariable<'a> = between (str "$(") (str ")") ((many1Chars letter ) |>> Variable)
+let pWildcard<'a> = str "*" |>> Wildcard
+let pExpressionC = choice [pWildcard;pVariable;pLiteral]
+let pSeq = many pExpressionC |>> Seq
+let pExpression = pSeq .>> eof
 
-#time 
+let test str p =
+  match run p str with
+  | Success(result, _, _)   -> printfn "Success: %A" result
+  | Failure(errorMsg, _, _) -> printfn "Failure: %s" errorMsg
 
-[ Pandoc.Pdf; Pandoc.HtmlDocument; Pandoc.Docx ]
-|> List.collect (fun t -> List.map (fun r -> (r, t)) xr)
-|> List.map (fun (r, o) -> 
-     async { 
-       let! (_, O(m, p)) = Pandoc.convertResources r [] 
-                             (o, 
-                              { Output = from __SOURCE_DIRECTORY__
-                                WorkingDir = from __SOURCE_DIRECTORY__ })
-       return (m, p.Value)
-     })
-|> Async.Parallel
-|> Async.RunSynchronously
+test "abigfatliteral" pExpression
+test "*" pExpression
+test "*$(bob)" pExpression
+test "*rest" pExpression
+test "$(bob)" pExpression
+test "SomePath$(bob)RestOfPath" pExpression

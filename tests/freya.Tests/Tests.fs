@@ -41,7 +41,7 @@ let qsCompilation = """
 :QualityStatement
   rdf:type :FilePattern,
   owl:NamedIndividual ;
-  :expression "statement_(?<QualityStatementId>.*).md"^^xsd:string ;
+  :expression "statement_$(QualityStatementId).md"^^xsd:string ;
   :tool :Content ;
   :tool :YamlMetadata ;
   :represents :QualityStatement;
@@ -51,7 +51,7 @@ let qsCompilation = """
 :QualityStandard
   rdf:type :DirectoryPattern ,
            owl:NamedIndividual ;
-  :expression "standard_(?<QualityStandardId>.*)"^^xsd:string ;
+  :expression "standard_$(QualityStandardId)"^^xsd:string ;
   :parent :QualityStandards .
 
 """
