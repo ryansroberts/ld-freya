@@ -6,3 +6,4 @@ ExtCore
 FSharp.Data
 FSharp.Collections.ParallelSeq
 FParsec
+NEST

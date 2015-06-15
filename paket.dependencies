@@ -5,6 +5,7 @@ nuget FParsec
 nuget FSharp.Collections.ParallelSeq
 nuget FSharp.Data
 nuget FSharp.Formatting
+nuget NEST
 nuget Nuget.CommandLine
 nuget FAKE
 nuget SharpYaml
