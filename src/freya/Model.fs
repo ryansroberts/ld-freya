@@ -48,6 +48,9 @@ and File =
     File(SysPath.GetDirectoryName s |> Path.from,
         FullName(SysPath.GetFileNameWithoutExtension s,SysPath.GetExtension s))
 
+  static member path (File(x,_)) = x
+  static member fullname (File(_,x)) = x
+  static member name (File(_,(FullName(x,_)))) = x
   static member write s f = SysFile.WriteAllText(string f,s)
 
 [<AutoOpen>]
@@ -77,7 +80,7 @@ type Target =
     ProvId : Uri
     Commit : Uri
     Compilation : Uri
-    Path : Path
+    Path : File 
     Content : string }
 
 type Commit =
@@ -285,10 +288,10 @@ module compilation =
 
   let toolsFor t rp =
     match rp, t.Path with
-    | ResourcePath(dx, fp), Path px ->
+    | ResourcePath(dx, fp), (File((Path px),FullName(f,ex))) ->
       let mx =
         globs rp
-        |> Seq.zip px
+        |> Seq.zip (px @ [(Segment(f + ex))] )
         |> Seq.collect matchesExpression
       match mx |> Seq.exists ((=) None) with
       | false ->
@@ -465,7 +468,7 @@ module compilation =
               Commit = getWasGeneratedBy e
               Compilation = Resource.id r
               Content = getContent e
-              Path = getPath e |> Path.from }
+              Path = getPath e |> File.from }
         }
       | _ -> Seq.empty
 
@@ -482,12 +485,12 @@ module Tracing =
   open rdf
 
   type Location =
-    | File of (Path * int option * int option)
+    | FileLocation of (File * int option * int option)
     | Resource of Uri
 
-  let fileLocation p = File(p, None, None)
-  let lineLocation p l = File(p, Some l, None)
-  let charlocation p l c = File(p, Some l, Some c)
+  let fileLocation f = FileLocation(f,None,None)
+  let lineLocation p l = FileLocation(p, Some l, None)
+  let charlocation p l c = FileLocation(p, Some l, Some c)
   let resourceLocation r = Resource(Resource.id r)
 
   let private ifSome f x =
@@ -497,10 +500,10 @@ module Tracing =
 
   let private position =
     function
-    | (File(Path p, line, char)) ->
+    | (FileLocation(f, line, char)) ->
       List.concat
         [ [ a !"compilation:InFile"
-            dataProperty !"compilation:path" ((string (Path p)) ^^ xsd.string) ]
+            dataProperty !"compilation:path" ((string f) ^^ xsd.string) ]
 
           ifSome
             (fun l ->

@@ -13,7 +13,7 @@ let matchingTarget =
       ProvId = Uri.from "http://ld.nice.org.uk/qualitystandards/resource"
       Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
       Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
-      Path = Path.from "qualitystandards/standard_1/statement_23.md"
+      Path = File.from "qualitystandards/standard_1/statement_23.md"
       Content = "" }
 
 let nonMatchingTarget =
@@ -21,7 +21,7 @@ let nonMatchingTarget =
       ProvId = Uri.from "http://ld.nice.org.uk/qualitystandards/resource"
       Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
       Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
-      Path = Path.from "qualitystandards/lol/standard_23.md"
+      Path = File.from "qualitystandards/lol/standard_23.md"
       Content = "" }
 
 let qsCompilation = """
@@ -138,7 +138,7 @@ let ``Translate provenence to compilation targets`` () =
                      ProvId = Uri.from "http://ld.nice.org.uk/ns/prov/entity#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
                      Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
                      Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit/c47800c"
-                     Path = Path [Segment "qualitystandards"; Segment "standard_1"; Segment "statement_23.md"]
+                     Path = File.from "qualitystandards/standard_1/statement_23.md"
                      Content = ""}]
 
 let res = makeAll [rp] provM.Targets |> Array.ofSeq
@@ -152,7 +152,7 @@ let matchingYamlTarget = {
       ProvId = Uri.from "http://ld.nice.org.uk/qualitystandards/resource:version"
       Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
       Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
-      Path = Path.from "qualitystandards/standard_1/statement_23.md"
+      Path = File.from "qualitystandards/standard_1/statement_23.md"
       Content = """
 ```
 prefix:

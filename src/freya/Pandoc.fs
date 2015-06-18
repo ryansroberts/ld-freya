@@ -137,13 +137,13 @@ module Pandoc =
     | (p, conv) ->
       let compilationMessages (x:Statement list) = (x,[])
       let fragment (Uri.Sys u) = u.Fragment.Substring(1, u.Fragment.Length - 1)
-
+      let target = conv.ToolMatch.Target
       let file root =
-        let fn = Freya.FullName(Resource.id r |> fragment, extension p)
         root ++
-             (Path.from (mimeTypeDir p)) ++
-             (Path.from (fragment conv.ToolMatch.Target.Commit )) ++
-             fn
+             Path.from (mimeTypeDir p) ++
+             File.path target.Path ++
+             Path.from (fragment conv.ToolMatch.Target.Commit ) ++
+             FullName(File.name target.Path,extension p)
 
       let generatedBy =
         match p with

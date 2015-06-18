@@ -38,3 +38,4 @@ test "*$(bob)" pExpression
 test "*rest" pExpression
 test "$(bob)" pExpression
 test "SomePath$(bob)RestOfPath" pExpression
+
