@@ -77,7 +77,7 @@ module path =
 
 type Target =
   { Id : Uri
-    ProvId : Uri
+    Specialisation : Uri
     Commit : Uri
     Compilation : Uri
     Path : File 
@@ -463,8 +463,8 @@ module compilation =
       | Traverse uses xe ->
         seq {
           for e in xe ->
-            { Id = getSpecialisationOf e
-              ProvId = id e
+            { Id = id e
+              Specialisation = getSpecialisationOf e
               Commit = getWasGeneratedBy e
               Compilation = Resource.id r
               Content = getContent e
@@ -533,16 +533,16 @@ module Tracing =
     Uri.from (sprintf "%s-%s" (string cmp) tool)
 
   let toolProv tm id tool xs =
-    let genId = (generationId tm.Target.ProvId tool)
+    let genId = (generationId tm.Target.Id tool)
 
     let derived =
       rdf.resource id
         [ a !"prov:Entity"
-          objectProperty !"prov:wasDerivedFrom" tm.Target.ProvId
+          objectProperty !"prov:wasDerivedFrom" tm.Target.Id
 
           blank !"prov:qualifiedDeriviation"
             [ a !"prov:Deriviation"
-              objectProperty !"prov:entity" tm.Target.ProvId
+              objectProperty !"prov:entity" tm.Target.Id
               objectProperty !"prov:hadGeneration" genId ] ]
 
     let generation =

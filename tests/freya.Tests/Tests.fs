@@ -10,7 +10,7 @@ open TestSupport
 
 let matchingTarget =
     { Id = Uri.from "http://ld.nice.org.uk/ns/target1"
-      ProvId = Uri.from "http://ld.nice.org.uk/qualitystandards/resource"
+      Specialisation = Uri.from "http://ld.nice.org.uk/qualitystandards/resource"
       Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
       Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
       Path = File.from "qualitystandards/standard_1/statement_23.md"
@@ -18,7 +18,7 @@ let matchingTarget =
 
 let nonMatchingTarget =
     { Id = Uri.from "http://ld.nice.org.uk/ns/target1"
-      ProvId = Uri.from "http://ld.nice.org.uk/qualitystandards/resource"
+      Specialisation = Uri.from "http://ld.nice.org.uk/qualitystandards/resource"
       Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
       Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
       Path = File.from "qualitystandards/lol/standard_23.md"
@@ -134,8 +134,8 @@ let ``Translate provenence to compilation targets`` () =
                          When = "2015-02-23T12:12:47.259270+00:00"}
                         {Id = (Uri.from "http://ld.nice.org.uk/ns/prov/commit#999586c1dfe8a71c6cbf6c129f404c5642ff31bd")
                          When = "2015-02-23T12:12:47.259270+00:00"}]
-  targets       =? [{Id = Uri.from "http://ld.nice.org.uk/ns/prov/new.md"
-                     ProvId = Uri.from "http://ld.nice.org.uk/ns/prov/entity#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
+  targets       =? [{Id = Uri.from "http://ld.nice.org.uk/ns/prov/entity#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
+                     Specialisation = Uri.from "http://ld.nice.org.uk/ns/prov/new.md"
                      Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
                      Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit/c47800c"
                      Path = File.from "qualitystandards/standard_1/statement_23.md"
@@ -149,7 +149,7 @@ let ``Execute specified tools on compilation targets to produce ontology`` () =
 
 let matchingYamlTarget = {
       Id = Uri.from "http://ld.nice.org.uk/ns/target1"
-      ProvId = Uri.from "http://ld.nice.org.uk/qualitystandards/resource:version"
+      Specialisation = Uri.from "http://ld.nice.org.uk/qualitystandards/resource:version"
       Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
       Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
       Path = File.from "qualitystandards/standard_1/statement_23.md"
@@ -186,7 +186,7 @@ let ``Extract arbitrary statements from YAML metadata`` () =
           x =? Uri.from "prefix:fragment"
       match d with
         | ObjectProperty (Uri.from "prov:wasDerivedFrom") [x] ->
-          x =? matchingYamlTarget.ProvId
+          x =? matchingYamlTarget.Id
 
 open Commands
 open Freya
