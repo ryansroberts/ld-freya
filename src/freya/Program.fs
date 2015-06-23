@@ -15,7 +15,7 @@ let removeHash (s : string) = s.Substring(1, (s.Length - 1))
 let deltafile (prov : Provenance) =
   prov.InformedBy
   |> Seq.map (fragment >> removeHash)
-  |> Seq.fold (+) ""
+  |> String.concat "-"
 
 let toFile (p) = new System.IO.StreamWriter(System.IO.File.OpenWrite p)
 let (++) a b = System.IO.Path.Combine(a, b)

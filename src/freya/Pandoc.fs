@@ -169,7 +169,10 @@ module Pandoc =
 
       let resourceUri = Uri.from ("http://ld.nice.org.uk/" + (string (file conv.Output)))
       async {
-        if File.exists (file conv.Output) then return []
+        let generationProv = generatedResource conv.ToolMatch resourceUri generatedBy 
+        if File.exists (file conv.Output) then return (
+         generationProv [warn "Resource already exists" (resourceLocation r)]
+        )
         else
           match r with
           | FunctionalDataProperty (Uri.from "cnt:chars")
@@ -189,13 +192,13 @@ module Pandoc =
               match exit with
               | 0 -> info
               | _ -> error
-            return (generatedResource conv.ToolMatch resourceUri generatedBy [ log
+            return (generationProv [ log
                        (sprintf "Pandoc conversion \r %s \r %s"
                           (String.concat "" stdout) (String.concat "" stderr))
                        (resourceLocation r)
                        ])
           | _ ->
-            return (generatedResource conv.ToolMatch resourceUri generatedBy [ error
+            return (generationProv [ error
                        (sprintf "No content statement - failed to convert %A" r)
                        (resourceLocation r) ])
       }

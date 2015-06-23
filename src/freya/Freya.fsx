@@ -1,10 +1,18 @@
+#r "../../Packages/json-ld.net/lib/net40-Client/JsonLD.dll"
+#r "../../Packages/Newtonsoft.Json/lib/net40/Newtonsoft.Json.dll"
 #r "../../Packages/dotNetRdf/lib/net40/dotNetRdf.dll"
 #r "../../Packages/VDS.Common/lib/net40-client/VDS.Common.dll"
 #r "../../Packages/ExtCore/lib/net40/ExtCore.dll"
+#I "../../Packages/FParsec/lib/net40-client"
+#r "../../Packages/FParsec/lib/net40-client/FParsec.dll"
+#r "../../Packages/FParsec/lib/net40-client/FParsecCS.dll"
+#I "../../Packages/FSharp.RDF/lib/net40"
+#r "../../Packages/FSharp.RDF/lib/net40/owlapi.dll"
 #r "../../Packages/FSharp.RDF/lib/net40/FSharp.RDF.dll"
 #r "../../Packages/FSharp.Data/lib/net40/FSharp.Data.dll"
 #r "../../Packages/FSharp.Formatting/lib/net40/FSharp.Markdown.dll"
 #r "../../Packages/SharpYaml/lib/SharpYaml.dll"
+
 #load "Model.fs"
 #load "Commands.fs"
 
@@ -42,12 +50,11 @@ let qsCompilation = """
 
 """
 
-let from s = 
-  String.split [| '/' |] s
-  |> Array.map Freya.Segment
-  |> List.ofArray
-  |> Freya.Path
+let rec take n xs =
+  match n,xs with
+  | _,[] -> []
+  | 0,_ -> []
+  | n,x::xs -> x::(take (n-1) xs)
 
-let g = graph.loadFormat graph.parse.ttl (graph.fromString qsCompilation)
-let rp = Freya.compilation.loadMake g |> List.head
-let desc = describe [ rp ] (from "qualitystandards/*")
+open Freya
+Path.from "application/pdf" ++ (FullName("lol","wut"))

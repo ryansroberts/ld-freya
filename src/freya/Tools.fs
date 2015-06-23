@@ -84,11 +84,10 @@ module Tools =
                          return pipeline.succeed prov [ r ] }
     | [] -> async { return pipeline.fail [] }
 
-  let fragment (Uri.Sys u) = u.Fragment.Substring(1, u.Fragment.Length - 1)
 
   let convertMarkdown x t =
     step (convertMarkdownS (x,
-                            { Output = Path.from "/artifacts/"
+                            { Output = Path.from "artifacts"
                               ToolMatch = t
                               WorkingDir = Path.from "." }))
 
