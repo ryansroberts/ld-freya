@@ -349,7 +349,7 @@ module compilation =
     let content = Uri.from ("http://ld.nice.org.uk/ns/compilation#content")
     let path = Uri.from ("http://ld.nice.org.uk/ns/compilation#path")
 
-  let uriNode (Sys u) (Graph g) = g.CreateUriNode(u)
+  let uriNode u (Graph g) = g.CreateUriNode(Uri.toSys u)
 
   let fromPredicateObject p o (Graph g) =
     seq {
@@ -360,7 +360,7 @@ module compilation =
 
   let loadMake g =
     let xf = Resource.fromType filePattern g
-    let fragment (Uri.Sys u) = u.Fragment
+    let fragment u = (Uri.toSys u).Fragment
 
     let getExpression =
       function
@@ -569,6 +569,7 @@ module Tracing =
       |> List.map (objectProperty !"dcterms:format")
 
     let derived =
+
       rdf.resource id
         ([ a !"prov:Entity"
            objectProperty !"prov:wasDerivedFrom" (fst tm.Target.Content)

@@ -169,7 +169,7 @@ let matchingYamlTarget = {
       Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
       Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
       Path = File.from "qualitystandards/standard_1/statement_23.md"
-      Content = (Uri.from "http://raw",yamlContent)}
+      Content = (Uri.from "http://ld.nice.org.uk/ns/target1",yamlContent)}
 
 let tm = { Target = matchingYamlTarget
            Represents = (Uri.from "http://ld.nice.org.uk/ns/qualitystandard#QualityStatement")
