@@ -50,6 +50,12 @@ let qsCompilation = """
 
 """
 
+
+type List<'a> =
+  | Empty
+  | Cons of ('a * List<'a>)
+
+
 let rec take n xs =
   match n,xs with
   | _,[] -> []

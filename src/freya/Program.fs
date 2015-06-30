@@ -9,7 +9,7 @@ open System.IO
 open ExtCore
 open FSharp.RDF
 
-let fragment (Uri.Sys u) = u.Fragment
+let fragment u = (u |> Uri.toSys).Fragment
 let removeHash (s : string) = s.Substring(1, (s.Length - 1))
 
 let deltafile (prov : Provenance) =
@@ -37,7 +37,7 @@ let compile pth m p d =
   let kbg = Graph.empty (Uri.from "https://ld.nice.org.uk") domainSpaces
             |> Graph.threadSafe
 
-  let provFn = sprintf "%s/%s.prov.ttl" (string pth) d
+  let provFn = sprintf "%s/%s.prov.compilation.ttl" (string pth) d
   use provFile = toFile provFn :> System.IO.TextWriter
   use kbgFile = toFile (sprintf "%s/%s.ttl" (string pth) d) :> System.IO.TextWriter
   makeAll m prg.Targets
@@ -74,8 +74,7 @@ type Arguments =
     member s.Usage =
       match s with
       | Compilation _ -> "Path or url of compilation ontology"
-      | Provenance _ ->
-        "Path or url to input provenance, if not specified prov is read from stdin"
+      | Provenance _ -> "Path or url to input provenance"
       | Describe _ -> "Display actions available at path"
       | Action _ -> "Perform the specified action"
       | Output _ -> "Directory to save compilaton output"
@@ -85,12 +84,12 @@ type Arguments =
 let main argv =
   let parser = UnionArgParser.Create<Arguments>()
   let args = parser.Parse argv
-  let makeOntology =
-    Graph.loadFrom (args.GetResult(<@ Compilation @>)) |> loadMake
+  let makeOntology = Graph.loadFrom (args.GetResult(<@ Compilation @>)) |> loadMake
   let toLower (s : string) = s.ToLower()
   let containsParam param = Seq.map toLower >> Seq.exists ((=) (toLower param))
   let paramIsHelp param =
     containsParam param [ "help"; "?"; "/?"; "-h"; "--help"; "/h"; "/help" ]
+
   if ((argv.Length = 2 && paramIsHelp argv.[1]) || argv.Length = 1) then
     printfn """Usage: freya [options]
                 %s""" (parser.Usage())
@@ -100,7 +99,7 @@ let main argv =
     | Some p -> p
                 |> Graph.loadFrom
                 |> Graph.threadSafe
-    | _ -> Graph.loadTtl (fromStream (System.Console.OpenStandardInput()))
+    | _ -> Graph.loadFrom (args.GetResult(<@ Provenance @>))
            |> Graph.threadSafe
   compile (args.GetResult <@ Output @> |> Path.from) makeOntology (prov)
     (args.GetResult <@ Output @>)

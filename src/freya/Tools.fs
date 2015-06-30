@@ -29,18 +29,19 @@ module Tools =
       return PipelineStep(m, res :: xp)
     }
 
-  let private contentS m _ =
+  let private contentS t m _ =
     async
       {
       return pipeline.succeed
-               (semanticExtraction m "Content" [])
-               [ owl.individual m.Target.Id [ m.Represents ]
-                   [ dataProperty !"cnt:chars" (m.Target.Content ^^ xsd.string) ] ] }
-  let content = step contentS
+               (semanticExtraction m t [])
+               [owl.individual m.Target.Id [ m.Represents ]
+                 [a !"owl:class"
+                  dataProperty !"cnt:chars" ((snd  m.Target.Content ) ^^ xsd.string)]]}
+  let content = step << contentS
 
   type YNode = Freya.YamlParser.Node
 
-  let yamlMetadataS m _ =
+  let yamlMetadataS t m _ =
     async {
       let translate = function
         | YNode.Map xs ->
@@ -56,25 +57,25 @@ module Tools =
       let yamlToStatements y =
         try
           pipeline.succeed
-            (semanticExtraction m "YamlMetadata" [])
+            (semanticExtraction m t [])
             [ rdf.resource m.Target.Id (translate (parse y)) ]
         with e ->
           pipeline.succeed
-            (semanticExtraction m "YamlMetadata" [ warn (sprintf "Failed to parse yaml: %s" e.Message)
+            (semanticExtraction m t [ warn (sprintf "Failed to parse yaml: %s" e.Message)
               (fileLocation m.Target.Path) ])
             []
 
-      let md = Markdown.Parse m.Target.Content
+      let md = Markdown.Parse (snd m.Target.Content)
       match md.Paragraphs with
       | CodeBlock(yaml, _, _) :: _ -> return yamlToStatements yaml
       | _ ->
         return pipeline.succeed
-                 (semanticExtraction m "YamlMetadata" [ warn "No metadata block at start of file"
+                 (semanticExtraction m t [ warn "No metadata block at start of file"
                    (fileLocation m.Target.Path) ])
                  []
     }
 
-  let yamlMetadata = step yamlMetadataS
+  let yamlMetadata = step << yamlMetadataS
 
   open Pandoc
 
@@ -84,18 +85,17 @@ module Tools =
                          return pipeline.succeed prov [ r ] }
     | [] -> async { return pipeline.fail [] }
 
-
   let convertMarkdown x t =
     step (convertMarkdownS (x,
                             { Output = Path.from "artifacts"
                               ToolMatch = t
                               WorkingDir = Path.from "." }))
 
-  let exec t =
-    function
-    | SemanticExtractor(Content) -> content
-    | SemanticExtractor(YamlMetadata) -> yamlMetadata
-    | KnowledgeBaseProcessor(MarkdownConvertor x) -> convertMarkdown x t
+  let exec tm t =
+    match t with
+    | SemanticExtractor(Content) -> content t
+    | SemanticExtractor(YamlMetadata) -> yamlMetadata t
+    | KnowledgeBaseProcessor(MarkdownConvertor x) -> convertMarkdown x tm
 
   let composeStep a b = (fun x -> async { let! r = a x
                                           return! b r })

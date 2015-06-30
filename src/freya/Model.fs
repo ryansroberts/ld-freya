@@ -54,8 +54,10 @@ and File =
   static member write s f = SysFile.WriteAllText(string f,s)
 
 [<AutoOpen>]
-module gubbins =
+module prelude =
   let inline (|?) (a: 'a option) b = if a.IsSome then a.Value else b
+  let inline toolUri x = Uri.from (sprintf "compilation:%s" (string x))
+  let inline mimeUri x = Uri.from (sprintf "http://purl.org/NET/mediatypes/%s" (string x))
 
 [<AutoOpen>]
 module path =
@@ -80,8 +82,8 @@ type Target =
     Specialisation : Uri
     Commit : Uri
     Compilation : Uri
-    Path : File 
-    Content : string }
+    Path : File
+    Content : Uri * string }
 
 type Commit =
   { Id : Uri
@@ -93,10 +95,11 @@ type Provenance =
     Targets : Target seq
     InformedBy : Uri seq }
 
+
 type SemanticExtractor =
   | Content
   | YamlMetadata
-  override x.ToString() =
+  static member toUri x =
     match x with
     | Content -> "Content"
     | YamlMetadata -> "YamlMetadata"
@@ -112,6 +115,12 @@ type MarkdownConvertor =
     | HtmlFragment -> "HtmlFragment"
     | Docx -> "Docx"
     | Pdf -> "Pdf"
+  static member mime x =
+    match x with
+    | HtmlDocument
+    | HtmlFragment -> "text/html"
+    | Pdf ->  "application/pdf"
+    | Docx -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"
 
 type KnowledgeBaseProcessor =
   | MarkdownConvertor of MarkdownConvertor
@@ -120,10 +129,15 @@ type Tool =
   | KnowledgeBaseProcessor of KnowledgeBaseProcessor
   | SemanticExtractor of SemanticExtractor
   static member toUri =
-    let inline uri x = Uri.from (sprintf "compilation:%s" (string x))
     function
-    | KnowledgeBaseProcessor x -> uri x
-    | SemanticExtractor x -> uri x
+    | KnowledgeBaseProcessor x -> (toolUri x)
+    | SemanticExtractor x -> (toolUri x)
+
+  static member toMime =
+    function
+    | KnowledgeBaseProcessor x -> Some (mimeUri (mimeUri x))
+    | SemanticExtractor x -> None
+
 
 type Expression =
   | Seq of Expression list
@@ -218,8 +232,19 @@ module pipeline =
     | false -> PipelineExecution.Failure(m.Target, r)
 
 
+
+
+
 [<AutoOpen>]
 module expression =
+
+  type Uri with
+    static member fragment u =
+      let u = (Uri.toSys u)
+      u.Fragment.Substring(1, u.Fragment.Length - 1)
+    static member scheme u = (Uri.toSys u).Scheme
+    static member uripath u = (Uri.toSys u).PathAndQuery
+
   open FParsec
   let private str = pstring
   let private pLiteral<'a> = many1Chars (choice [letter
@@ -402,8 +427,6 @@ module compilation =
     [ for f in xf ->
         ResourcePath(getDirectoryPath (getParent f), getFilePattern f) ]
 
-  let scheme (Uri.Sys u) = u.Scheme
-  let uripath (Uri.Sys u) = u.PathAndQuery
 
   let loadProvenance g =
     let uses = prefixes.prov + "uses" |> Uri.from
@@ -432,9 +455,9 @@ module compilation =
     let getContent =
       function
       | FunctionalObjectProperty content l ->
-        match (scheme l) with
-        | "http" | "https" -> FSharp.Data.Http.RequestString(string l)
-        | "file" -> loader (uripath l)
+        match (Uri.scheme l) with
+        | "http" | "https" -> (l,FSharp.Data.Http.RequestString(string l))
+        | "file" -> (l,loader (Uri.uripath l))
         | _ -> failwithf "Cannot load content from %s" (string l)
       | r -> failwithf "%A has no content property" r
 
@@ -487,6 +510,10 @@ module Tracing =
   type Location =
     | FileLocation of (File * int option * int option)
     | Resource of Uri
+  with override x.ToString() =
+    match x with
+      | FileLocation (f,l,c) -> sprintf "%s" (string f)
+      | Resource r -> (string r)
 
   let fileLocation f = FileLocation(f,None,None)
   let lineLocation p l = FileLocation(p, Some l, None)
@@ -519,6 +546,7 @@ module Tracing =
         objectProperty !"compilation:source" uri ]
 
   let message t s p =
+    printfn "In (%s) %s" (string p) s
     blank !"compilation:message" [ a t
                                    dataProperty !"rdfs:label" (s ^^ xsd.string)
                                    blank !"compilation:position" (position p) ]
@@ -530,20 +558,26 @@ module Tracing =
   open System
 
   let private generationId cmp tool =
-    Uri.from (sprintf "%s-%s" (string cmp) tool)
+    Uri.from (sprintf "%s-%s" (string cmp) (string (toolUri tool)))
 
   let toolProv tm id tool xs =
     let genId = (generationId tm.Target.Id tool)
 
+    let mime =
+      Tool.toMime tool
+      |> Option.toList
+      |> List.map (objectProperty !"dcterms:format")
+
     let derived =
       rdf.resource id
-        [ a !"prov:Entity"
-          objectProperty !"prov:wasDerivedFrom" tm.Target.Id
+        ([ a !"prov:Entity"
+           objectProperty !"prov:wasDerivedFrom" (fst tm.Target.Content)
 
-          blank !"prov:qualifiedDeriviation"
+           blank !"prov:qualifiedDeriviation"
             [ a !"prov:Deriviation"
-              objectProperty !"prov:entity" tm.Target.Id
-              objectProperty !"prov:hadGeneration" genId ] ]
+              objectProperty !"prov:entity" (fst tm.Target.Content)
+              objectProperty !"prov:hadGeneration" genId ]]
+         @ mime)
 
     let generation =
       rdf.resource genId ([ a !"prov:Generation"

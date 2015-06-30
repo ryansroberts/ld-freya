@@ -14,7 +14,7 @@ let matchingTarget =
       Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
       Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
       Path = File.from "qualitystandards/standard_1/statement_23.md"
-      Content = "" }
+      Content = (Uri.from "http://raw","") }
 
 let nonMatchingTarget =
     { Id = Uri.from "http://ld.nice.org.uk/ns/target1"
@@ -22,7 +22,7 @@ let nonMatchingTarget =
       Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
       Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
       Path = File.from "qualitystandards/lol/standard_23.md"
-      Content = "" }
+      Content = (Uri.from "http://raw","") }
 
 let qsCompilation = """
 @prefix : <http://ld.nice.org.uk/ns/compilation#> .
@@ -139,7 +139,7 @@ let ``Translate provenence to compilation targets`` () =
                      Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
                      Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit/c47800c"
                      Path = File.from "qualitystandards/standard_1/statement_23.md"
-                     Content = ""}]
+                     Content = (Uri.from "file:///testrepo/content.md","")}]
 
 let res = makeAll [rp] provM.Targets |> Array.ofSeq
 [<Fact>]
@@ -147,13 +147,9 @@ let ``Execute specified tools on compilation targets to produce ontology`` () =
   let x = match res with [|PipelineExecution.Success(t,{Provenance=_;Extracted=x;})|] -> x
   x <>? []
 
-let matchingYamlTarget = {
-      Id = Uri.from "http://ld.nice.org.uk/ns/target1"
-      Specialisation = Uri.from "http://ld.nice.org.uk/qualitystandards/resource:version"
-      Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
-      Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
-      Path = File.from "qualitystandards/standard_1/statement_23.md"
-      Content = """
+
+let yamlContent =
+    """
 ```
 prefix:
   property:
@@ -165,7 +161,15 @@ prefix:
 #Some title
 
 Hey this is markdown
-      """ }
+      """
+
+let matchingYamlTarget = {
+      Id = Uri.from "http://ld.nice.org.uk/ns/target1"
+      Specialisation = Uri.from "http://ld.nice.org.uk/qualitystandards/resource:version"
+      Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit#a71586c1dfe8a71c6cbf6c129f404c5642ff31bd"
+      Compilation = Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
+      Path = File.from "qualitystandards/standard_1/statement_23.md"
+      Content = (Uri.from "http://raw",yamlContent)}
 
 let tm = { Target = matchingYamlTarget
            Represents = (Uri.from "http://ld.nice.org.uk/ns/qualitystandard#QualityStatement")
@@ -175,7 +179,7 @@ let tm = { Target = matchingYamlTarget
 open resource
 [<Fact>]
 let ``Extract arbitrary statements from YAML metadata`` () =
-  let r = Tools.yamlMetadata (PipelineStep (tm,[]))  |> Async.RunSynchronously
+  let r = Tools.yamlMetadata (SemanticExtractor(YamlMetadata)) (PipelineStep (tm,[]))  |> Async.RunSynchronously
   match r with
     | PipelineStep(t,[ToolExecution.Success{Provenance=[d;g];Extracted=r::rx}]) ->
       match r with

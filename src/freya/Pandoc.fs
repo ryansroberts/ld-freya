@@ -134,23 +134,15 @@ module Pandoc =
   open FSharp.RDF.resource
 
   let convertResources r xr = function
-    | (p, conv) ->
+    | (t, conv) ->
       let compilationMessages (x:Statement list) = (x,[])
-      let fragment (Uri.Sys u) = u.Fragment.Substring(1, u.Fragment.Length - 1)
       let target = conv.ToolMatch.Target
       let file root =
         root ++
-             Path.from (mimeTypeDir p) ++
-             File.path target.Path ++
-             Path.from (fragment conv.ToolMatch.Target.Commit ) ++
-             FullName(File.name target.Path,extension p)
-
-      let generatedBy =
-        match p with
-        | Pdf -> "Pdf"
-        | HtmlDocument -> "HtmlDocument"
-        | Docx -> "Docx"
-        | HtmlFragment -> "HtmlFragment"
+             Path.from (mimeTypeDir t) ++
+             Path.from (Uri.fragment conv.ToolMatch.Target.Commit ) ++
+             (File.path target.Path) ++
+             FullName(File.name target.Path,extension t)
 
 
       let args =
@@ -159,8 +151,8 @@ module Pandoc =
           Smart
           Normalize
           Self_Contained ]
-        @ match p with
-          | Pdf -> [ Latex_Engine "xelatex" ]
+        @ match t with
+          | Pdf -> [ Latex_Engine "lualatex" ]
           | HtmlDocument ->
             [ Standalone
               To "html5" ]
@@ -169,9 +161,9 @@ module Pandoc =
 
       let resourceUri = Uri.from ("http://ld.nice.org.uk/" + (string (file conv.Output)))
       async {
-        let generationProv = generatedResource conv.ToolMatch resourceUri generatedBy 
+        let generationProv = generatedResource conv.ToolMatch resourceUri (KnowledgeBaseProcessor(MarkdownConvertor(t)))
         if File.exists (file conv.Output) then return (
-         generationProv [warn "Resource already exists" (resourceLocation r)]
+             generationProv [warn "Resource already exists" (resourceLocation r)]
         )
         else
           match r with
