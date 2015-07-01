@@ -140,17 +140,17 @@ let ``Translate provenence to compilation targets`` () =
                      Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit/c47800c"
                      Path = File.from "qualitystandards/standard_1/statement_23.md"
                      Content = (Uri.from "file:///testrepo/content.md","")}]
-
 let res = makeAll [rp] provM.Targets |> Array.ofSeq
 [<Fact>]
 let ``Execute specified tools on compilation targets to produce ontology`` () =
   let x = match res with [|PipelineExecution.Success(t,{Provenance=_;Extracted=x;})|] -> x
   x <>? []
 
-
 let yamlContent =
     """
 ```
+
+
 prefix:
   property:
      - "Value 1"

@@ -18,12 +18,12 @@ type SysFile = System.IO.File
 
 type Path =
   | Path of Segment list
-  static member (++) ((Path a), (Path b)) = Path(a @ b)
+  static member (++) (Path a, Path b) = Path(a @ b)
   static member (++) (p, f) = File(p, f)
 
   override x.ToString() =
     match x with
-    | Path xs -> System.String.Join("/", xs)
+    | Path xs -> "/"  + System.String.Join("/", xs)
 
   static member from s =
     String.split [| '/' |] s
@@ -56,8 +56,8 @@ and File =
 [<AutoOpen>]
 module prelude =
   let inline (|?) (a: 'a option) b = if a.IsSome then a.Value else b
-  let inline toolUri x = Uri.from (sprintf "compilation:%s" (string x))
-  let inline mimeUri x = Uri.from (sprintf "http://purl.org/NET/mediatypes/%s" (string x))
+  let inline toolUri x = Uri.from (sprintf "compilation:%s" (x))
+  let inline mimeUri x = Uri.from (sprintf "http://purl.org/NET/mediatypes/%s" (x))
 
 [<AutoOpen>]
 module path =
@@ -99,8 +99,7 @@ type Provenance =
 type SemanticExtractor =
   | Content
   | YamlMetadata
-  static member toUri x =
-    match x with
+  static member name = function
     | Content -> "Content"
     | YamlMetadata -> "YamlMetadata"
 
@@ -109,14 +108,12 @@ type MarkdownConvertor =
   | HtmlFragment
   | Docx
   | Pdf
-  override x.ToString() =
-    match x with
+  static member name = function
     | HtmlDocument -> "HtmlDocument"
     | HtmlFragment -> "HtmlFragment"
     | Docx -> "Docx"
     | Pdf -> "Pdf"
-  static member mime x =
-    match x with
+  static member mime = function
     | HtmlDocument
     | HtmlFragment -> "text/html"
     | Pdf ->  "application/pdf"
@@ -124,18 +121,20 @@ type MarkdownConvertor =
 
 type KnowledgeBaseProcessor =
   | MarkdownConvertor of MarkdownConvertor
+  static member name = function
+    | MarkdownConvertor x -> (MarkdownConvertor.name x)
 
 type Tool =
   | KnowledgeBaseProcessor of KnowledgeBaseProcessor
   | SemanticExtractor of SemanticExtractor
   static member toUri =
     function
-    | KnowledgeBaseProcessor x -> (toolUri x)
-    | SemanticExtractor x -> (toolUri x)
+    | KnowledgeBaseProcessor x -> (toolUri (KnowledgeBaseProcessor.name x))
+    | SemanticExtractor x -> (toolUri (SemanticExtractor.name x))
 
   static member toMime =
     function
-    | KnowledgeBaseProcessor x -> Some (mimeUri (mimeUri x))
+    | KnowledgeBaseProcessor(MarkdownConvertor x) -> Some (mimeUri (MarkdownConvertor.mime x))
     | SemanticExtractor x -> None
 
 
@@ -295,7 +294,6 @@ module compilation =
       match g, s with
       | _, Segment "*" -> yield Some(Matches [])
       | ex,Segment s -> yield Expression.matcher ex s
-      | _ -> yield None
     }
 
   let globs rp =
@@ -561,7 +559,7 @@ module Tracing =
     Uri.from (sprintf "%s-%s" (string cmp) (string (toolUri tool)))
 
   let toolProv tm id tool xs =
-    let genId = (generationId tm.Target.Id tool)
+    let genId = (generationId tm.Target.Id (string tool))
 
     let mime =
       Tool.toMime tool
@@ -600,5 +598,11 @@ module Tracing =
 
     [ derived; generation ]
 
+  let alternateRepresentation tm id = [
+    rdf.resource id [objectProperty !"prov:alternateOf" tm.Target.Id]
+    rdf.resource tm.Target.Id [objectProperty !"prov:alternateOf" id]
+  ]
+
+
   let semanticExtraction tm = toolProv tm tm.Target.Id
-  let generatedResource = toolProv
+  let generatedResource tm id tool xs  = toolProv tm id tool xs @ alternateRepresentation tm id

@@ -185,8 +185,8 @@ module Pandoc =
               | 0 -> info
               | _ -> error
             return (generationProv [ log
-                       (sprintf "Pandoc conversion \r %s \r %s"
-                          (String.concat "" stdout) (String.concat "" stderr))
+                       (sprintf "Pandoc conversion %A \r %s \r %s"
+                          args (String.concat "" stdout) (String.concat "" stderr))
                        (resourceLocation r)
                        ])
           | _ ->
