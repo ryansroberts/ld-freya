@@ -20,29 +20,24 @@ module Tools =
     | ToolExecution.Success x -> x
 
   let step f (PipelineStep(m, xp)) =
-    async {
-      let xr =
+    let xr =
         xp
         |> List.map either
         |> List.collect (fun { Provenance = _; Extracted = r } -> r)
-      let! res = f m xr
-      return PipelineStep(m, res :: xp)
-    }
+    let res = f m xr
+    PipelineStep(m, res :: xp)
 
   let private contentS t m _ =
-    async
-      {
-      return pipeline.succeed
+      pipeline.succeed
                (semanticExtraction m t [])
                [owl.individual m.Target.Id [ m.Represents ]
                  [a !"owl:class"
-                  dataProperty !"cnt:chars" ((snd  m.Target.Content ) ^^ xsd.string)]]}
+                  dataProperty !"cnt:chars" ((snd  m.Target.Content ) ^^ xsd.string)]]
   let content = step << contentS
 
   type YNode = Freya.YamlParser.Node
 
   let yamlMetadataS t m _ =
-    async {
       let translate = function
         | YNode.Map xs ->
           [ for (prefix, YNode.Map xs') in xs do
@@ -67,13 +62,12 @@ module Tools =
 
       let md = Markdown.Parse (snd m.Target.Content)
       match md.Paragraphs with
-      | CodeBlock(yaml, _, _) :: _ -> return yamlToStatements yaml
+      | CodeBlock(yaml, _, _) :: _ -> yamlToStatements yaml
       | _ ->
-        return pipeline.succeed
+        pipeline.succeed
                  (semanticExtraction m t [ warn "No metadata block at start of file"
                    (fileLocation m.Target.Path) ])
                  []
-    }
 
   let yamlMetadata = step << yamlMetadataS
 
@@ -81,9 +75,10 @@ module Tools =
 
   let convertMarkdownS t m xr =
     match xr with
-    | r :: xr -> async { let! prov = convertResources r [] t
-                         return pipeline.succeed prov [ r ] }
-    | [] -> async { return pipeline.fail [] }
+    | r :: xr ->
+      let prov = convertResources r [] t
+      pipeline.succeed prov [ r ]
+    | [] -> pipeline.fail []
 
   let convertMarkdown x t =
     step (convertMarkdownS (x,
@@ -97,16 +92,12 @@ module Tools =
     | SemanticExtractor(YamlMetadata) -> yamlMetadata t
     | KnowledgeBaseProcessor(MarkdownConvertor x) -> convertMarkdown x tm
 
-  let composeStep a b = (fun x -> async { let! r = a x
-                                          return! b r })
 
   //Produce a single PipelineStep -> PipelineStep from the tool list to apply to the source
   let execMatches x =
-    async {
-      return! (x.Tools
+      (x.Tools
                |> List.map (exec x)
-               |> List.reduce composeStep) (PipelineStep(x, []))
-    }
+               |> List.reduce (>>)) (PipelineStep(x, []))
 
   let make xrp t =
     xrp
@@ -119,5 +110,4 @@ module Tools =
   let makeAll xrp xt =
     xt
     |> PSeq.collect (make xrp)
-    |> PSeq.map Async.RunSynchronously
     |> PSeq.map pipeline.result

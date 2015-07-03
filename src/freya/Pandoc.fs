@@ -159,17 +159,18 @@ module Pandoc =
           | Docx -> [ To "docx" ]
           | HtmlFragment -> [ To "html5" ]
 
+      let argsT = (sprintf "%A" args).Replace("\"","''")
+
       let resourceUri = Uri.from ("http://ld.nice.org.uk/" + (string (file conv.Output)))
-      async {
-        let generationProv = generatedResource conv.ToolMatch resourceUri (KnowledgeBaseProcessor(MarkdownConvertor(t)))
-        if File.exists (file conv.Output) then return (
+      let generationProv = generatedResource conv.ToolMatch resourceUri (KnowledgeBaseProcessor(MarkdownConvertor(t)))
+      if File.exists (file conv.Output) then (
              generationProv [warn "Resource already exists" (resourceLocation r)]
         )
-        else
+      else
           match r with
           | FunctionalDataProperty (Uri.from "cnt:chars")
             (FSharp.RDF.xsd.string) content ->
-            let! (exit, stdout, stderr) = asyncShellExec
+            let (exit, stdout, stderr) = asyncShellExec
                                             { Program = "pandoc"
                                               WorkingDirectory =
                                                 string (conv.WorkingDir)
@@ -179,18 +180,17 @@ module Pandoc =
                                               StdIn =
                                                 new MemoryStream(System.Text.Encoding.UTF8.GetBytes
                                                                    content) :> Stream
-                                                |> Some }
+                                                |> Some } |> Async.RunSynchronously
             let log =
               match exit with
               | 0 -> info
               | _ -> error
-            return (generationProv [ log
+            (generationProv [ log
                        (sprintf "Pandoc conversion %A \r %s \r %s"
                           args (String.concat "" stdout) (String.concat "" stderr))
                        (resourceLocation r)
                        ])
           | _ ->
-            return (generationProv [ error
+            (generationProv [ error
                        (sprintf "No content statement - failed to convert %A" r)
                        (resourceLocation r) ])
-      }

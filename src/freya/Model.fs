@@ -210,7 +210,7 @@ module pipeline =
                             Extracted = [] })
 
   //Make a useful result type from a sequence of pipeline steps
-  //Actually this is horrible, need to generalise success and failure before it multiplies out of control
+  //Actually this is horrible, need to get some either stuff going on before it multiplies out of control
   let result (PipelineStep(m, xe : ToolExecution list)) =
     let output =
       function
@@ -570,7 +570,7 @@ module Tracing =
 
       rdf.resource id
         ([ a !"prov:Entity"
-           objectProperty !"prov:wasDerivedFrom" (fst tm.Target.Content)
+           objectProperty !"compilation:wasDerivedFrom" (fst tm.Target.Content)
 
            blank !"prov:qualifiedDeriviation"
             [ a !"prov:Deriviation"
