@@ -132,6 +132,11 @@ type Tool =
     | KnowledgeBaseProcessor x -> (toolUri (KnowledgeBaseProcessor.name x))
     | SemanticExtractor x -> (toolUri (SemanticExtractor.name x))
 
+  static member name =
+    function
+    | KnowledgeBaseProcessor(MarkdownConvertor x) -> MarkdownConvertor.name x
+    | SemanticExtractor x -> SemanticExtractor.name x
+
   static member toMime =
     function
     | KnowledgeBaseProcessor(MarkdownConvertor x) -> Some (mimeUri (MarkdownConvertor.mime x))
@@ -559,7 +564,7 @@ module Tracing =
     Uri.from (sprintf "%s-%s" (string cmp) (string (toolUri tool)))
 
   let toolProv tm id tool xs =
-    let genId = (generationId tm.Target.Id (string tool))
+    let genId = (generationId tm.Target.Id (Tool.name tool))
 
     let mime =
       Tool.toMime tool
