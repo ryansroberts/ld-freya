@@ -149,13 +149,10 @@ let ``Execute specified tools on compilation targets to produce ontology`` () =
 let yamlContent =
     """
 ```
-
-
-prefix:
-  property:
+dataProperty:
      - "Value 1"
      - "Value 2"
-  objectProperty:
+objectProperty:
      - "prefix:fragment"
 ```
 #Some title
@@ -177,7 +174,7 @@ let tm = { Target = matchingYamlTarget
            Captured =[] }
 
 open resource
-[<Fact>]
+//Yaml extraction going to change
 let ``Extract arbitrary statements from YAML metadata`` () =
   let r = Tools.yamlMetadata (SemanticExtractor(YamlMetadata)) (PipelineStep (tm,[]))
   match r with

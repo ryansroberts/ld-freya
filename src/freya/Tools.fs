@@ -94,7 +94,7 @@ module Tools =
 
 
   //Produce a single PipelineStep -> PipelineStep from the tool list to apply to the source, this way they
-  //will execute sequentially
+  //will execute sequentially as part of a parallel sequence
   let execMatches x =
       (x.Tools
                |> List.map (exec x)
