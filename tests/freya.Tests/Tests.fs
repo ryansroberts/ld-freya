@@ -179,7 +179,7 @@ let tm = { Target = matchingYamlTarget
 open resource
 [<Fact>]
 let ``Extract arbitrary statements from YAML metadata`` () =
-  let r = Tools.yamlMetadata (SemanticExtractor(YamlMetadata)) (PipelineStep (tm,[]))  |> Async.RunSynchronously
+  let r = Tools.yamlMetadata (SemanticExtractor(YamlMetadata)) (PipelineStep (tm,[]))
   match r with
     | PipelineStep(t,[ToolExecution.Success{Provenance=[d;g];Extracted=r::rx}]) ->
       match r with
@@ -204,7 +204,7 @@ let ``Getting a description of a filepath`` () =
   let g' = Graph.empty !"http://ld.nice.org.uk" []
   [rdf.resource !"http://ld.nice.org.uk/command" [
          a !"http://ld.nice.org.uk/ns/compilation/Command"
-         objectProperty !"compilation:represents" !"http://ld.nice.org.uk/ns/compilation#QualityStatement"
+         
          objectProperty !"compilation:tool" !"compilation:Content"
          objectProperty !"compilation:tool" !"compilation:YamlMetadata"
          ]]

@@ -93,7 +93,8 @@ module Tools =
     | KnowledgeBaseProcessor(MarkdownConvertor x) -> convertMarkdown x tm
 
 
-  //Produce a single PipelineStep -> PipelineStep from the tool list to apply to the source
+  //Produce a single PipelineStep -> PipelineStep from the tool list to apply to the source, this way they
+  //will execute sequentially
   let execMatches x =
       (x.Tools
                |> List.map (exec x)
