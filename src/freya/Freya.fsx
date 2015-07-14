@@ -15,52 +15,75 @@
 
 #load "Model.fs"
 #load "Commands.fs"
-
-open FSharp.RDF
-open Freya.Commands
-
-let qsCompilation = """
-@prefix : <http://ld.nice.org.uk/ns/compilation#> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@base <http://ld.nice.org.uk/ns/compilation/> .
-
-:QualityStandards
-  rdf:type :DirectoryPattern ,
-  owl:NamedIndividual ;
-  :expression "qualitystandards"^^xsd:string ;
-  :parent :Root .
-
-:QualityStatement
-  rdf:type :FilePattern,
-  owl:NamedIndividual ;
-  :expression "statement_(?<QualityStatementId>.*).md"^^xsd:string ;
-  :tool :Content ;
-  :tool :YamlMetadata ;
-  :represents :QualityStatement;
-  :parent :QualityStandard .
-
-:QualityStandard
-  rdf:type :DirectoryPattern ,
-           owl:NamedIndividual ;
-  :expression "standard_(?<QualityStandardId>.*)"^^xsd:string ;
-  :parent :QualityStandards .
-
-"""
-
-
-type List<'a> =
-  | Empty
-  | Cons of ('a * List<'a>)
-
-
-let rec take n xs =
-  match n,xs with
-  | _,[] -> []
-  | 0,_ -> []
-  | n,x::xs -> x::(take (n-1) xs)
-
 open Freya
-Path.from "application/pdf" ++ (FullName("lol","wut"))
+open FSharp.RDF
+type TargetPattern =
+  | TargetDirectory of  DirectoryPattern
+  | TargetFile of FilePattern
+
+
+let private pandoc x = MarkdownConvertor(x) |> KnowledgeBaseProcessor
+let docx = pandoc Docx
+let pdf = pandoc Pdf
+let html = pandoc HtmlFragment
+
+
+let targetUri = sprintf "http://ld.nice.org.uk/compilation/targets#%s" >> Uri.from
+
+let file p xt t (r:string) = TargetFile {
+  Id = Uri.from "re:placed"
+  Expression = Expression.parse p
+  Tools = xt
+  Template = t
+  Represents = Uri.from r
+}
+
+let dir p = TargetDirectory {
+  Id = Uri.from "re:placed"
+  Expression = Expression.parse p
+}
+
+let private targets = System.Collections.Generic.Dictionary<_,_>()
+
+let target (l:string) f =
+  let t = (match f with
+           | TargetFile x -> TargetFile {x with Id = targetUri l}
+           | TargetDirectory x -> TargetDirectory {x with Id = targetUri l})
+  targets.Add (l,t)
+  t
+
+let private dependencies = System.Collections.Generic.Dictionary<_,_>()
+
+let rec hasDependents x xs =
+  let t = targets.[x]
+  let xs' = xs |> List.map (fun x -> (targets.[x]))
+  match dependencies.ContainsKey t with
+    | true -> dependencies.[t] <- xs' @ dependencies.[t]
+    | false -> dependencies.Add (t,xs')
+  x
+
+let (===>) = hasDependents
+
+target "QualityStandardRoot" (dir "QualityStandards")
+target "QualityStandards"    (dir "qs$(QualityStandardId)")
+target "QualityStandard"     (file "QualityStandard.md"
+                                   [docx;html]
+                                   None
+                                   "qs:QualityStandard")
+target "QualityStatements"   (dir "st$(QualityStatementId)")
+target "QualityStatement"    (file "Statement.md"
+                                   [docx;html]
+                                   None
+                                   "qs:QualityStatement")
+
+"QualityStandardRoot"
+===> ["QualityStandards"
+      ===> ["QualityStandard"
+            "QualityStatements"
+            ===> ["QualityStatement"]]]
+
+dependencies
+
+
+
+
