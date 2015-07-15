@@ -18,3 +18,4 @@ nuget Unquote 2.2.2
 nuget FSharp.Compiler.Service 0.0.87
 
 github fsharp/FAKE modules/Octokit/Octokit.fsx
+github matthid/Yaaf.FSharp.Scripting src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs

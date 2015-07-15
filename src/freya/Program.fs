@@ -9,6 +9,9 @@ open System.IO
 open ExtCore
 open FSharp.RDF
 
+
+
+
 let fragment u = (u |> Uri.toSys).Fragment
 let removeHash (s : string) = s.Substring(1, (s.Length - 1))
 

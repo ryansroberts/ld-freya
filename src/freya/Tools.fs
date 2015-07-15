@@ -109,6 +109,5 @@ module Tools =
   open FSharp.Collections.ParallelSeq
 
   let makeAll xrp xt =
-    xt
-    |> PSeq.collect (make xrp)
+    PSeq.collect (make xrp) xt
     |> PSeq.map pipeline.result

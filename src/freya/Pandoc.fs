@@ -161,7 +161,7 @@ module Pandoc =
 
       let argsT = (sprintf "%A" args).Replace("\"","''")
 
-      let resourceUri = Uri.from ("http://ld.nice.org.uk/" + (string (file conv.Output)))
+      let resourceUri = Uri.from ("http://ld.nice.org.uk" + (string (file conv.Output)))
       let generationProv = generatedResource conv.ToolMatch resourceUri (KnowledgeBaseProcessor(MarkdownConvertor(t)))
       if File.exists (file conv.Output) then (
              generationProv [warn "Resource already exists" (resourceLocation r)]

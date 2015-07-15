@@ -12,7 +12,9 @@
 #r "../../Packages/FSharp.Data/lib/net40/FSharp.Data.dll"
 #r "../../Packages/FSharp.Formatting/lib/net40/FSharp.Markdown.dll"
 #r "../../Packages/SharpYaml/lib/SharpYaml.dll"
+#r "../../Packages/FSharp.Compiler.Service/lib/net40/FSharp.Compiler.Service.dll"
 
+#load "../../paket-files/matthid/Yaaf.FSharp.Scripting/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs"
 #load "Model.fs"
 #load "Commands.fs"
 open Freya
@@ -64,26 +66,21 @@ let rec hasDependents x xs =
 
 let (===>) = hasDependents
 
-target "QualityStandardRoot" (dir "QualityStandards")
-target "QualityStandards"    (dir "qs$(QualityStandardId)")
-target "QualityStandard"     (file "QualityStandard.md"
-                                   [docx;html]
-                                   None
-                                   "qs:QualityStandard")
-target "QualityStatements"   (dir "st$(QualityStatementId)")
-target "QualityStatement"    (file "Statement.md"
-                                   [docx;html]
-                                   None
-                                   "qs:QualityStatement")
-
-"QualityStandardRoot"
-===> ["QualityStandards"
-      ===> ["QualityStandard"
-            "QualityStatements"
-            ===> ["QualityStatement"]]]
-
-dependencies
 
 
+open Yaaf.FSharp.Scripting
+let exec xs =
+  let xs' = List.map System.IO.File.ReadAllText xs
+  let ax = System.AppDomain.CurrentDomain.GetAssemblies()
+  let asm s =
+    (Array.find (fun (x:System.Reflection.Assembly) -> x.FullName.StartsWith s ) ax).Location
 
+  let fsi = ScriptHost.CreateNew()
+  [
+    for x in xs' do
+      printfn "%s" x
+      let r = fsi.EvalScriptWithOutput x
+      yield r.Output.ScriptOutput
+  ]
 
+exec [__SOURCE_DIRECTORY__ + "/Script.fsx"]

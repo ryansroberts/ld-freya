@@ -201,7 +201,6 @@ let ``Getting a description of a filepath`` () =
   let g' = Graph.empty !"http://ld.nice.org.uk" []
   [rdf.resource !"http://ld.nice.org.uk/command" [
          a !"http://ld.nice.org.uk/ns/compilation/Command"
-         
          objectProperty !"compilation:tool" !"compilation:Content"
          objectProperty !"compilation:tool" !"compilation:YamlMetadata"
          ]]
