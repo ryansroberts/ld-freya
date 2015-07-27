@@ -16,71 +16,19 @@
 
 #load "../../paket-files/matthid/Yaaf.FSharp.Scripting/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs"
 #load "Model.fs"
-#load "Commands.fs"
 open Freya
-open FSharp.RDF
-type TargetPattern =
-  | TargetDirectory of  DirectoryPattern
-  | TargetFile of FilePattern
+#load "Commands.fs"
+#load "DSL.fs"
+
+let x = Freya.Builder.exec [__SOURCE_DIRECTORY__ + "/Script.fsx"]
+printfn "%A" x
 
 
-let private pandoc x = MarkdownConvertor(x) |> KnowledgeBaseProcessor
-let docx = pandoc Docx
-let pdf = pandoc Pdf
-let html = pandoc HtmlFragment
+open FSharp.Data
 
 
-let targetUri = sprintf "http://ld.nice.org.uk/compilation/targets#%s" >> Uri.from
+type j = JsonProvider<""" {"b" : "23"} """>
 
-let file p xt t (r:string) = TargetFile {
-  Id = Uri.from "re:placed"
-  Expression = Expression.parse p
-  Tools = xt
-  Template = t
-  Represents = Uri.from r
-}
+let f x = x + 1
+let f = (+) 1
 
-let dir p = TargetDirectory {
-  Id = Uri.from "re:placed"
-  Expression = Expression.parse p
-}
-
-let private targets = System.Collections.Generic.Dictionary<_,_>()
-
-let target (l:string) f =
-  let t = (match f with
-           | TargetFile x -> TargetFile {x with Id = targetUri l}
-           | TargetDirectory x -> TargetDirectory {x with Id = targetUri l})
-  targets.Add (l,t)
-  t
-
-let private dependencies = System.Collections.Generic.Dictionary<_,_>()
-
-let rec hasDependents x xs =
-  let t = targets.[x]
-  let xs' = xs |> List.map (fun x -> (targets.[x]))
-  match dependencies.ContainsKey t with
-    | true -> dependencies.[t] <- xs' @ dependencies.[t]
-    | false -> dependencies.Add (t,xs')
-  x
-
-let (===>) = hasDependents
-
-
-
-open Yaaf.FSharp.Scripting
-let exec xs =
-  let xs' = List.map System.IO.File.ReadAllText xs
-  let ax = System.AppDomain.CurrentDomain.GetAssemblies()
-  let asm s =
-    (Array.find (fun (x:System.Reflection.Assembly) -> x.FullName.StartsWith s ) ax).Location
-
-  let fsi = ScriptHost.CreateNew()
-  [
-    for x in xs' do
-      printfn "%s" x
-      let r = fsi.EvalScriptWithOutput x
-      yield r.Output.ScriptOutput
-  ]
-
-exec [__SOURCE_DIRECTORY__ + "/Script.fsx"]

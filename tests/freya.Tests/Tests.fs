@@ -57,7 +57,7 @@ let qsCompilation = """
 """
 
 let g = Graph.loadTtl (fromString qsCompilation)
-let rp = loadMake g |> List.head
+let rp = Freya.Builder.resourcePaths () |> Seq.head
 
 loader <- (fun s -> "")
 

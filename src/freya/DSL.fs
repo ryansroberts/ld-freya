@@ -1,5 +1,7 @@
 module Freya.Builder
 open FSharp.RDF
+open System.Collections.Generic
+
 type TargetPattern =
   | TargetDirectory of  DirectoryPattern
   | TargetFile of FilePattern
@@ -26,7 +28,7 @@ let dir p = TargetDirectory {
   Expression = Expression.parse p
 }
 
-let private targets = System.Collections.Generic.Dictionary<_,_>()
+let private targets = Dictionary<_,_>()
 
 let target (l:string) f =
   let t = (match f with
@@ -35,7 +37,7 @@ let target (l:string) f =
   targets.Add (l,t)
   t
 
-let private dependencies = System.Collections.Generic.Dictionary<_,_>()
+let private dependencies = Dictionary<_,_>()
 
 let rec hasDependents x xs =
   let t = targets.[x]
@@ -47,3 +49,28 @@ let rec hasDependents x xs =
 
 let (===>) = hasDependents
 
+open Yaaf.FSharp.Scripting
+let exec xs =
+  let xs' = List.map System.IO.File.ReadAllText xs
+  let ax = System.AppDomain.CurrentDomain.GetAssemblies()
+  let asm s = (Array.find (fun (x:System.Reflection.Assembly) -> x.FullName.StartsWith s ) ax).Location
+
+  let fsi = ScriptHost.CreateNew()
+  [
+    for x in xs do
+      let r = fsi.EvalScriptWithOutput x
+      let targets = fsi.EvalExpression<Dictionary<string,TargetPattern>> "Freya.Builder.displayTargets"
+      yield targets
+  ]
+
+let private resourcePathsS (dx:Dictionary<TargetPattern,_>) () =
+  let kx = dx.Keys |> List.ofSeq
+  let rec resourcePaths dpx kx = [
+    for d' in dx.[List.head kx] do
+      match d' with
+      | TargetDirectory x -> yield! resourcePaths (x::dpx) (List.tail kx)
+      | TargetFile x -> yield ResourcePath(dpx,x)
+  ]
+  resourcePaths [] kx
+
+let resourcePaths = resourcePathsS dependencies

@@ -9,9 +9,6 @@ open System.IO
 open ExtCore
 open FSharp.RDF
 
-
-
-
 let fragment u = (u |> Uri.toSys).Fragment
 let removeHash (s : string) = s.Substring(1, (s.Length - 1))
 
@@ -66,6 +63,12 @@ let compile pth m p d =
     Graph.writeTtl kbgFile kbg
     0
 
+let makeFiles () =
+  System.IO.Directory.EnumerateFiles (".","build.fsx",System.IO.SearchOption.AllDirectories) |> List.ofSeq
+
+do
+  printfn "%A" <| Freya.Builder.exec ( makeFiles ())
+
 type Arguments =
   | Compilation of string
   | Provenance of string
@@ -87,7 +90,7 @@ type Arguments =
 let main argv =
   let parser = UnionArgParser.Create<Arguments>()
   let args = parser.Parse argv
-  let makeOntology = Graph.loadFrom (args.GetResult(<@ Compilation @>)) |> loadMake
+  let makeOntology = Freya.Builder.resourcePaths ()
   let toLower (s : string) = s.ToLower()
   let containsParam param = Seq.map toLower >> Seq.exists ((=) (toLower param))
   let paramIsHelp param =
