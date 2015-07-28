@@ -13,22 +13,32 @@
 #r "../../Packages/FSharp.Formatting/lib/net40/FSharp.Markdown.dll"
 #r "../../Packages/SharpYaml/lib/SharpYaml.dll"
 #r "../../Packages/FSharp.Compiler.Service/lib/net40/FSharp.Compiler.Service.dll"
-
+#r "System.Xml.Linq.dll"
 #load "../../paket-files/matthid/Yaaf.FSharp.Scripting/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs"
 #load "Model.fs"
+
 open Freya
 #load "Commands.fs"
 #load "DSL.fs"
 
-let x = Freya.Builder.exec [__SOURCE_DIRECTORY__ + "/Script.fsx"]
-printfn "%A" x
+open Freya.Builder
+target "Root" (dir "root")
+target "QualityStandards" (dir "qualitystandards")
+target "QualityStatement" (file "statement_$(QualityStandardId).md"
+                                [content;yamlMetadata;]
+                                (Some "file://templates/qs.md")
+                                "http://ld.nice.org.uk/ns/qualitystandards/QualityStatement")
+target "QualityStandard"  (dir "standard_$(QualityStandardId)")
+target "QualityStandardDoc" (file "Standard.md"
+                                  [content;yamlMetadata]
+                                  (Some "file://")
+                                  "http://ld.nice.org.uk/ns/QualityStandards/QualityStandard")
+"Root"
+===> ["QualityStandards"
+      ===> ["QualityStandardDoc"
+            "QualityStandard"
+            ===> ["QualityStatement"]]]
 
+let rp = Freya.Builder.resourcePaths ()
 
-open FSharp.Data
-
-
-type j = JsonProvider<""" {"b" : "23"} """>
-
-let f x = x + 1
-let f = (+) 1
 

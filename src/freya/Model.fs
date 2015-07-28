@@ -6,7 +6,6 @@ open FSharp.RDF
 open resource
 open ExtCore
 
-
 type Segment =
   | Segment of string
   override x.ToString() =
@@ -14,6 +13,7 @@ type Segment =
     s
 
 type SysPath = System.IO.Path
+
 type SysFile = System.IO.File
 
 type Path =
@@ -23,7 +23,7 @@ type Path =
 
   override x.ToString() =
     match x with
-    | Path xs -> "/"  + System.String.Join("/", xs)
+    | Path xs -> "/" + System.String.Join("/", xs)
 
   static member from s =
     String.split [| '/' |] s
@@ -40,24 +40,29 @@ and FullName =
 
 and File =
   | File of Path * FullName
+
   override x.ToString() =
     match x with
     | File(p, FullName(f, e)) -> sprintf "%s/%s.%s" (string p) f e
 
   static member from s =
-    File(SysPath.GetDirectoryName s |> Path.from,
-        FullName(SysPath.GetFileNameWithoutExtension s,SysPath.GetExtension s))
-
-  static member path (File(x,_)) = x
-  static member fullname (File(_,x)) = x
-  static member name (File(_,(FullName(x,_)))) = x
-  static member write s f = SysFile.WriteAllText(string f,s)
+    File
+      (SysPath.GetDirectoryName s |> Path.from,
+       FullName(SysPath.GetFileNameWithoutExtension s, SysPath.GetExtension s))
+  static member path (File(x, _)) = x
+  static member fullname (File(_, x)) = x
+  static member name (File(_, (FullName(x, _)))) = x
+  static member write s f = SysFile.WriteAllText(string f, s)
 
 [<AutoOpen>]
 module prelude =
-  let inline (|?) (a: 'a option) b = if a.IsSome then a.Value else b
+  let inline (|?) (a : 'a option) b =
+    if a.IsSome then a.Value
+    else b
+
   let inline toolUri x = Uri.from (sprintf "compilation:%s" (x))
-  let inline mimeUri x = Uri.from (sprintf "http://purl.org/NET/mediatypes/%s" (x))
+  let inline mimeUri x =
+    Uri.from (sprintf "http://purl.org/NET/mediatypes/%s" (x))
 
 [<AutoOpen>]
 module path =
@@ -95,11 +100,11 @@ type Provenance =
     Targets : Target seq
     InformedBy : Uri seq }
 
-
 type SemanticExtractor =
   | Content
   | YamlMetadata
-  static member name = function
+  static member name =
+    function
     | Content -> "Content"
     | YamlMetadata -> "YamlMetadata"
 
@@ -108,16 +113,20 @@ type MarkdownConvertor =
   | HtmlFragment
   | Docx
   | Pdf
-  static member name = function
+
+  static member name =
+    function
     | HtmlDocument -> "HtmlDocument"
     | HtmlFragment -> "HtmlFragment"
     | Docx -> "Docx"
     | Pdf -> "Pdf"
-  static member mime = function
-    | HtmlDocument
-    | HtmlFragment -> "text/html"
-    | Pdf ->  "application/pdf"
-    | Docx -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"
+
+  static member mime =
+    function
+    | HtmlDocument | HtmlFragment -> "text/html"
+    | Pdf -> "application/pdf"
+    | Docx ->
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"
 
 type KnowledgeBaseProcessor =
   | MarkdownConvertor of MarkdownConvertor
@@ -127,6 +136,7 @@ type KnowledgeBaseProcessor =
 type Tool =
   | KnowledgeBaseProcessor of KnowledgeBaseProcessor
   | SemanticExtractor of SemanticExtractor
+
   static member toUri =
     function
     | KnowledgeBaseProcessor x -> (toolUri (KnowledgeBaseProcessor.name x))
@@ -139,9 +149,9 @@ type Tool =
 
   static member toMime =
     function
-    | KnowledgeBaseProcessor(MarkdownConvertor x) -> Some (mimeUri (MarkdownConvertor.mime x))
+    | KnowledgeBaseProcessor(MarkdownConvertor x) ->
+      Some(mimeUri (MarkdownConvertor.mime x))
     | SemanticExtractor x -> None
-
 
 type Expression =
   | Seq of Expression list
@@ -235,62 +245,80 @@ module pipeline =
     | true -> PipelineExecution.Success(m.Target, r)
     | false -> PipelineExecution.Failure(m.Target, r)
 
-
-
-
-
 [<AutoOpen>]
 module expression =
-
   type Uri with
+
     static member fragment u =
       let u = (Uri.toSys u)
       u.Fragment.Substring(1, u.Fragment.Length - 1)
+
     static member scheme u = (Uri.toSys u).Scheme
     static member uripath u = (Uri.toSys u).PathAndQuery
 
   open FParsec
+
   let private str = pstring
-  let private pLiteral<'a> = many1Chars (choice [letter
-                                                 digit
-                                                 pchar '.'
-                                                 pchar '-'
-                                                 pchar '_'] ) |>> Literal
-  let private pVariable<'a> = between (str "$(") (str ")") ((many1Chars letter) |>> Variable)
+
+  let private pLiteral<'a> =
+    many1Chars (choice [ letter
+                         digit
+                         pchar '.'
+                         pchar '-'
+                         pchar '_' ])
+    |>> Literal
+
+  let private pVariable<'a> =
+    between (str "$(") (str ")") ((many1Chars letter) |>> Variable)
   let private pWildcard<'a> = str "*" |>> Wildcard
-  let private pExpressionC = choice [pWildcard;pVariable;pLiteral]
+  let private pExpressionC = choice [ pWildcard; pVariable; pLiteral ]
   let private pSeq = many pExpressionC |>> Seq
   let private pExpression = pSeq .>> eof
+
   let private runParser str p =
-        match run p str with
-        | Success(result, _, _)   -> result
-        | Failure(errorMsg, _, _) -> failwithf "Failed to parse %s" errorMsg
+    match run p str with
+    | Success(result, _, _) -> result
+    | Failure(errorMsg, _, _) -> failwithf "Failed to parse %s" errorMsg
 
   type Expression with
     static member parse s = runParser s pExpression
+
     static member matcher r =
       let rec matcher =
         function
         | Literal s -> s
         | Wildcard _ -> ".*"
         | Variable v -> (sprintf "(?<%s>.*)" v)
-        | Seq xs -> xs |> List.map matcher |> String.concat ""
+        | Seq xs ->
+          xs
+          |> List.map matcher
+          |> String.concat ""
+
       let re = Regex(matcher r)
       (fun s ->
-        match re.Match s with
-            | m when m.Length <> 0 ->
-              Some
-                (Matches
-                [ for g in re.GetGroupNames() |> Seq.filter ((<>) "0") ->
-                  (g, m.Groups.[g].Value) ])
-            | _ -> None)
+      match re.Match s with
+      | m when m.Length <> 0 ->
+        Some
+          (Matches
+             [ for g in re.GetGroupNames() |> Seq.filter ((<>) "0") ->
+                 (g, m.Groups.[g].Value) ])
+      | _ -> None)
+
     static member reifier xs r =
-      let rec reifier = function
-                        | Literal s -> s
-                        | Wildcard _ -> "*"
-                        | Variable v -> xs |> List.find (snd >> ((=) v)) |> snd
-                        | Seq xs -> xs |> List.map reifier |> String.concat ""
+      let rec reifier =
+        function
+        | Literal s -> s
+        | Wildcard _ -> "*"
+        | Variable v ->
+          xs
+          |> List.find (snd >> ((=) v))
+          |> snd
+        | Seq xs ->
+          xs
+          |> List.map reifier
+          |> String.concat ""
       reifier r
+
 module compilation =
   let mutable loader = System.IO.File.ReadAllText
 
@@ -298,7 +326,7 @@ module compilation =
     seq {
       match g, s with
       | _, Segment "*" -> yield Some(Matches [])
-      | ex,Segment s -> yield Expression.matcher ex s
+      | ex, Segment s -> yield Expression.matcher ex s
     }
 
   let globs rp =
@@ -316,10 +344,10 @@ module compilation =
 
   let toolsFor t rp =
     match rp, t.Path with
-    | ResourcePath(dx, fp), (File((Path px),FullName(f,ex))) ->
+    | ResourcePath(dx, fp), (File((Path px), FullName(f, ex))) ->
       let mx =
         globs rp
-        |> Seq.zip (px @ [(Segment(f + ex))] )
+        |> Seq.zip (px @ [ (Segment(f + ex)) ])
         |> Seq.collect matchesExpression
       match mx |> Seq.exists ((=) None) with
       | false ->
@@ -389,8 +417,8 @@ module compilation =
       function
       | FunctionalObjectProperty content l ->
         match (Uri.scheme l) with
-        | "http" | "https" -> (l,FSharp.Data.Http.RequestString(string l))
-        | "file" -> (l,loader (Uri.uripath l))
+        | "http" | "https" -> (l, FSharp.Data.Http.RequestString(string l))
+        | "file" -> (l, loader (Uri.uripath l))
         | _ -> failwithf "Cannot load content from %s" (string l)
       | r -> failwithf "%A has no content property" r
 
@@ -443,12 +471,12 @@ module Tracing =
   type Location =
     | FileLocation of (File * int option * int option)
     | Resource of Uri
-  with override x.ToString() =
-    match x with
-      | FileLocation (f,l,c) -> sprintf "%s" (string f)
+    override x.ToString() =
+      match x with
+      | FileLocation(f, l, c) -> sprintf "%s" (string f)
       | Resource r -> (string r)
 
-  let fileLocation f = FileLocation(f,None,None)
+  let fileLocation f = FileLocation(f, None, None)
   let lineLocation p l = FileLocation(p, Some l, None)
   let charlocation p l c = FileLocation(p, Some l, Some c)
   let resourceLocation r = Resource(Resource.id r)
@@ -502,16 +530,18 @@ module Tracing =
       |> List.map (objectProperty !"dcterms:format")
 
     let derived =
+      rdf.resource id ([ a !"prov:Entity"
 
-      rdf.resource id
-        ([ a !"prov:Entity"
-           objectProperty !"compilation:wasDerivedFrom" (fst tm.Target.Content)
+                         objectProperty !"compilation:wasDerivedFrom"
+                           (fst tm.Target.Content)
 
-           blank !"prov:qualifiedDeriviation"
-            [ a !"prov:Deriviation"
-              objectProperty !"prov:entity" (fst tm.Target.Content)
-              objectProperty !"prov:hadGeneration" genId ]]
-         @ mime)
+                         blank !"prov:qualifiedDeriviation"
+                           [ a !"prov:Deriviation"
+
+                             objectProperty !"prov:entity"
+                               (fst tm.Target.Content)
+                             objectProperty !"prov:hadGeneration" genId ] ]
+                       @ mime)
 
     let generation =
       rdf.resource genId ([ a !"prov:Generation"
@@ -533,11 +563,10 @@ module Tracing =
 
     [ derived; generation ]
 
-  let alternateRepresentation tm id = [
-    rdf.resource id [objectProperty !"prov:alternateOf" tm.Target.Id]
-    rdf.resource tm.Target.Id [objectProperty !"prov:alternateOf" id]
-  ]
-
+  let alternateRepresentation tm id =
+    [ rdf.resource id [ objectProperty !"prov:alternateOf" tm.Target.Id ]
+      rdf.resource tm.Target.Id [ objectProperty !"prov:alternateOf" id ] ]
 
   let semanticExtraction tm = toolProv tm tm.Target.Id
-  let generatedResource tm id tool xs  = toolProv tm id tool xs @ alternateRepresentation tm id
+  let generatedResource tm id tool xs =
+    toolProv tm id tool xs @ alternateRepresentation tm id

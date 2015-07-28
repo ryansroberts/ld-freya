@@ -24,40 +24,15 @@ let nonMatchingTarget =
       Path = File.from "qualitystandards/lol/standard_23.md"
       Content = (Uri.from "http://raw","") }
 
-let qsCompilation = """
-@prefix : <http://ld.nice.org.uk/ns/compilation#> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@base <http://ld.nice.org.uk/ns/compilation/> .
+let makeFiles() =
+  System.IO.Directory.EnumerateFiles
+    (".", "build.fsx", System.IO.SearchOption.AllDirectories) |> List.ofSeq
 
-:QualityStandards
-  rdf:type :DirectoryPattern ,
-  owl:NamedIndividual ;
-  :expression "qualitystandards"^^xsd:string ;
-  :parent :Root .
+System.IO.Directory.SetCurrentDirectory "../../examples"
 
-:QualityStatement
-  rdf:type :FilePattern,
-  owl:NamedIndividual ;
-  :expression "statement_$(QualityStatementId).md"^^xsd:string ;
-  :tool :Content ;
-  :tool :YamlMetadata ;
-  :represents :QualityStatement;
-  :template "A template";
-  :parent :QualityStandard .
-
-:QualityStandard
-  rdf:type :DirectoryPattern ,
-           owl:NamedIndividual ;
-  :expression "standard_$(QualityStandardId)"^^xsd:string ;
-  :parent :QualityStandards .
-
-"""
-
-let g = Graph.loadTtl (fromString qsCompilation)
-let rp = Freya.Builder.resourcePaths () |> Seq.head
+printfn "%A" <| Freya.Builder.exec (makeFiles())
+let xrp = Freya.Builder.resourcePaths ()
+let rp = Seq.head xrp
 
 loader <- (fun s -> "")
 
@@ -143,8 +118,9 @@ let ``Translate provenence to compilation targets`` () =
 let res = makeAll [rp] provM.Targets |> Array.ofSeq
 [<Fact>]
 let ``Execute specified tools on compilation targets to produce ontology`` () =
-  let x = match res with [|PipelineExecution.Success(t,{Provenance=_;Extracted=x;})|] -> x
-  x <>? []
+  match res with
+    | [|PipelineExecution.Success(t,{Provenance=_;Extracted=x;})|] -> x <>? []
+    | x -> failwithf "%A %A" x xrp
 
 let yamlContent =
     """

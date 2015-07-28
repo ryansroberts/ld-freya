@@ -34,12 +34,13 @@ let compile pth m p d =
   let prg = loadProvenance p
   let hasFailure = ref false
   let d = deltafile prg
-  let kbg = Graph.empty (Uri.from "https://ld.nice.org.uk") domainSpaces
-            |> Graph.threadSafe
-
+  let kbg =
+    Graph.empty (Uri.from "https://ld.nice.org.uk") domainSpaces
+    |> Graph.threadSafe
   let provFn = sprintf "%s/%s.prov.compilation.ttl" (string pth) d
   use provFile = toFile provFn :> System.IO.TextWriter
-  use kbgFile = toFile (sprintf "%s/%s.ttl" (string pth) d) :> System.IO.TextWriter
+  use kbgFile =
+    toFile (sprintf "%s/%s.ttl" (string pth) d) :> System.IO.TextWriter
   makeAll m prg.Targets
   |> PSeq.map (function
        | Failure(x, y) ->
@@ -50,9 +51,7 @@ let compile pth m p d =
   |> PSeq.iter (fun (prov, extracted) ->
        FSharp.RDF.Assertion.Assert.graph p prov |> ignore
        FSharp.RDF.Assertion.Assert.graph kbg extracted |> ignore)
-
   Graph.writeTtl provFile p
-
   printfn "#Wrote provenance to: %s" provFn
   match !hasFailure with
   | true ->
@@ -63,11 +62,10 @@ let compile pth m p d =
     Graph.writeTtl kbgFile kbg
     0
 
-let makeFiles () =
-  System.IO.Directory.EnumerateFiles (".","build.fsx",System.IO.SearchOption.AllDirectories) |> List.ofSeq
+let makeFiles() =
+  System.IO.Directory.EnumerateFiles
+    (".", "build.fsx", System.IO.SearchOption.AllDirectories) |> List.ofSeq
 
-do
-  printfn "%A" <| Freya.Builder.exec ( makeFiles ())
 
 type Arguments =
   | Compilation of string
@@ -90,22 +88,23 @@ type Arguments =
 let main argv =
   let parser = UnionArgParser.Create<Arguments>()
   let args = parser.Parse argv
-  let makeOntology = Freya.Builder.resourcePaths ()
+  let makeOntology = Freya.Builder.resourcePaths()
   let toLower (s : string) = s.ToLower()
   let containsParam param = Seq.map toLower >> Seq.exists ((=) (toLower param))
   let paramIsHelp param =
     containsParam param [ "help"; "?"; "/?"; "-h"; "--help"; "/h"; "/help" ]
-
   if ((argv.Length = 2 && paramIsHelp argv.[1]) || argv.Length = 1) then
     printfn """Usage: freya [options]
                 %s""" (parser.Usage())
     exit 1
+
+  printfn "%A" <| Freya.Builder.exec (makeFiles())
   let prov =
     match args.TryGetResult <@ Provenance @> with
-    | Some p -> p
-                |> Graph.loadFrom
-                |> Graph.threadSafe
-    | _ -> Graph.loadFrom (args.GetResult(<@ Provenance @>))
-           |> Graph.threadSafe
+    | Some p ->
+      p
+      |> Graph.loadFrom
+      |> Graph.threadSafe
+    | _ -> Graph.loadFrom (args.GetResult(<@ Provenance @>)) |> Graph.threadSafe
   compile (args.GetResult <@ Output @> |> Path.from) makeOntology (prov)
     (args.GetResult <@ Output @>)
