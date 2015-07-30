@@ -13,6 +13,7 @@ let pdf = pandoc Pdf
 let html = pandoc HtmlFragment
 let content = SemanticExtractor(Content)
 let yamlMetadata = SemanticExtractor(YamlMetadata)
+
 let targetUri =
   sprintf "http://ld.nice.org.uk/compilation/targets#%s" >> Uri.from
 
