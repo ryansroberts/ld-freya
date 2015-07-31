@@ -1,5 +1,6 @@
-#I "/Users/ryanroberts/code/freya/bin/"
-#r "/Users/ryanroberts/code/freya/bin/freya.exe"
+#I "../../../bin/"
+#I "../../../packages/FSharp.RDF/lib/net40/"
+#r "../../../bin/freya.exe"
 open Freya.Builder
 
 target "QualityStandards" (dir "qualitystandards")

@@ -390,13 +390,12 @@ module compilation =
     }
 
   let loadProvenance g =
-    let pprov = "http://www.w3.org/ns/prov# "
-    let uses = pprov + "uses" |> Uri.from
-    let commit = pprov + "uses" |> Uri.from
-    let specialisationOf = pprov + "specializationOf" |> Uri.from
-    let informedBy = pprov + "informedBy" |> Uri.from
-    let wasGeneratedBy = pprov + "wasGeneratedBy" |> Uri.from
-    let startedAtTime = pprov + "startedAtTime" |> Uri.from
+    let uses = "prov:uses" |> Uri.from
+    let commit = "http://ld.nice.org.uk/ns/prov/commit" |> Uri.from
+    let specialisationOf = "http://www.w3.org/ns/prov#specializationOf" |> Uri.from
+    let informedBy = "http://www.w3.org/ns/prov#informedBy" |> Uri.from
+    let wasGeneratedBy = "http://www.w3.org/ns/prov#wasGeneratedBy" |> Uri.from
+    let startedAtTime = "http://www.w3.org/ns/prov#startedAtTime" |> Uri.from
     let id (R(S u, _)) = u
 
     let getEndedAt =
