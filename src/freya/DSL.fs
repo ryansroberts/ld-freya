@@ -2,6 +2,7 @@ module Freya.Builder
 
 open FSharp.RDF
 open System.Collections.Generic
+open System
 
 type TargetPattern =
   | TargetDirectory of DirectoryPattern
@@ -57,6 +58,9 @@ open Yaaf.FSharp.Scripting
 let displayTargets = targets
 let displayDependencies = dependencies
 
+type BuildScriptException(message:string, innerException:Exception) =
+   inherit Exception(message, innerException)
+
 let exec xs =
   let xs' = List.map System.IO.File.ReadAllText xs
   let ax = System.AppDomain.CurrentDomain.GetAssemblies()
@@ -65,7 +69,12 @@ let exec xs =
        (fun (x : System.Reflection.Assembly) -> x.FullName.StartsWith s) ax).Location
   let fsi = ScriptHost.CreateNew()
   for x in xs do
+    try
       fsi.EvalScriptWithOutput x |> ignore
+    with
+      | :? FsiEvaluationException as ev ->
+        raise (BuildScriptException(ev.Result.Error.FsiOutput,ev))
+
   fsi.EvalExpression<ResourcePath list>
     "Freya.Builder.resourcePaths ()"
 

@@ -390,12 +390,13 @@ module compilation =
     }
 
   let loadProvenance g =
-    let uses = prefixes.prov + "uses" |> Uri.from
-    let commit = prefixes.prov + "uses" |> Uri.from
-    let specialisationOf = prefixes.prov + "specializationOf" |> Uri.from
-    let informedBy = prefixes.prov + "informedBy" |> Uri.from
-    let wasGeneratedBy = prefixes.prov + "wasGeneratedBy" |> Uri.from
-    let startedAtTime = prefixes.prov + "startedAtTime" |> Uri.from
+    let pprov = "http://www.w3.org/ns/prov# "
+    let uses = pprov + "uses" |> Uri.from
+    let commit = pprov + "uses" |> Uri.from
+    let specialisationOf = pprov + "specializationOf" |> Uri.from
+    let informedBy = pprov + "informedBy" |> Uri.from
+    let wasGeneratedBy = pprov + "wasGeneratedBy" |> Uri.from
+    let startedAtTime = pprov + "startedAtTime" |> Uri.from
     let id (R(S u, _)) = u
 
     let getEndedAt =
@@ -490,31 +491,31 @@ module Tracing =
     function
     | (FileLocation(f, line, char)) ->
       List.concat
-        [ [ a !"compilation:InFile"
-            dataProperty !"compilation:path" ((string f) ^^ xsd.string) ]
+        [ [ a !!"compilation:InFile"
+            dataProperty !!"compilation:path" ((string f) ^^ xsd.string) ]
 
           ifSome
             (fun l ->
-            dataProperty !"compilation:charPosition" ((string l) ^^ xsd.string))
+            dataProperty !!"compilation:charPosition" ((string l) ^^ xsd.string))
             char
 
           ifSome
             (fun l ->
-            dataProperty !"compilation:charPosition" ((string l) ^^ xsd.string))
+            dataProperty !!"compilation:charPosition" ((string l) ^^ xsd.string))
             char ]
     | Resource uri ->
-      [ a !"compilation:FromResource"
-        objectProperty !"compilation:source" uri ]
+      [ a !!"compilation:FromResource"
+        objectProperty !!"compilation:source" uri ]
 
   let message t s p =
     printfn "In (%s) %s" (string p) s
-    blank !"compilation:message" [ a t
-                                   dataProperty !"rdfs:label" (s ^^ xsd.string)
-                                   blank !"compilation:position" (position p) ]
+    blank !!"compilation:message" [a t
+                                   dataProperty !!"rdfs:label" (s ^^ xsd.string)
+                                   blank !!"compilation:position" (position p) ]
 
-  let warn = message !"compilation:Warning"
-  let info = message !"compilation:Information"
-  let error = message !"compilation:Error"
+  let warn = message !!"compilation:Warning"
+  let info = message !!"compilation:Information"
+  let error = message !!"compilation:Error"
 
   open System
 
@@ -527,45 +528,45 @@ module Tracing =
     let mime =
       Tool.toMime tool
       |> Option.toList
-      |> List.map (objectProperty !"dcterms:format")
+      |> List.map (objectProperty !!"dcterms:format")
 
     let derived =
-      rdf.resource id ([ a !"prov:Entity"
+      rdf.resource id ([ a !!"prov:Entity"
 
-                         objectProperty !"compilation:wasDerivedFrom"
+                         objectProperty !!"compilation:wasDerivedFrom"
                            (fst tm.Target.Content)
 
-                         blank !"prov:qualifiedDeriviation"
-                           [ a !"prov:Deriviation"
+                         blank !!"prov:qualifiedDeriviation"
+                           [ a !!"prov:Deriviation"
 
-                             objectProperty !"prov:entity"
+                             objectProperty !!"prov:entity"
                                (fst tm.Target.Content)
-                             objectProperty !"prov:hadGeneration" genId ] ]
+                             objectProperty !!"prov:hadGeneration" genId ] ]
                        @ mime)
 
     let generation =
-      rdf.resource genId ([ a !"prov:Generation"
-                            a !"prov:InstantaneousEvent"
+      rdf.resource genId ([ a !!"prov:Generation"
+                            a !!"prov:InstantaneousEvent"
 
-                            objectProperty !"prov:wasGeneratedBy"
+                            objectProperty !!"prov:wasGeneratedBy"
                               tm.Target.Compilation
 
-                            blank !"prov:qualifiedGeneration"
-                              [ a !"prov:Generation"
-                                a !"prov:InstantaneousEvent"
+                            blank !!"prov:qualifiedGeneration"
+                              [ a !!"prov:Generation"
+                                a !!"prov:InstantaneousEvent"
 
-                                dataProperty !"prov:atTime"
+                                dataProperty !!"prov:atTime"
                                   (DateTimeOffset.Now ^^ xsd.datetime)
 
-                                objectProperty !"prov:activity"
+                                objectProperty !!"prov:activity"
                                   tm.Target.Compilation ] ]
                           @ xs)
 
     [ derived; generation ]
 
   let alternateRepresentation tm id =
-    [ rdf.resource id [ objectProperty !"prov:alternateOf" tm.Target.Id ]
-      rdf.resource tm.Target.Id [ objectProperty !"prov:alternateOf" id ] ]
+    [ rdf.resource id [ objectProperty !!"prov:alternateOf" tm.Target.Id ]
+      rdf.resource tm.Target.Id [ objectProperty !!"prov:alternateOf" id ] ]
 
   let semanticExtraction tm = toolProv tm tm.Target.Id
   let generatedResource tm id tool xs =
