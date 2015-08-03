@@ -390,8 +390,7 @@ module compilation =
     }
 
   let loadProvenance g =
-    let uses = "prov:uses" |> Uri.from
-    let commit = "http://ld.nice.org.uk/ns/prov/commit" |> Uri.from
+    let uses = "http://www.w3.org/ns/prov#uses" |> Uri.from
     let specialisationOf = "http://www.w3.org/ns/prov#specializationOf" |> Uri.from
     let informedBy = "http://www.w3.org/ns/prov#informedBy" |> Uri.from
     let wasGeneratedBy = "http://www.w3.org/ns/prov#wasGeneratedBy" |> Uri.from

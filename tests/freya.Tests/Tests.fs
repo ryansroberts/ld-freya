@@ -40,7 +40,6 @@ loader <- (fun s -> "")
 let ``Tools fail to match unless correctly configured``() =
   test <@ toolsFor nonMatchingTarget rp = None @>
 let ``Match provenence entities to compilation tools``() =
-  printf "Tools - %A" ( toolsFor matchingTarget rp  ) |> id
   test <@ toolsFor matchingTarget rp = Some({ Target = matchingTarget
                                               Represents = (Uri.from "http://ld.nice.org.uk/ns/qualitystandard#QualityStatement")
                                               Tools = [SemanticExtractor(YamlMetadata);SemanticExtractor(Content)]
@@ -115,12 +114,12 @@ let ``Translate provenence to compilation targets`` () =
                      Commit = Uri.from "http://ld.nice.org.uk/ns/prov/commit/c47800c"
                      Path = File.from "qualitystandards/standard_1/statement_23.md"
                      Content = (Uri.from "file:///testrepo/content.md","")}]
-let res = makeAll [rp] provM.Targets |> Array.ofSeq
+let res = (makeAll [rp] provM.Targets) |> Array.ofSeq
 [<Fact>]
 let ``Execute specified tools on compilation targets to produce ontology`` () =
   match res with
     | [|PipelineExecution.Success(t,{Provenance=_;Extracted=x;})|] -> x <>? []
-    | x -> failwithf "%A %A" x xrp
+    | x -> failwithf "%A %A %A" x rp (provM.Targets |> List.ofSeq)
 
 let yamlContent =
     """
@@ -173,10 +172,10 @@ open rdf
 [<Fact>]
 let ``Getting a description of a filepath`` () =
   let qs = describe [rp] (Path.from "qualitystandards/*") |> Seq.toList
-  let g = Graph.empty !!"http://ld.nice.org.uk" []
-  let g' = Graph.empty !!"http://ld.nice.org.uk" []
+  let g = Graph.empty !!"http://ld.nice.org.uk" [("compilation",!!"http://ld.nice.org.uk/ns/compilation#")]
+  let g' = Graph.empty !!"http://ld.nice.org.uk" [("compilation",!!"http://ld.nice.org.uk/ns/compilation#")]
   [rdf.resource !!"http://ld.nice.org.uk/command" [
-         a !!"http://ld.nice.org.uk/ns/compilation/Command"
+         a !!"http://ld.nice.org.uk/ns/compilation#Command"
          objectProperty (!!"compilation:tool") (!!"compilation:Content" )
          objectProperty (!!"compilation:tool") (!!"compilation:YamlMetadata" )
          ]]

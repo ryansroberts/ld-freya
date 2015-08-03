@@ -25,11 +25,11 @@ let hasFailure =
     | (Failure _) -> true
     | _ -> false)
 
-let domainSpaces = []
+let domainSpaces = [("compilation",Uri.from "http://ld.nice.org.uk/compilation#" )]
 
 open FSharp.Collections.ParallelSeq
 
-let compile pth m p d =
+let compile pth m p =
   let map2 f g = PSeq.map (fun x -> (f x, g x))
   let prg = loadProvenance p
   let hasFailure = ref false
@@ -107,4 +107,3 @@ let main argv =
       |> Graph.threadSafe
     | _ -> Graph.loadFrom (args.GetResult(<@ Provenance @>)) |> Graph.threadSafe
   compile (args.GetResult <@ Output @> |> Path.from) makeOntology (prov)
-    (args.GetResult <@ Output @>)

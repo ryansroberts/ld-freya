@@ -12,11 +12,11 @@ module Commands =
     | CreateResource of Uri * (string * string) list
 
   let descriptionOf rp =
-    let postFix u p = Uri.from (sprintf "%s:%s" (string u) p)
+    let postFix u p = !!(sprintf "%s:%s" (string u) p)
     match rp with
     | ResourcePath(xr, { Id = id; Expression = e; Tools = xt; Represents = rep }) as rp ->
       [ resource (postFix rep "description")
-          ([ a !!"http://ld.nice.org.uk/ns/compilation/Description"
+          ([ a !!"compilation:Description"
              objectProperty !!"compilation:represents" rep
              objectProperty !!"compilation:action" (postFix rep "CreateResource") ]
            @ List.map

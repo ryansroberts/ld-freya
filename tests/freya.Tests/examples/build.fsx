@@ -4,7 +4,7 @@
 open Freya.Builder
 
 target "QualityStandards" (dir "qualitystandards")
-target "QualityStatement" (file "statement_$(QualityStandardId).md"
+target "QualityStatement" (file "statement_$(QualityStatementId).md"
                                 [content;yamlMetadata;]
                                 (Some "file://templates/qs.md")
                                 "http://ld.nice.org.uk/ns/qualitystandards/QualityStatement")
