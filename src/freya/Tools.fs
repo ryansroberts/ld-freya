@@ -105,4 +105,7 @@ module Tools =
 
   open FSharp.Collections.ParallelSeq
 
-  let makeAll xrp xt = PSeq.collect (make xrp) xt |> PSeq.map pipeline.result
+  let makeAll xrp xt =
+    printfn "%d prov entities for compilation" (Seq.length xt)
+    PSeq.collect (make xrp) xt
+    |> PSeq.map pipeline.result
