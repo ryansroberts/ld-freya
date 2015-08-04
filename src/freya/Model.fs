@@ -343,14 +343,15 @@ module compilation =
     | None -> []
 
   let toolsFor t rp =
+    printfn "Determining pipeline for %s" (string t.Path)
     match rp, t.Path with
     | ResourcePath(dx, fp), (File((Path px), FullName(f, ex))) ->
-      let mx =
-        globs rp
-        |> Seq.zip (px @ [ (Segment(f + ex)) ])
-        |> Seq.collect matchesExpression
+      let mx = globs rp
+               |> Seq.zip (px @ [ (Segment(f + ex)) ])
+               |> Seq.collect matchesExpression
       match mx |> Seq.exists ((=) None) with
       | false ->
+        printfn "Executing %A" fp.Tools
         Some { Target = t
                Represents = fp.Represents
                Tools = fp.Tools
@@ -358,7 +359,9 @@ module compilation =
                  mx
                  |> Seq.toList
                  |> List.collect capture }
-      | _ -> None
+      | _ ->
+          printfn "No matching tool chain"
+          None
 
   [<AutoOpen>]
   module compilationuris =
@@ -466,6 +469,7 @@ module compilation =
 module Tracing =
   open Assertion
   open rdf
+
 
   type Location =
     | FileLocation of (File * int option * int option)
