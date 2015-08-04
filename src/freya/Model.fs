@@ -365,21 +365,9 @@ module compilation =
 
   [<AutoOpen>]
   module compilationuris =
-    let directoryPattern =
-      Uri.from ("http://ld.nice.org.uk/ns/compilation#DirectoryPattern")
-    let filePattern =
-      Uri.from ("http://ld.nice.org.uk/ns/compilation#FilePattern")
-    let tool = Uri.from ("http://ld.nice.org.uk/ns/compilation#tool")
     let template = Uri.from ("http://ld.nice.org.uk/ns/compilation#template")
-    let root = Uri.from ("http://ld.nice.org.uk/ns/compilation#Root")
-    let parent = Uri.from ("http://ld.nice.org.uk/ns/compilation#parent")
-    let expression =
-      Uri.from ("http://ld.nice.org.uk/ns/compilation#expression")
-    let represents =
-      Uri.from ("http://ld.nice.org.uk/ns/compilation#represents")
-    let compilation =
-      Uri.from ("http://ld.nice.org.uk/ns/compilation#Compilation")
-    let informedBy = Uri.from "prov:informedBy"
+    let represents = Uri.from ("http://ld.nice.org.uk/ns/compilation#represents")
+    let compilation = Uri.from ("http://ld.nice.org.uk/ns/compilation#Compilation")
     let content = Uri.from ("http://ld.nice.org.uk/ns/compilation#content")
     let path = Uri.from ("http://ld.nice.org.uk/ns/compilation#path")
 
@@ -393,6 +381,10 @@ module compilation =
     }
 
   let loadProvenance g =
+    let g = g
+            |> Graph.addPrefixes (Uri.from "http://ld.nice.org.uk/prov") [("prov",Uri.from "http://www.w3.org/ns/prov#")]
+            |> Graph
+
     let uses = "http://www.w3.org/ns/prov#uses" |> Uri.from
     let specialisationOf = "http://www.w3.org/ns/prov#specializationOf" |> Uri.from
     let informedBy = "http://www.w3.org/ns/prov#informedBy" |> Uri.from
@@ -437,7 +429,7 @@ module compilation =
     let getInformedBy =
       function
       | ObjectProperty informedBy x -> x
-      | r -> failwith (sprintf "%A has no informedBy" r)
+      | r -> []
 
     let getWasGeneratedBy =
       function
@@ -533,42 +525,42 @@ module Tracing =
       |> List.map (objectProperty !!"dcterms:format")
 
     let derived =
-      rdf.resource id ([ a !!"prov:Entity"
+      rdf.resource id ([ a !!"http://www.w3.org/ns/prov#Entity"
 
                          objectProperty !!"compilation:wasDerivedFrom"
                            (fst tm.Target.Content)
 
-                         blank !!"prov:qualifiedDeriviation"
-                           [ a !!"prov:Deriviation"
+                         blank !!"http://www.w3.org/ns/prov#qualifiedDeriviation"
+                           [ a !!"http://www.w3.org/ns/prov#Deriviation"
 
-                             objectProperty !!"prov:entity"
+                             objectProperty !!"http://www.w3.org/ns/prov#entity"
                                (fst tm.Target.Content)
-                             objectProperty !!"prov:hadGeneration" genId ] ]
+                             objectProperty !!"http://www.w3.org/ns/prov#hadGeneration" genId ] ]
                        @ mime)
 
     let generation =
-      rdf.resource genId ([ a !!"prov:Generation"
-                            a !!"prov:InstantaneousEvent"
+      rdf.resource genId ([ a !!"http://www.w3.org/ns/prov#Generation"
+                            a !!"http://www.w3.org/ns/prov#InstantaneousEvent"
 
-                            objectProperty !!"prov:wasGeneratedBy"
+                            objectProperty !!"http://www.w3.org/ns/prov#wasGeneratedBy"
                               tm.Target.Compilation
 
-                            blank !!"prov:qualifiedGeneration"
-                              [ a !!"prov:Generation"
-                                a !!"prov:InstantaneousEvent"
+                            blank !!"http://www.w3.org/ns/prov#qualifiedGeneration"
+                              [ a !!"http://www.w3.org/ns/prov#Generation"
+                                a !!"http://www.w3.org/ns/prov#InstantaneousEvent"
 
-                                dataProperty !!"prov:atTime"
+                                dataProperty !!"http://www.w3.org/ns/prov#atTime"
                                   (DateTimeOffset.Now ^^ xsd.datetime)
 
-                                objectProperty !!"prov:activity"
+                                objectProperty !!"http://www.w3.org/ns/prov#activity"
                                   tm.Target.Compilation ] ]
                           @ xs)
 
     [ derived; generation ]
 
   let alternateRepresentation tm id =
-    [ rdf.resource id [ objectProperty !!"prov:alternateOf" tm.Target.Id ]
-      rdf.resource tm.Target.Id [ objectProperty !!"prov:alternateOf" id ] ]
+    [ rdf.resource id [ objectProperty !!"http://www.w3.org/ns/prov#alternateOf" tm.Target.Id ]
+      rdf.resource tm.Target.Id [ objectProperty !!"http://www.w3.org/ns/prov#alternateOf" id ] ]
 
   let semanticExtraction tm = toolProv tm tm.Target.Id
   let generatedResource tm id tool xs =

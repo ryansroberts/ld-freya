@@ -47,7 +47,7 @@ let ``Match provenence entities to compilation tools``() =
                                                 [ ("QualityStandardId", "1")
                                                   ("QualityStatementId", "23") ] }) @>
 
-let prov = """@base <http://ld.nice.org.uk/ns/compilation>.
+let prov = """@base <http://ld.nice.org.uk/prov>.
 
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
@@ -96,7 +96,11 @@ let prov = """@base <http://ld.nice.org.uk/ns/compilation>.
   prov:wasGeneratedBy <http://ld.nice.org.uk/ns/prov/commit/c47800c>.
 """
 
-let provM = Graph.loadTtl (graph.fromString prov) |> loadProvenance
+let provM =
+    Graph.loadTtl (graph.fromString prov)
+    |> Graph.addPrefixes (Uri.from "http://ld.nice.org.uk/prov") [("prov",Uri.from "http://www.w3.org/ns/prov#")]
+    |> Graph
+    |> loadProvenance
 
 [<Fact>]
 let ``Translate provenence to compilation targets`` () =
