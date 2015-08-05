@@ -6,9 +6,9 @@
 #I "../../Packages/FParsec/lib/net40-client"
 #r "../../Packages/FParsec/lib/net40-client/FParsec.dll"
 #r "../../Packages/FParsec/lib/net40-client/FParsecCS.dll"
-#I "../../Packages/FSharp.RDF/lib/net40"
-#r "../../Packages/FSharp.RDF/lib/net40/owlapi.dll"
-#r "../../Packages/FSharp.RDF/lib/net40/FSharp.RDF.dll"
+#I "../../Packages/FSharp.RDF/lib/"
+#r "../../Packages/FSharp.RDF/lib/owlapi.dll"
+#r "../../Packages/FSharp.RDF/lib/FSharp.RDF.dll"
 #r "../../Packages/FSharp.Data/lib/net40/FSharp.Data.dll"
 #r "../../Packages/FSharp.Formatting/lib/net40/FSharp.Markdown.dll"
 #r "../../Packages/SharpYaml/lib/SharpYaml.dll"
@@ -22,23 +22,4 @@ open Freya
 #load "DSL.fs"
 
 open Freya.Builder
-target "Root" (dir "root")
-target "QualityStandards" (dir "qualitystandards")
-target "QualityStatement" (file "statement_$(QualityStandardId).md"
-                                [content;yamlMetadata;]
-                                (Some "file://templates/qs.md")
-                                "http://ld.nice.org.uk/ns/qualitystandards/QualityStatement")
-target "QualityStandard"  (dir "standard_$(QualityStandardId)")
-target "QualityStandardDoc" (file "Standard.md"
-                                  [content;yamlMetadata]
-                                  (Some "file://")
-                                  "http://ld.nice.org.uk/ns/QualityStandards/QualityStandard")
-"Root"
-===> ["QualityStandards"
-      ===> ["QualityStandardDoc"
-            "QualityStandard"
-            ===> ["QualityStatement"]]]
-
-let rp = Freya.Builder.resourcePaths ()
-
 

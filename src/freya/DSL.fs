@@ -4,6 +4,8 @@ open FSharp.RDF
 open System.Collections.Generic
 open System
 
+type Tool = ToolMatch -> ToolExecution
+
 type TargetPattern =
   | TargetDirectory of DirectoryPattern
   | TargetFile of FilePattern
@@ -62,11 +64,10 @@ type BuildScriptException(message:string, innerException:Exception) =
    inherit Exception(message, innerException)
 
 let exec xs =
-  let xs' = List.map System.IO.File.ReadAllText xs
   let fsi = ScriptHost.CreateNew()
-  for x in xs' do
+  for x in xs do
     try
-      fsi.EvalScriptWithOutput x |> ignore
+      fsi.Load x
     with
       | :? FsiEvaluationException as ev ->
         raise (BuildScriptException(sprintf "Failed to evaluate %s\r%s" x ev.Result.Error.FsiOutput,ev))
