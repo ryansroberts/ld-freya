@@ -63,21 +63,16 @@ type BuildScriptException(message:string, innerException:Exception) =
 
 let exec xs =
   let xs' = List.map System.IO.File.ReadAllText xs
-  let ax = System.AppDomain.CurrentDomain.GetAssemblies()
-  let asm s =
-    (Array.find
-       (fun (x : System.Reflection.Assembly) -> x.FullName.StartsWith s) ax).Location
   let fsi = ScriptHost.CreateNew()
-  for x in xs do
+  for x in xs' do
     try
       fsi.EvalScriptWithOutput x |> ignore
     with
       | :? FsiEvaluationException as ev ->
-        raise (BuildScriptException(ev.Result.Error.FsiOutput,ev))
+        raise (BuildScriptException(sprintf "Failed to evaluate %s\r%s" x ev.Result.Error.FsiOutput,ev))
 
   fsi.EvalExpression<ResourcePath list>
     "Freya.Builder.resourcePaths ()"
-
 
 let private resourcePathsS (dx : Dictionary<_, _>) () =
   let roots = dx.Keys
