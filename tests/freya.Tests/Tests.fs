@@ -38,14 +38,14 @@ loader <- (fun s -> "")
 
 [<Fact>]
 let ``Tools fail to match unless correctly configured``() =
-  test <@ toolsFor nonMatchingTarget rp = None @>
+  test <@ Target.toolsFor nonMatchingTarget rp = None @>
 let ``Match provenence entities to compilation tools``() =
-  test <@ toolsFor matchingTarget rp = Some({ Target = matchingTarget
-                                              Represents = (Uri.from "http://ld.nice.org.uk/ns/qualitystandard#QualityStatement")
-                                              Tools = [SemanticExtractor(YamlMetadata);SemanticExtractor(Content)]
-                                              Captured =
-                                                [ ("QualityStandardId", "1")
-                                                  ("QualityStatementId", "23") ] }) @>
+    test <@ Target.toolsFor matchingTarget rp = Some({ Target = matchingTarget
+                                                       Represents = (Uri.from "http://ld.nice.org.uk/ns/qualitystandard#QualityStatement")
+                                                       Tools = [SemanticExtractor(YamlMetadata);SemanticExtractor(Content)]
+                                                       Captured =
+                                                            [ ("QualityStandardId", "1")
+                                                              ("QualityStatementId", "23") ] }) @>
 
 let prov = """@base <http://ld.nice.org.uk/prov>.
 

@@ -123,9 +123,9 @@ module Pandoc =
 
     let extension =
       function
-      | Docx -> "docx"
-      | Pdf -> "pdf"
-      | HtmlDocument | HtmlFragment -> "html"
+      | Docx -> ".docx"
+      | Pdf -> ".pdf"
+      | HtmlDocument | HtmlFragment -> ".html"
 
   let private parser = UnionArgParser.Create<PandocArgs>()
 
@@ -139,9 +139,10 @@ module Pandoc =
       let compilationMessages (x : Statement list) = (x, [])
       let target = conv.ToolMatch.Target
       let file root =
-        root ++ Path.from (mimeTypeDir t)
+        root
         ++ Path.from (Uri.fragment conv.ToolMatch.Target.Commit)
-        ++ (File.path target.Path)
+        ++ Path.from (mimeTypeDir t)
+        ++ File.path target.Path
         ++ FullName(File.name target.Path, extension t)
 
       let args =
@@ -158,9 +159,8 @@ module Pandoc =
           | Docx -> [ To "docx" ]
           | HtmlFragment -> [ To "html5" ]
 
-      let argsT = (sprintf "%A" args).Replace("\"", "''")
       let resourceUri =
-        Uri.from ("http://ld.nice.org.uk" + (string (file conv.Output)))
+        Uri.from ("http://ld.nice.org.uk/" + (string (file (Path.from "artifacts"))))
       let generationProv =
         generatedResource conv.ToolMatch resourceUri
           (KnowledgeBaseProcessor(MarkdownConvertor(t)))
@@ -168,7 +168,7 @@ module Pandoc =
         (generationProv [ warn "Resource already exists" (resourceLocation r) ])
       else
         match r with
-        | FunctionalDataProperty (Uri.from "cnt:chars") (FSharp.RDF.xsd.string)
+        | FunctionalDataProperty (Uri.from "http://www.w3.org/2011/content#chars") (FSharp.RDF.xsd.string)
           content ->
           let (exit, stdout, stderr) =
             asyncShellExec

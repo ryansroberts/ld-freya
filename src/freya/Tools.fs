@@ -30,7 +30,7 @@ module Tools =
     pipeline.succeed (semanticExtraction m t [])
       [ owl.individual m.Target.Id [ m.Represents ]
           [ a !!"owl:class"
-            dataProperty !!"cnt:chars" ((snd m.Target.Content) ^^ xsd.string) ] ]
+            dataProperty !!"http://www.w3.org/2011/content#chars" ((snd m.Target.Content) ^^ xsd.string) ] ]
 
   let content = step << contentS
 
@@ -99,13 +99,13 @@ module Tools =
 
   let make xrp t =
     xrp
-    |> List.map (compilation.toolsFor t)
+    |> List.map (Target.toolsFor t)
     |> List.choose id
     |> List.map execMatches
 
   open FSharp.Collections.ParallelSeq
 
   let makeAll xrp xt =
-    printfn "%d prov entities for compilation" (Seq.length xt)
+    printfn "%d prov entities for compilation using %d tools" (Seq.length xt) (List.length xrp)
     PSeq.collect (make xrp) xt
     |> PSeq.map pipeline.result

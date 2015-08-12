@@ -23,7 +23,7 @@ type Path =
 
   override x.ToString() =
     match x with
-    | Path xs -> "/" + System.String.Join("/", xs)
+    | Path xs -> System.String.Join("/", xs)
 
   static member from s =
     String.split [| '/' |] s
@@ -43,7 +43,7 @@ and File =
 
   override x.ToString() =
     match x with
-    | File(p, FullName(f, e)) -> sprintf "%s/%s.%s" (string p) f e
+    | File(p, FullName(f, e)) -> sprintf "%s/%s%s" (string p) f e
 
   static member from s =
     File
@@ -319,6 +319,8 @@ module expression =
           |> String.concat ""
       reifier r
 
+
+[<AutoOpen>]
 module compilation =
   let mutable loader = System.IO.File.ReadAllText
 
@@ -342,34 +344,33 @@ module compilation =
     | Some(Matches cx) -> cx
     | None -> []
 
-  let toolsFor t rp =
-    printfn "Determining pipeline for %s" (string t.Path)
+
+  type Target with
+  static member toolsFor t rp =
     match rp, t.Path with
     | ResourcePath(dx, fp), (File((Path px), FullName(f, ex))) ->
       let mx = globs rp
                |> Seq.zip (px @ [ (Segment(f + ex)) ])
                |> Seq.collect matchesExpression
-      match mx |> Seq.exists ((=) None) with
-      | false ->
-        printfn "Executing %A" fp.Tools
-        Some { Target = t
-               Represents = fp.Represents
-               Tools = fp.Tools
-               Captured =
-                 mx
-                 |> Seq.toList
-                 |> List.collect capture }
-      | _ ->
-          printfn "No matching tool chain"
-          None
+      if mx |> Seq.exists ((=) None) then
+         printfn "Executing %A against target %s" fp.Tools (string t.Path)
+         Some { Target = t
+                Represents = fp.Represents
+                Tools = fp.Tools
+                Captured =
+                   mx
+                   |> Seq.toList
+                   |> List.collect capture }
+      else
+         None
 
-  [<AutoOpen>]
-  module compilationuris =
-    let template = Uri.from ("http://ld.nice.org.uk/ns/compilation#template")
-    let represents = Uri.from ("http://ld.nice.org.uk/ns/compilation#represents")
-    let compilation = Uri.from ("http://ld.nice.org.uk/ns/compilation#Compilation")
-    let content = Uri.from ("http://ld.nice.org.uk/ns/compilation#content")
-    let path = Uri.from ("http://ld.nice.org.uk/ns/compilation#path")
+[<AutoOpen>]
+module compilationuris =
+  let template = Uri.from ("http://ld.nice.org.uk/ns/compilation#template")
+  let represents = Uri.from ("http://ld.nice.org.uk/ns/compilation#represents")
+  let compilation = Uri.from ("http://ld.nice.org.uk/ns/compilation#Compilation")
+  let content = Uri.from ("http://ld.nice.org.uk/ns/compilation#content")
+  let path = Uri.from ("http://ld.nice.org.uk/ns/compilation#path")
 
   let uriNode u (Graph g) = g.CreateUriNode(Uri.toSys u)
 

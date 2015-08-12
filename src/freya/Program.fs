@@ -42,6 +42,7 @@ let compile pth m p =
   use kbgFile =
     toFile (sprintf "%s/%s.ttl" (string pth) d) :> System.IO.TextWriter
   makeAll m prg.Targets
+  |> PSeq.toList
   |> PSeq.map (function
        | Failure(x, y) ->
          hasFailure := true
@@ -52,19 +53,19 @@ let compile pth m p =
        FSharp.RDF.Assertion.Assert.graph p prov |> ignore
        FSharp.RDF.Assertion.Assert.graph kbg extracted |> ignore)
   Graph.writeTtl provFile p
-  printfn "#Wrote provenance to: %s" provFn
+  printfn "Wrote provenance to: %s" provFn
   match !hasFailure with
   | true ->
-    printfn "#Build failed"
+    printfn "Build failed"
     1
   | false ->
-    printfn "#Build successful"
+    printfn "Build successful"
     Graph.writeTtl kbgFile kbg
     0
 
-let makeFiles() =
+let makeFiles from =
   System.IO.Directory.EnumerateFiles
-    (".", "build.fsx", System.IO.SearchOption.AllDirectories) |> List.ofSeq
+    (from, "build.fsx", System.IO.SearchOption.AllDirectories) |> List.ofSeq
 
 
 type Arguments =
@@ -72,6 +73,7 @@ type Arguments =
   | Provenance of string
   | Describe of string
   | Action of string
+  | Root of string
   | Output of string
   | Param of string * string
   interface IArgParserTemplate with
@@ -81,6 +83,7 @@ type Arguments =
       | Provenance _ -> "Path or url to input provenance"
       | Describe _ -> "Display actions available at path"
       | Action _ -> "Perform the specified action"
+      | Root _ -> "Directory to scan for build files"
       | Output _ -> "Directory to save compilaton output"
       | Param _ -> "Key value pair in the form key=value for action"
 
@@ -88,7 +91,6 @@ type Arguments =
 let main argv =
   let parser = UnionArgParser.Create<Arguments>()
   let args = parser.Parse argv
-  let makeOntology = Freya.Builder.resourcePaths()
   let toLower (s : string) = s.ToLower()
   let containsParam param = Seq.map toLower >> Seq.exists ((=) (toLower param))
   let paramIsHelp param =
@@ -98,7 +100,7 @@ let main argv =
                 %s""" (parser.Usage())
     exit 1
 
-  printfn "%A" <| Freya.Builder.exec (makeFiles())
+  let xrp = Freya.Builder.exec (makeFiles (args.GetResult <@ Root @> ))
   let prov =
     match args.TryGetResult <@ Provenance @> with
     | Some p ->
@@ -110,4 +112,4 @@ let main argv =
       |> Graph.addPrefixes (Uri.from "http://ld.nice.org.uk/prov") [("prov",Uri.from "http://www.w3.org/ns/prov#")]
       |> Graph
       |> Graph.threadSafe
-  compile (args.GetResult <@ Output @> |> Path.from) makeOntology (prov)
+  compile (args.GetResult <@ Output @> |> Path.from) xrp (prov)

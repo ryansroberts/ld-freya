@@ -64,9 +64,11 @@ type BuildScriptException(message:string, innerException:Exception) =
    inherit Exception(message, innerException)
 
 let exec xs =
+  printfn "Discovered build script at %A" xs
   let fsi = ScriptHost.CreateNew()
   for x in xs do
     try
+      printfn "Load build script %s" x
       fsi.Load x
     with
       | :? FsiEvaluationException as ev ->
