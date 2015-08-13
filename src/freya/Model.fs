@@ -18,18 +18,28 @@ type SysFile = System.IO.File
 
 type Path =
   | Path of Segment list
-  static member (++) (Path a, Path b) = Path(a @ b)
+  | AbsolutePath of Segment list
+  static member (++) (a,b) =
+    match a,b with
+    | AbsolutePath a, Path b
+    | AbsolutePath a,AbsolutePath b -> AbsolutePath (a @ b)
+    | Path a, AbsolutePath b
+    | Path a,Path b -> Path(a @ b)
   static member (++) (p, f) = File(p, f)
 
   override x.ToString() =
     match x with
     | Path xs -> System.String.Join("/", xs)
+    | AbsolutePath xs -> "/" + System.String.Join("/",xs)
+
+  static member segments = function
+    | Path xs | AbsolutePath xs -> xs
 
   static member from s =
     String.split [| '/' |] s
     |> Array.map Segment
     |> List.ofArray
-    |> Path
+    |> (if SysPath.IsPathRooted s then AbsolutePath else Path)
 
 and FileName = string
 
@@ -348,9 +358,9 @@ module compilation =
   type Target with
   static member toolsFor t rp =
     match rp, t.Path with
-    | ResourcePath(dx, fp), (File((Path px), FullName(f, ex))) ->
+    | ResourcePath(dx, fp), (File(p, FullName(f, ex))) ->
       let mx = globs rp
-               |> Seq.zip (px @ [ (Segment(f + ex)) ])
+               |> Seq.zip ((Path.segments p) @ [ (Segment(f + ex)) ])
                |> Seq.collect matchesExpression
       if mx |> Seq.exists ((=) None) then
          printfn "Executing %A against target %s" fp.Tools (string t.Path)

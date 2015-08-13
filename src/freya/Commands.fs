@@ -22,12 +22,12 @@ module Commands =
            @ List.map
                (fun t -> objectProperty !!"compilation:tool" (Tool.toUri t)) xt) ]
 
-  let describe xr (Path xs) =
+  let describe xr p =
     xr
     |> Seq.map (fun r ->
          let m =
            globs r
-           |> Seq.zip xs
+           |> Seq.zip (Path.segments p)
            |> Seq.collect matchesExpression
          match (Seq.exists ((=) None) m) with
          | true -> None

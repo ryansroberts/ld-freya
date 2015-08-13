@@ -123,7 +123,7 @@ let res = (makeAll [rp] provM.Targets) |> Array.ofSeq
 let ``Execute specified tools on compilation targets to produce ontology`` () =
   match res with
     | [|PipelineExecution.Success(t,{Provenance=_;Extracted=x;})|] -> x <>? []
-    | x -> failwithf "%A %A %A" x rp (provM.Targets |> List.ofSeq)
+    | x -> failwithf "exec - %A \n Resource - %A \n Targets - %A" x rp (provM.Targets |> List.ofSeq)
 
 let yamlContent =
     """
