@@ -362,7 +362,7 @@ module compilation =
       let mx = globs rp
                |> Seq.zip ((Path.segments p) @ [ (Segment(f + ex)) ])
                |> Seq.collect matchesExpression
-      if mx |> Seq.exists ((=) None) then
+      if mx |> Seq.exists ((=) None) |> not then
          printfn "Executing %A against target %s" fp.Tools (string t.Path)
          Some { Target = t
                 Represents = fp.Represents
