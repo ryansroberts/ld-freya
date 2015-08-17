@@ -37,10 +37,10 @@ let compile pth m p =
   let kbg =
     Graph.empty (Uri.from "https://ld.nice.org.uk") domainSpaces
     |> Graph.threadSafe
-  let provFn = sprintf "%s/%s.prov.compilation.ttl" (string pth) d
+  let provFn = sprintf "%s/%s/prov.compilation.ttl" (string pth) d
   use provFile = toFile provFn :> System.IO.TextWriter
   use kbgFile =
-    toFile (sprintf "%s/%s.ttl" (string pth) d) :> System.IO.TextWriter
+    toFile (sprintf "%s/%s/extracted.ttl" (string pth) d) :> System.IO.TextWriter
   makeAll m prg.Targets
   |> PSeq.toList
   |> PSeq.map (function

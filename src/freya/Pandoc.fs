@@ -160,7 +160,7 @@ module Pandoc =
           | HtmlFragment -> [ To "html5" ]
 
       let resourceUri =
-        Uri.from ("http://ld.nice.org.uk/" + (string (file (Path.from "artifacts"))))
+        Uri.from ("http://ld.nice.org.uk/" + (string (file (Path.from "/artifacts"))))
       let generationProv =
         generatedResource conv.ToolMatch resourceUri
           (KnowledgeBaseProcessor(MarkdownConvertor(t)))
