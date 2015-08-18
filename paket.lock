@@ -26,7 +26,7 @@ NUGET
       Newtonsoft.Json (>= 7.0 < 8.0)
     Newtonsoft.Json (7.0.1)
     NuGet.CommandLine (2.8.6)
-    Octokit (0.14.0)
+    Octokit (0.14.0) - framework: portable-net40+sl50+wp80+win80
       Microsoft.Net.Http
     SharpYaml (1.5.0)
     SourceLink.Fake (1.0.0)

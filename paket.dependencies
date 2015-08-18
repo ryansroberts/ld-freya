@@ -11,7 +11,7 @@ nuget FAKE
 nuget SharpYaml
 nuget SourceLink.Fake
 nuget UnionArgParser
-nuget FSharp.RDF
+nuget FSharp.RDF 1.0.74
 nuget xunit 1.9.2
 nuget xunit.runners 1.9.2
 nuget Unquote 2.2.2
