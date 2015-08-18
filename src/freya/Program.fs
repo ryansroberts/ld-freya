@@ -110,6 +110,5 @@ let main argv =
     | _ ->
       Graph.loadFrom (args.GetResult(<@ Provenance @>))
       |> Graph.addPrefixes (Uri.from "http://ld.nice.org.uk/prov") [("prov",Uri.from "http://www.w3.org/ns/prov#")]
-      |> Graph
       |> Graph.threadSafe
   compile (args.GetResult <@ Output @> |> Path.from) xrp (prov)

@@ -12,7 +12,7 @@ NUGET
     FSharp.Formatting (2.10.0)
       FSharp.Compiler.Service (>= 0.0.87)
       FSharpVSPowerTools.Core (1.8.0)
-    FSharp.RDF (1.0.72)
+    FSharp.RDF (1.0.74)
     FSharpVSPowerTools.Core (1.8.0)
       FSharp.Compiler.Service (>= 0.0.87)
     Microsoft.Bcl (1.1.10)

@@ -394,7 +394,6 @@ module compilationuris =
   let loadProvenance g =
     let g = g
             |> Graph.addPrefixes (Uri.from "http://ld.nice.org.uk/prov") [("prov",Uri.from "http://www.w3.org/ns/prov#")]
-            |> Graph
 
     let uses = "http://www.w3.org/ns/prov#uses" |> Uri.from
     let specialisationOf = "http://www.w3.org/ns/prov#specializationOf" |> Uri.from
