@@ -3,7 +3,7 @@ module TestSupport
 open System
 open VDS.RDF
 open VDS.RDF.Writing.Formatting
-open Xunit
+open NUnit.Framework
 open FSharp.RDF
 open System.Diagnostics
 open System.IO

@@ -13,9 +13,9 @@ nuget SharpYaml
 nuget SourceLink.Fake
 nuget UnionArgParser
 nuget FSharp.RDF
-nuget xunit 1.9.2
-nuget xunit.runners 1.9.2
 nuget Unquote 2.2.2
+nuget nunit
+nuget NUnit.Runners
 
 github fsharp/FAKE modules/Octokit/Octokit.fsx
 github matthid/Yaaf.FSharp.Scripting src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs

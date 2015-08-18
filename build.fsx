@@ -89,8 +89,14 @@ Target "Build" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Run the unit tests using test runner
 Target "RunTests" (fun _ ->
-  !!testAssemblies |> xUnit(fun p ->
-                        { p with TimeOut = TimeSpan.FromMinutes 20.}))
+    !! testAssemblies
+    |> NUnit (fun p ->
+        { p with
+            DisableShadowCopy = true
+            TimeOut = TimeSpan.FromMinutes 20.
+            OutputFile = "TestResults.xml" })
+)
+
 // --------------------------------------------------------------------------------------
 // Generate the documentation
 Target "GenerateReferenceDocs"

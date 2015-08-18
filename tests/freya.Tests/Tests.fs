@@ -2,7 +2,7 @@ module freya.Tests
 open Freya
 open System.Text.RegularExpressions
 open FSharp.RDF
-open Xunit
+open NUnit.Framework
 open Swensen.Unquote
 open compilation
 open Tools
@@ -36,7 +36,7 @@ let rp = Seq.head xrp
 
 loader <- (fun s -> "")
 
-[<Fact>]
+[<Test>]
 let ``Tools fail to match unless correctly configured``() =
   test <@ Target.toolsFor nonMatchingTarget rp = None @>
 let ``Match provenence entities to compilation tools``() =
@@ -101,7 +101,7 @@ let provM =
     |> Graph.addPrefixes (Uri.from "http://ld.nice.org.uk/prov") [("prov",Uri.from "http://www.w3.org/ns/prov#")]
     |> loadProvenance
 
-[<Fact>]
+[<Test>]
 let ``Translate provenence to compilation targets`` () =
 
   provM.Id =? Uri.from "http://ld.nice.org.uk/ns/prov#compilation_2015-02-23T12:12:47.2583040+00:00"
@@ -119,7 +119,7 @@ let ``Translate provenence to compilation targets`` () =
                      Content = (Uri.from "file:///testrepo/content.md","")}]
 let res = (makeAll [rp] provM.Targets) |> Array.ofSeq
 
-[<Fact>]
+[<Test>]
 let ``Execute specified tools on compilation targets to produce ontology`` () =
   match res with
     | [|PipelineExecution.Success(t,{Provenance=_;Extracted=x;})|] -> x <>? []
@@ -173,7 +173,7 @@ open Freya
 open Assertion
 open rdf
 
-[<Fact>]
+[<Test>]
 let ``Getting a description of a filepath`` () =
   let qs = describe [rp] (Path.from "qualitystandards/*") |> Seq.toList
   let g = Graph.empty !!"http://ld.nice.org.uk" [("compilation",!!"http://ld.nice.org.uk/ns/compilation#")]
