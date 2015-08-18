@@ -99,7 +99,6 @@ let prov = """@base <http://ld.nice.org.uk/prov>.
 let provM =
     Graph.loadTtl (graph.fromString prov)
     |> Graph.addPrefixes (Uri.from "http://ld.nice.org.uk/prov") [("prov",Uri.from "http://www.w3.org/ns/prov#")]
-    |> Graph
     |> loadProvenance
 
 [<Fact>]
