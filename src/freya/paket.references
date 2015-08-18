@@ -7,5 +7,5 @@ FSharp.Data
 FSharp.Collections.ParallelSeq
 FParsec
 NEST
-
-File: YaafFSharpScripting.fs 
+FSharp.Core
+File:YaafFSharpScripting.fs

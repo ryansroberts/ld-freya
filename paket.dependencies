@@ -3,6 +3,7 @@ source https://nuget.org/api/v2
 nuget ExtCore
 nuget FParsec
 nuget FSharp.Collections.ParallelSeq
+nuget FSharp.Core
 nuget FSharp.Data
 nuget FSharp.Formatting
 nuget NEST
@@ -11,11 +12,10 @@ nuget FAKE
 nuget SharpYaml
 nuget SourceLink.Fake
 nuget UnionArgParser
-nuget FSharp.RDF 1.0.74
+nuget FSharp.RDF
 nuget xunit 1.9.2
 nuget xunit.runners 1.9.2
 nuget Unquote 2.2.2
-nuget FSharp.Compiler.Service 0.0.87
 
 github fsharp/FAKE modules/Octokit/Octokit.fsx
 github matthid/Yaaf.FSharp.Scripting src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs

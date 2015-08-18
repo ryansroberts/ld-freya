@@ -28,9 +28,8 @@ module Tools =
 
   let private contentS t m _ =
     pipeline.succeed (semanticExtraction m t [])
-      [ owl.individual m.Target.Id [ m.Represents ]
-          [ a !!"owl:class"
-            dataProperty !!"http://www.w3.org/2011/content#chars" ((snd m.Target.Content) ^^ xsd.string) ] ]
+      [owl.individual m.Target.Id [ m.Represents ]
+          [dataProperty !!"http://www.w3.org/2011/content#chars" ((snd m.Target.Content) ^^ xsd.string) ] ]
 
   let content = step << contentS
 

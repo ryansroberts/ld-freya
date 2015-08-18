@@ -6,13 +6,14 @@ NUGET
     FAKE (4.1.4)
     FParsec (1.0.1)
     FSharp.Collections.ParallelSeq (1.0.2)
-    FSharp.Compiler.Service (0.0.87)
+    FSharp.Compiler.Service (1.4.0.1)
+    FSharp.Core (4.0.0.1)
     FSharp.Data (2.2.5)
       Zlib.Portable (>= 1.10.0) - framework: portable-net40+sl50+wp80+win80
     FSharp.Formatting (2.10.0)
       FSharp.Compiler.Service (>= 0.0.87)
       FSharpVSPowerTools.Core (1.8.0)
-    FSharp.RDF (1.0.74)
+    FSharp.RDF (1.0.83)
     FSharpVSPowerTools.Core (1.8.0)
       FSharp.Compiler.Service (>= 0.0.87)
     Microsoft.Bcl (1.1.10)
@@ -26,7 +27,7 @@ NUGET
       Newtonsoft.Json (>= 7.0 < 8.0)
     Newtonsoft.Json (7.0.1)
     NuGet.CommandLine (2.8.6)
-    Octokit (0.14.0) - framework: portable-net40+sl50+wp80+win80
+    Octokit (0.14.0)
       Microsoft.Net.Http
     SharpYaml (1.5.0)
     SourceLink.Fake (1.0.0)
