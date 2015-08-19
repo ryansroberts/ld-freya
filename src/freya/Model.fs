@@ -524,10 +524,10 @@ module Tracing =
   open System
 
   let private generationId cmp tool =
-    Uri.from (sprintf "%s-%s" (string cmp) (string (toolUri tool)))
+    Uri.from (sprintf "%s-%s" (string cmp) (Tool.name tool))
 
   let toolProv tm id tool xs =
-    let genId = (generationId tm.Target.Id (Tool.name tool))
+    let genId = (generationId tm.Target.Id (tool))
 
     let mime =
       Tool.toMime tool
