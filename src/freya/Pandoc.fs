@@ -139,10 +139,8 @@ module Pandoc =
       let compilationMessages (x : Statement list) = (x, [])
       let target = conv.ToolMatch.Target
       let file root =
-        root
-        ++ Path.from (Uri.fragment conv.ToolMatch.Target.Commit)
-        ++ Path.from (mimeTypeDir t)
-        ++ File.path target.Path
+        root ++ Path.from (Uri.fragment conv.ToolMatch.Target.Commit)
+        ++ Path.from (mimeTypeDir t) ++ File.path target.Path
         ++ FullName(File.name target.Path, extension t)
 
       let args =
@@ -160,16 +158,16 @@ module Pandoc =
           | HtmlFragment -> [ To "html5" ]
 
       let resourceUri =
-        Uri.from ("http://ld.nice.org.uk" + (string (file (Path.from "/artifacts"))))
+        Uri.from
+          ("http://ld.nice.org.uk" + (string (file (Path.from "/artifacts"))))
       let generationProv =
-        generatedResource conv.ToolMatch resourceUri
-          (KnowledgeBaseProcessor(MarkdownConvertor(t)))
+        generatedResource conv.ToolMatch resourceUri (Pandoc t)
       if File.exists (file conv.Output) then
         (generationProv [ warn "Resource already exists" (resourceLocation r) ])
       else
         match r with
-        | FunctionalDataProperty (Uri.from "http://www.w3.org/2011/content#chars") (FSharp.RDF.xsd.string)
-          content ->
+        | FunctionalDataProperty (Uri.from "http://www.w3.org/2011/content#chars")
+          (FSharp.RDF.xsd.string) content ->
           let (exit, stdout, stderr) =
             asyncShellExec
               { Program = "pandoc"

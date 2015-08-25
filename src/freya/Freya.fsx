@@ -12,4 +12,3 @@
 #r "../../Packages/FSharp.Formatting/lib/net40/FSharp.Markdown.dll"
 
 open FSharp.RDF
-

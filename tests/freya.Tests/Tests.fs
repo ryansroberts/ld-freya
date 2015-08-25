@@ -152,6 +152,20 @@ let tm = { Target = matchingYamlTarget
            Tools = [ SemanticExtractor(Content) ]
            Captured =[] }
 
+open YamlParser
+let translate = function
+  | YNode.Map xs ->
+    [ for (prefix, YNode.Map xs') in xs do
+        for (property, YNode.List xs'') in xs' do
+          for (YNode.Scalar n) in xs'' do
+            let predicate = P(Uri.from(sprintf "%s:%s" prefix property))
+            match n with
+            | String s ->
+              yield (predicate, O(Node.Literal(Literal.String s), lazy []))
+            | Scalar.Uri u -> yield (predicate, O(Node.from u, lazy [])) ]
+
+
+
 open resource
 //Yaml extraction going to change
 let ``Extract arbitrary statements from YAML metadata`` () =
