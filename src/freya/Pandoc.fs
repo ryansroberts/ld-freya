@@ -149,12 +149,12 @@ module Pandoc =
         [ From "markdown"
           Output(string (Path.ensurePathExists (file conv.Output)))
           Smart
-          Normalize
-          Self_Contained ]
+          Normalize ]
         @ match t with
           | Pdf -> [ Latex_Engine "lualatex" ]
           | HtmlDocument ->
             [ Standalone
+              Self_Contained
               To "html5" ]
           | Docx -> [ To "docx" ]
           | HtmlFragment -> [ To "html5" ]
