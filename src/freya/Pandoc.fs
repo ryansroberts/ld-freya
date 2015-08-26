@@ -161,7 +161,7 @@ module Pandoc =
         Uri.from
           ("http://ld.nice.org.uk" + (string (file (Path.from "/artifacts"))))
       let generationProv =
-        generatedResource conv.ToolMatch resourceUri (Pandoc t)
+        generatedResource conv.ToolMatch resourceUri t
       if File.exists (file conv.Output) then
         (generationProv [ warn "Resource already exists" (resourceLocation r) ])
       else

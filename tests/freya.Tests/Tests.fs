@@ -42,7 +42,7 @@ let ``Tools fail to match unless correctly configured``() =
 let ``Match provenence entities to compilation tools``() =
     test <@ Target.toolsFor matchingTarget rp = Some({ Target = matchingTarget
                                                        Represents = (Uri.from "http://ld.nice.org.uk/ns/qualitystandard#QualityStatement")
-                                                       Tools = [SemanticExtractor(YamlMetadata);SemanticExtractor(Content)]
+                                                       Tools = [Freya.Builder.content]
                                                        Captured =
                                                             [ ("QualityStandardId", "1")
                                                               ("QualityStatementId", "23") ] }) @>
@@ -122,7 +122,9 @@ let res = (makeAll [rp] provM.Targets) |> Array.ofSeq
 [<Test>]
 let ``Execute specified tools on compilation targets to produce ontology`` () =
   match res with
-    | [|PipelineExecution.Success(t,{Provenance=_;Extracted=x;})|] -> x <>? []
+    | [|PipelineExecution.Success(t,{Provenance=_;Extracted=x;})|] ->
+         printfn "%A" x
+         x <>? []
     | x -> failwithf "exec - %A \n Resource - %A \n Targets - %A" x rp (provM.Targets |> List.ofSeq)
 
 let yamlContent =
@@ -149,38 +151,10 @@ let matchingYamlTarget = {
 
 let tm = { Target = matchingYamlTarget
            Represents = (Uri.from "http://ld.nice.org.uk/ns/qualitystandard#QualityStatement")
-           Tools = [ SemanticExtractor(Content) ]
+           Tools = [ Freya.Builder.content ]
            Captured =[] }
 
-open YamlParser
-let translate = function
-  | YNode.Map xs ->
-    [ for (prefix, YNode.Map xs') in xs do
-        for (property, YNode.List xs'') in xs' do
-          for (YNode.Scalar n) in xs'' do
-            let predicate = P(Uri.from(sprintf "%s:%s" prefix property))
-            match n with
-            | String s ->
-              yield (predicate, O(Node.Literal(Literal.String s), lazy []))
-            | Scalar.Uri u -> yield (predicate, O(Node.from u, lazy [])) ]
 
-
-
-open resource
-//Yaml extraction going to change
-let ``Extract arbitrary statements from YAML metadata`` () =
-  let r = Tools.yamlMetadata (SemanticExtractor(YamlMetadata)) (PipelineStep (tm,[]))
-  match r with
-    | PipelineStep(t,[ToolExecution.Success{Provenance=[d;g];Extracted=r::rx}]) ->
-      match r with
-        | DataProperty (Uri.from "prefix:property") xsd.string [v1;v2] ->
-          [v1;v2] =? ["Value 1";"Value 2"]
-      match r with
-        | ObjectProperty (Uri.from "prefix:objectProperty") [x] ->
-          x =? Uri.from "prefix:fragment"
-      match d with
-        | ObjectProperty (Uri.from "prov:wasDerivedFrom") [x] ->
-          x =? matchingYamlTarget.Id
 
 open Commands
 open Freya

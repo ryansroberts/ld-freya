@@ -20,27 +20,27 @@ type ExtractionContext<'a> =
 type ExtractionResult =
   { Trace : Statement list
     Extracted : Resource list }
-
-let docx = Pandoc Docx
-let pdf = Pandoc Pdf
-let html = Pandoc HtmlFragment
 //Naughty global mutable state, could refactor but it simplifies the implementation quite a bit
 let private tools = Dictionary<_, _>()
 let private dependencies = Dictionary<_, _>()
 let private notRoot = List<_>()
 let private targets = Dictionary<_, _>()
 
-let inline extractor n f =
+tools.Add("Docx",Pandoc Docx)
+tools.Add("Pdf",Pandoc Pdf)
+tools.Add("HtmlFragment",Pandoc HtmlFragment)
+
+let extractor n f =
   let t =
     SemanticExtractor
       (Name n,
-       (fun m xr ->
-       match f ({ Represents = m.Represents
-                  TargetId = m.Target.Id
-                  Path = m.Target.Path
-                  Content = m.Target.Content |> snd }) with
-       | { Trace = trace; Extracted = extracted } ->
-         pipeline.succeed (Tracing.semanticExtraction m t trace) extracted))
+       ToolFn (fun m xr ->
+                match f ({ Represents = m.Represents
+                           TargetId = m.Target.Id
+                           Path = m.Target.Path
+                           Content = m.Target.Content |> snd }) with
+                | { Trace = trace; Extracted = extracted } ->
+                  pipeline.succeed (Tracing.semanticExtraction m (Name n) trace) extracted))
   tools.Add(n, t)
   t
 
@@ -61,7 +61,11 @@ let yamlExtractor n f =
   extractor n (fun x ->
     let md = Markdown.Parse x.Content
     match md.Paragraphs with
-    | CodeBlock(yaml, _, _) :: _ -> YamlParser.parse yaml |> f
+    | CodeBlock(yaml, _, _) :: _ -> f {
+       Represents = x.Represents
+       TargetId = x.TargetId
+       Path = x.Path
+       Content = YamlParser.parse yaml }
     | _ ->
       { Trace =
           [ Tracing.warn "No valid yaml block at start of file"
