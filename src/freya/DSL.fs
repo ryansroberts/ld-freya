@@ -1,5 +1,5 @@
 module Freya.Builder
-
+open Freya
 open FSharp.RDF
 open System.Collections.Generic
 open System

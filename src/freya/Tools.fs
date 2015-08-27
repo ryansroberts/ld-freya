@@ -5,11 +5,10 @@ open FSharp.Markdown
 open Assertion
 open rdf
 open owl
-open Tracing
-open YamlParser
-open ExtCore
-open ExtCore.Collections
+open Freya.Tracing
+open Freya.YamlParser
 open System
+open Freya
 
 module Tools =
   let either = function

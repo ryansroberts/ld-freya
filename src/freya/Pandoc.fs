@@ -127,7 +127,7 @@ module Pandoc =
       | Pdf -> ".pdf"
       | HtmlDocument | HtmlFragment -> ".html"
 
-  let private parser = UnionArgParser.Create<PandocArgs>()
+  let private parser = new UnionArgParser<PandocArgs>()
 
   open Assertion
   open Assertion.rdf

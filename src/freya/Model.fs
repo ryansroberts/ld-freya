@@ -1,6 +1,5 @@
 namespace Freya
 
-open VDS.RDF
 open System.Text.RegularExpressions
 open FSharp.RDF
 open resource
