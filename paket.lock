@@ -3,7 +3,7 @@ NUGET
   specs:
     Elasticsearch.Net (1.7.0)
     ExtCore (0.8.45)
-    FAKE (4.3.0)
+    FAKE (4.3.2)
     FParsec (1.0.1)
     FSharp.Collections.ParallelSeq (1.0.2)
     FSharp.Compiler.Service (1.4.0.1)
@@ -13,7 +13,7 @@ NUGET
     FSharp.Formatting (2.10.0)
       FSharp.Compiler.Service (>= 0.0.87)
       FSharpVSPowerTools.Core (1.8.0)
-    FSharp.RDF (1.0.84)
+    FSharp.RDF (1.0.88)
     FSharpVSPowerTools.Core (1.8.0)
       FSharp.Compiler.Service (>= 0.0.87)
     Microsoft.Bcl (1.1.10)
@@ -39,7 +39,7 @@ NUGET
 GITHUB
   remote: fsharp/FAKE
   specs:
-    modules/Octokit/Octokit.fsx (52a1c3f13641a7e34ecffb63c2e6a94d639d3162)
+    modules/Octokit/Octokit.fsx (119eb12b9ee247811abbd1916711104fed1988ec)
       Octokit
   remote: matthid/Yaaf.FSharp.Scripting
   specs:

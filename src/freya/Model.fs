@@ -568,10 +568,7 @@ module Tracing =
     [ derived; generation ]
 
   let alternateRepresentation tm id =
-    [ rdf.resource id
-        [ objectProperty !!"http://www.w3.org/ns/prov#alternateOf" tm.Target.Id ]
-
-      rdf.resource tm.Target.Id
+    [ rdf.resource tm.Target.Id
         [ objectProperty !!"http://www.w3.org/ns/prov#alternateOf" id ] ]
 
   let semanticExtraction tm (Name n) =

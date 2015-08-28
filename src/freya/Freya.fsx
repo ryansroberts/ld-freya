@@ -23,7 +23,7 @@
 #r "../../packages/FSharp.Compiler.Service/lib/net40/FSharp.Compiler.Service.dll"
 #load "Model.fs"
 #load "Yaml.fs"
-#load "GuardedAwaitObservable.fs"
+#load "GuardedAwaitObservable.s"
 #load "Pandoc.fs"
 #load "../../paket-files/matthid/Yaaf.FSharp.Scripting/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs"
 #load "Tools.fs"
@@ -90,11 +90,11 @@ open rdf
 
 let owlAllValuesFrom property  = function
   | [] -> []
-  | ranges -> [
-  blank !!"owl:subClassOf"
-    ([ a !!"owl:Restriction"
-       objectProperty !!"owl:onProperty" property ]
-     @ List.map (objectProperty !!"owl:allValuesFrom") ranges)
+  | ranges -> [for range in ranges -> 
+  blank !!"rdfs:subClassOf"
+    [ a !!"owl:Restriction"
+      objectProperty !!"owl:onProperty" property
+      objectProperty !!"owl:allValuesFrom" range]
   ]
 
 let qsAnnotations ctx =

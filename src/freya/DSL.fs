@@ -50,7 +50,7 @@ let content =
     (fun x ->
     { Trace = []
       Extracted =
-        [ owl.individual x.TargetId [ x.Represents ]
+        [ owl.pun x.TargetId [ x.Represents ]
             [ rdf.dataProperty !!"http://www.w3.org/2011/content#chars"
                 (x.Content ^^ xsd.string) ] ] })
 

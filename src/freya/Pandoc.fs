@@ -165,16 +165,13 @@ module Pandoc =
       if File.exists (file conv.Output) then
         (generationProv [ warn "Resource already exists" (resourceLocation r) ])
       else
-        match r with
-        | FunctionalDataProperty (Uri.from "http://www.w3.org/2011/content#chars")
-          (FSharp.RDF.xsd.string) content ->
           let (exit, stdout, stderr) =
             asyncShellExec
               { Program = "pandoc"
                 WorkingDirectory = string (conv.WorkingDir)
                 CommandLine = parser.PrintCommandLine args |> String.concat " "
                 StdIn =
-                  new MemoryStream(System.Text.Encoding.UTF8.GetBytes content) :> Stream
+                  new MemoryStream(System.Text.Encoding.UTF8.GetBytes (snd conv.ToolMatch.Target.Content)) :> Stream
                   |> Some }
             |> Async.RunSynchronously
 
@@ -187,8 +184,4 @@ module Pandoc =
              [ log
                  (sprintf "Pandoc conversion %A \r %s \r %s" args
                     (String.concat "" stdout) (String.concat "" stderr))
-                 (resourceLocation r) ])
-        | _ ->
-          (generationProv
-             [ error (sprintf "No content statement - failed to convert %A" r)
                  (resourceLocation r) ])
