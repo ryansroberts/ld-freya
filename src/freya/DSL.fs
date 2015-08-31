@@ -29,6 +29,7 @@ let private targets = Dictionary<_, _>()
 tools.Add("Docx",Pandoc Docx)
 tools.Add("Pdf",Pandoc Pdf)
 tools.Add("HtmlFragment",Pandoc HtmlFragment)
+tools.Add("HtmlDocument",Pandoc HtmlFragment)
 
 let extractor n f =
   let t =
@@ -48,7 +49,7 @@ let extractor n f =
 let content =
   extractor "Content"
     (fun x ->
-    { Trace = []
+    { Trace = [Tracing.info "Extrated content from raw" (Tracing.fileLocation x.Path)]
       Extracted =
         [ owl.pun x.TargetId [ x.Represents ]
             [ rdf.dataProperty !!"http://www.w3.org/2011/content#chars"
@@ -61,11 +62,19 @@ let yamlExtractor n f =
   extractor n (fun x ->
     let md = Markdown.Parse x.Content
     match md.Paragraphs with
-    | CodeBlock(yaml, _, _) :: _ -> f {
+    | CodeBlock(yaml, _, _) :: _ ->
+      try
+      f {
        Represents = x.Represents
        TargetId = x.TargetId
        Path = x.Path
        Content = YamlParser.parse yaml }
+      with
+      | :? SharpYaml.YamlException as e ->
+       {Trace =
+          [ Tracing.warn (sprintf "Yaml parse error %s" e.Message)
+              (Tracing.fileLocation x.Path) ]
+        Extracted = [] }
     | _ ->
       { Trace =
           [ Tracing.warn "No valid yaml block at start of file"

@@ -23,7 +23,7 @@
 #r "../../packages/FSharp.Compiler.Service/lib/net40/FSharp.Compiler.Service.dll"
 #load "Model.fs"
 #load "Yaml.fs"
-#load "GuardedAwaitObservable.s"
+#load "GuardedAwaitObservable.fs"
 #load "Pandoc.fs"
 #load "../../paket-files/matthid/Yaaf.FSharp.Scripting/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs"
 #load "Tools.fs"
@@ -51,20 +51,20 @@ let vocabLookup uri =
 
 let lookupVocab =
   ([ "setting",
-     vocabLookup "http://192.168.59.103/ns/qualitystandard/setting.ttl"
+     vocabLookup "http://192.168.99.100/ns/qualitystandard/setting.ttl"
 
      "agegroup",
-     vocabLookup "http://192.168.59.103/ns/qualitystandard/agegroup.ttl"
+     vocabLookup "http://192.168.99.100/ns/qualitystandard/agegroup.ttl"
 
      "lifestylecondition",
      vocabLookup
-       "http://192.168.59.103/ns/qualitystandard/lifestylecondition.ttl"
+       "http://192.168.99.100/ns/qualitystandard/lifestylecondition.ttl"
 
      "conditiondisease",
-     vocabLookup "http://192.168.59.103/ns/qualitystandard/conditiondisease.ttl"
+     vocabLookup "http://192.168.99.100/ns/qualitystandard/conditiondisease.ttl"
 
      "servicearea",
-     vocabLookup "http://192.168.59.103/ns/qualitystandard/servicearea.ttl" ]
+     vocabLookup "http://192.168.99.100/ns/qualitystandard/servicearea.ttl" ]
    |> Map.ofList)
 
 let lookupProperty =
@@ -90,14 +90,10 @@ open rdf
 
 let owlAllValuesFrom property  = function
   | [] -> []
-  | ranges -> [for range in ranges -> 
-  blank !!"rdfs:subClassOf"
-    [ a !!"owl:Restriction"
-      objectProperty !!"owl:onProperty" property
-      objectProperty !!"owl:allValuesFrom" range]
-  ]
+  | ranges -> [for range in ranges -> objectProperty property range]
 
 let qsAnnotations ctx =
+  printfn "%A" ctx.Content
   let message f x = f x (Tracing.fileLocation ctx.Path)
   let info = message Tracing.info
   let warn = message Tracing.warn
@@ -134,7 +130,7 @@ let qsAnnotations ctx =
 
   { Trace = List.concat (List.map fst extracted)
     Extracted =  List.map snd extracted
-                 |> List.map (owl.cls ctx.TargetId [] )}
+                 |> List.map (owl.individual ctx.TargetId [] )}
 
 let r = (qsAnnotations {
   Represents =
@@ -143,20 +139,27 @@ let r = (qsAnnotations {
                   !!"http://ld.nice.org.uk/entity#3decd:/qualitystandards/qs1/st2/Statement.md"
   Path = File.from "qualitystandards/qs1/st2/Statement.md"
   Content = YamlParser.parse """
+
 Setting:
-  - "Outpatient clinic"
+  - "Hospital"
+  - "Care home"
+  - "Community"
+  - "Hospice"
+  - "Primary care setting"
 Age Group:
-  - "Adults 18-24"
-  - "Adults 25-64"
-  - "Young people"
+  -
+  - "Older adults"
+Condition Disease:
+  - "Dementia"
 Service area:
-  - "Maternity care"
-Condition disease:
-  - "Pregnancy"
-Lifestyle condition:
-  - "Physical activity"
-  - "Unhealthy eating habits"
-  """ })
+  - "Community health care"
+  - "End of life care"
+  - "Mental health care"
+  - "Primary care"
+  - "Secondary medical care"
+  - "Social care"
+  - "Urgent and emergency care"
+""" })
 
 let g = Graph.unnamed []
 

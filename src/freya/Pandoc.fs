@@ -30,25 +30,22 @@ module Pandoc =
       WorkingDirectory : string
       /// Command-line parameters in a string.
       CommandLine : string
-      ///Optional stream to pipe to stdin
-      StdIn : Stream option }
+      ///Optional string to pipe to stdin
+      StdIn : string }
 
   type ProcessResult = int * string list * string list
 
   let startedProcesses = HashSet()
 
   let start (proc : Process) =
-    if proc.StartInfo.FileName.ToLowerInvariant().EndsWith(".exe") then
-      proc.StartInfo.Arguments <- "--debug \"" + proc.StartInfo.FileName + "\" "
-                                  + proc.StartInfo.Arguments
-      proc.StartInfo.FileName <- "mono"
     proc.Start() |> ignore
     startedProcesses.Add(proc.Id, (proc.StartTime)) |> ignore
 
   let asyncShellExec (args : ExecParams) =
     async {
-      let stdout = ref []
-      let stderr = ref []
+      let stdout = new System.Text.StringBuilder ()
+      let stderr = new System.Text.StringBuilder ()
+
       if String.IsNullOrEmpty args.Program then
         invalidArg "args" "You must specify a program to run!"
       let info =
@@ -58,27 +55,26 @@ module Pandoc =
            WindowStyle = ProcessWindowStyle.Hidden,
            WorkingDirectory = args.WorkingDirectory,
            Arguments = args.CommandLine,
-           RedirectStandardInput = (Option.isSome args.StdIn))
+           RedirectStandardInput = true)
       use proc = new Process(StartInfo = info)
       proc.ErrorDataReceived.Add(fun e ->
-        if e.Data <> null then stderr := e.Data :: !stderr)
+        if e.Data <> null then stderr.Append e.Data |> ignore)
       proc.OutputDataReceived.Add(fun e ->
-        if e.Data <> null then stdout := e.Data :: !stdout)
+        if e.Data <> null then stdout.Append e.Data |> ignore)
+
       start proc
       proc.BeginOutputReadLine()
       proc.BeginErrorReadLine()
-      match args.StdIn with
-      | Some x ->
-        try
-          x.CopyTo proc.StandardInput.BaseStream
-          proc.StandardInput.Close()
-        with _ -> ()
-      | None -> ()
+      proc.StandardInput.Write(args.StdIn)
+      proc.StandardInput.Close()
+
+      printfn "%s %A " args.StdIn proc.HasExited
+
       // attaches handler to Exited event, enables raising events, then awaits event
       // the event gets triggered even if process has already finished
       let! _ = Freya.Async.GuardedAwaitObservable proc.Exited
                  (fun _ -> proc.EnableRaisingEvents <- true)
-      return (proc.ExitCode, !stdout, !stderr)
+      return (proc.ExitCode, stdout.ToString(), stderr.ToString())
     }
 
   type PandocArgs =
@@ -170,9 +166,8 @@ module Pandoc =
               { Program = "pandoc"
                 WorkingDirectory = string (conv.WorkingDir)
                 CommandLine = parser.PrintCommandLine args |> String.concat " "
-                StdIn =
-                  new MemoryStream(System.Text.Encoding.UTF8.GetBytes (snd conv.ToolMatch.Target.Content)) :> Stream
-                  |> Some }
+                StdIn = (snd conv.ToolMatch.Target.Content)
+              }
             |> Async.RunSynchronously
 
           let log =
@@ -182,6 +177,5 @@ module Pandoc =
 
           (generationProv
              [ log
-                 (sprintf "Pandoc conversion %A \r %s \r %s" args
-                    (String.concat "" stdout) (String.concat "" stderr))
+                 (sprintf "Pandoc conversion %A \r %s \r %s" args stdout stderr)
                  (resourceLocation r) ])

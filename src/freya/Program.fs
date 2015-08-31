@@ -43,7 +43,6 @@ let compile pth m p =
   use kbgFile =
     toFile (sprintf "%s/%s/extracted.ttl" (string pth) d) :> System.IO.TextWriter
   makeAll m prg.Targets
-  |> PSeq.toList
   |> PSeq.map (function
        | Failure(x, y) ->
          hasFailure := true

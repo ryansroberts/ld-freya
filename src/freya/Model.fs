@@ -34,12 +34,11 @@ type Path =
 
   static member segments = function
     | Path xs | AbsolutePath xs -> xs
-  static member from s =
-    String.split [| '/' |] s
-    |> Array.map Segment
-    |> List.ofArray
-    |> (if SysPath.IsPathRooted s then AbsolutePath
-        else Path)
+    static member from s =
+      let segments = String.split [| '/' |] s
+      let combine = Array.map Segment >> List.ofArray
+      if SysPath.IsPathRooted s then combine (Array.skip 1 segments) |> AbsolutePath
+      else combine segments |> Path
 
 and FileName = string
 
