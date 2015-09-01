@@ -5,6 +5,11 @@ open FSharp.RDF
 open resource
 open ExtCore
 
+[<AutoOpen>]
+module prelude =
+  let inline (|?) (a : 'a option) b =
+    if a.IsSome then a.Value else b
+
 type Segment =
   | Segment of string
   override x.ToString() =
@@ -34,11 +39,18 @@ type Path =
 
   static member segments = function
     | Path xs | AbsolutePath xs -> xs
-    static member from s =
+
+  static member from s =
       let segments = String.split [| '/' |] s
-      let combine = Array.map Segment >> List.ofArray
-      if SysPath.IsPathRooted s then combine (Array.skip 1 segments) |> AbsolutePath
+      let combine = Seq.map Segment >> List.ofSeq
+      if SysPath.IsPathRooted s then combine (Seq.skip 1 segments) |> AbsolutePath
       else combine segments |> Path
+
+  static member ensurePathExists (File(p, f)) =
+    let d = System.IO.DirectoryInfo(string p)
+    d.Create()
+    File(p, f)
+
 
 and FileName = string
 
@@ -54,6 +66,8 @@ and File =
     match x with
     | File(p, FullName(f, e)) -> sprintf "%s/%s%s" (string p) f e
 
+  static member exists (f : File) = System.IO.File.Exists(string f)
+
   static member from s =
     File
       (SysPath.GetDirectoryName s |> Path.from,
@@ -62,28 +76,6 @@ and File =
   static member fullname (File(_, x)) = x
   static member name (File(_, (FullName(x, _)))) = x
   static member write s f = SysFile.WriteAllText(string f, s)
-
-[<AutoOpen>]
-module prelude =
-  let inline (|?) (a : 'a option) b =
-    if a.IsSome then a.Value
-    else b
-
-  type Path with
-
-    static member ensurePathExists (File(p, f)) =
-      let d = System.IO.DirectoryInfo(string p)
-      d.Create()
-      File(p, f)
-
-    static member from s =
-      String.split [| '/' |] s
-      |> Array.map Segment
-      |> Array.toList
-      |> Path.Path
-
-  type File with
-    static member exists (f : File) = System.IO.File.Exists(string f)
 
 type Target =
   { Id : Uri

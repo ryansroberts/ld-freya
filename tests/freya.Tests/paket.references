@@ -3,3 +3,4 @@ Unquote
 FSharp.Collections.ParallelSeq
 NEST
 nunit
+FSharp.Core
