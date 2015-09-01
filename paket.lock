@@ -28,7 +28,7 @@ NUGET
     NuGet.CommandLine (2.8.6)
     NUnit (2.6.4)
     NUnit.Runners (2.6.4)
-    Octokit (0.14.0) - framework: portable-net40+sl50+wp80+win80
+    Octokit (0.14.0)
       Microsoft.Net.Http
     SharpYaml (1.5.0)
     SourceLink.Fake (1.1.0)
