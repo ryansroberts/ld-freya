@@ -68,8 +68,6 @@ module Pandoc =
       proc.StandardInput.Write(args.StdIn)
       proc.StandardInput.Close()
 
-      printfn "%s %A " args.StdIn proc.HasExited
-
       // attaches handler to Exited event, enables raising events, then awaits event
       // the event gets triggered even if process has already finished
       let! _ = Freya.Async.GuardedAwaitObservable proc.Exited
