@@ -51,7 +51,7 @@ let content =
     (fun x ->
     { Trace = [Tracing.info "Extrated content from raw" (Tracing.fileLocation x.Path)]
       Extracted =
-        [ owl.pun x.TargetId [ x.Represents ]
+        [ owl.individual x.TargetId [ x.Represents ]
             [ rdf.dataProperty !!"http://www.w3.org/2011/content#chars"
                 (x.Content ^^ xsd.string) ] ] })
 
