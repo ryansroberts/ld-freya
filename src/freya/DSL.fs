@@ -61,8 +61,9 @@ open FSharp.Markdown
 let yamlExtractor n f =
   extractor n (fun x ->
     let md = Markdown.Parse x.Content
-    match md.Paragraphs with
-    | CodeBlock(yaml, _, _) :: _ ->
+    let yamlBlock = function CodeBlock(yaml, _, _) -> Some yaml | _ -> None
+    match md.Paragraphs |> List.choose yamlBlock with
+    | yaml:: _ ->
       try
       f {
        Represents = x.Represents
@@ -77,7 +78,7 @@ let yamlExtractor n f =
         Extracted = [] }
     | _ ->
       { Trace =
-          [ Tracing.warn "No valid yaml block at start of file"
+          [ Tracing.warn (sprintf "No valid yaml block at start of file - %A" md)
               (Tracing.fileLocation x.Path) ]
         Extracted = [] })
 
