@@ -78,7 +78,7 @@ let yamlExtractor n f =
         Extracted = [] }
     | _ ->
       { Trace =
-          [ Tracing.warn (sprintf "No valid yaml block at start of file - %A" md.Paragraphs)
+          [ Tracing.warn (sprintf "No valid yaml block at start of file %s \n---- %A" x.Content md.Paragraphs)
               (Tracing.fileLocation x.Path) ]
         Extracted = [] })
 
