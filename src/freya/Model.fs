@@ -522,8 +522,8 @@ module Tracing =
                            (fst tm.Target.Content)
 
                          blank
-                           !!"http://www.w3.org/ns/prov#qualifiedDeriviation"
-                           [ a !!"http://www.w3.org/ns/prov#Deriviation"
+                           !!"http://www.w3.org/ns/prov#qualifiedDerivation"
+                           [ a !!"http://www.w3.org/ns/prov#Derivation"
 
                              objectProperty !!"http://www.w3.org/ns/prov#entity"
                                (fst tm.Target.Content)
