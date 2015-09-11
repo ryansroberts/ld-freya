@@ -1,3 +1,4 @@
+redirects: on
 source https://nuget.org/api/v2
 
 nuget ExtCore
@@ -5,6 +6,7 @@ nuget FParsec
 nuget FSharp.Collections.ParallelSeq
 nuget FSharp.Data
 nuget FSharp.Formatting
+nuget FSharp.Text.RegexProvider
 nuget NEST
 nuget Nuget.CommandLine
 nuget FAKE

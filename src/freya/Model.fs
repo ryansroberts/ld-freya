@@ -522,8 +522,8 @@ module Tracing =
                            (fst tm.Target.Content)
 
                          blank
-                           !!"http://www.w3.org/ns/prov#qualifiedDerivation"
-                           [ a !!"http://www.w3.org/ns/prov#Derivation"
+                           !!"http://www.w3.org/ns/prov#qualifiedDerivi"
+                           [ a !!"http://www.w3.org/ns/prov#Deriviation"
 
                              objectProperty !!"http://www.w3.org/ns/prov#entity"
                                (fst tm.Target.Content)
@@ -558,9 +558,9 @@ module Tracing =
 
     [ derived; generation ]
 
-  let alternateRepresentation tm id =
-    [ rdf.resource tm.Target.Id
-        [ objectProperty !!"http://www.w3.org/ns/prov#alternateOf" id ] ]
+  let alternateRepresentation tm id = []
+    ///[ rdf.resource tm.Target.Id
+    ///    [ objectProperty !!"http://www.w3.org/ns/prov#alternateOf" id ] ]
 
   let semanticExtraction tm (Name n) =
     toolProv tm tm.Target.Id (Uri.from (sprintf "%s-%s" (string tm.Target.Id ) n)) None

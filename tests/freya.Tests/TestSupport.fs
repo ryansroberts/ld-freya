@@ -48,4 +48,4 @@ let showDifferences (report:VDS.RDF.GraphDiffReport) = [
 
 let graphsAreSame g g' =
   let diff = Graph.diff g g'
-  Assert.True(diff.AreEqual ,showDifferences diff |> String.concat Environment.NewLine)
+  Assert.True(Diff.equal diff,(string) diff)

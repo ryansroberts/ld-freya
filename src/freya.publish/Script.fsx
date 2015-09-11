@@ -1,4 +1,6 @@
+#I "../../bin"
 #r "../../packages/json-ld.net/lib/net40-Client/JsonLD.dll"
+#r "../../packages/FSharp.RDF/lib/FSharp.RDF.dll"
 #r "../../packages/Newtonsoft.Json/lib/net40/Newtonsoft.Json.dll"
 #r "../../packages/VDS.Common/lib/net40-client/VDS.Common.dll"
 #r "../../packages/ExtCore/lib/net40/ExtCore.dll"
@@ -11,49 +13,36 @@
 #r "../../packages/FSharp.Data/lib/net40/FSharp.Data.dll"
 #r "../../packages/FSharp.Formatting/lib/net40/FSharp.Markdown.dll"
 #I "../../packages/FSharp.RDF/lib"
-#I "../../packages"
 #r "../../packages/ExtCore/lib/net40/ExtCore.dll"
 #r "../../packages/dotNetRDF/lib/net40/dotNetRDF.dll"
 #r "../../packages/FParsec/lib/net40-client/FParsec.dll"
 #r "../../packages/UnionArgParser/lib/net40/UnionArgParser.dll"
 #r "../../packages/SharpYaml/lib/SharpYaml.dll"
-#r "../../packages/FSharp.RDF/lib/FSharp.RDF.dll"
 #r "../../packages/FSharpx.Core/lib/40/FSharpx.Core.dll"
+#r "../../packages/FSharp.Compiler.Service/lib/net45/FSharp.Compiler.Service.dll"
 #r "../../packages/FSharp.Collections.ParallelSeq/lib/net40/FSharp.Collections.ParallelSeq.dll"
-#r "../../packages/FSharp.Compiler.Service/lib/net40/FSharp.Compiler.Service.dll"
-#r "../../bin/freya.exe"
+#r "../../bin/freya.publish.exe"
+
 open FSharp.Data
 open Newtonsoft.Json.Linq
-open Freya.Builder
 open FSharp.RDF
-open FSharp.RDF.Assertion
-open 
 
-{
- Represents = Uri.from "http://lol"
- TargetId = Uri.from "http://lol2"
- Path = Path.from "/somewhere"
- Content = Markdown.Parse """
- ```
-   Stuff
- ```
- I am a title
- ------------
+let commit = Uri.from (sprintf "http://ld.nice.org.uk/prov/commit#%s" "824b345")
 
- ## Quality Statement
+let stardog = Store.Store.stardog "http://192.168.99.100/" "nice" "admin" "admin"
 
- This is the text you want as an abstract
- 
- But this isn't
+let contexts = [
+  "http://192.168.99.100/ns/qualitystandard.jsonld"
+  "http://192.168.99.100/ns/qualitystandard/agegroup.jsonld"
+  "http://192.168.99.100/ns/qualitystandard/conditiondisease.jsonld"
+  "http://192.168.99.100/ns/qualitystandard/setting.jsonld"
+  "http://192.168.99.100/ns/qualitystandard/servicearea.jsonld"
+  "http://192.168.99.100/ns/prov.jsonld"
+  "http://192.168.99.100/ns/owl.jsonld"
+  "http://192.168.99.100/ns/dcterms.jsonld"
+]
 
- ### And really
+open Freya.Publication
+publish stardog commit ["<http://ld.nice.org.uk/ns/qualitystandard#setting>";"<http://ld.nice.org.uk/ns/qualitystandard#targetPopulation>"] contexts |> Seq.toList |> List.map string
 
- Not this
 
- ## This
-
- Is right out
- """}
-|> (fun md ->
- ()
-)

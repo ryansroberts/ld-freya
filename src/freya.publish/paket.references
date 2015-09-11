@@ -1,0 +1,11 @@
+UnionArgParser
+FSharp.Rdf
+FSharp.Formatting
+SharpYaml
+ExtCore
+FSharp.Data
+FSharp.Collections.ParallelSeq
+FParsec
+NEST
+FSharp.Text.RegexProvider
+File:YaafFSharpScripting.fs

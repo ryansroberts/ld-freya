@@ -20,6 +20,7 @@ type ExtractionContext<'a> =
 type ExtractionResult =
   { Trace : Statement list
     Extracted : Resource list }
+
 //Naughty global mutable state, could refactor but it simplifies the implementation quite a bit
 let private tools = Dictionary<_, _>()
 let private dependencies = Dictionary<_, _>()
@@ -57,6 +58,15 @@ let content =
 
 open Freya.YamlParser
 open FSharp.Markdown
+
+let markdownExtractor n f =
+  extractor n (fun x ->
+    f {
+       Represents = x.Represents
+       TargetId = x.TargetId
+       Path = x.Path
+       Content = Markdown.Parse x.Content }
+   )
 
 let yamlExtractor n f =
   extractor n (fun x ->
