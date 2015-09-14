@@ -16,7 +16,6 @@ module Publication =
 
   type PropertyPaths = | PropertyPaths of Uri list list
 
-  let echo s x = printfn s x;x
 
 
   let publish (stardog : Store) commit propertyPaths contexts =
@@ -115,6 +114,7 @@ module Publication =
 
     ///Append _id and _type
     let elasiticerise (x:JObject) =
+      printfn "Write resource IRI %s" (string x.["prov:specializationOf"])
       x.["_id"] <- x.["prov:specializationOf"]
       x.["_type"] <- x.["@type"]
       x
@@ -129,7 +129,5 @@ module Publication =
        |> Seq.collect entityForResource
        |> Seq.map subGraph
        |> Seq.map (Resource.fromType (Uri.from "http://www.w3.org/2002/07/owl#NamedIndividual")))
-
-    printfn "%s" (string context)
-
+       |> Seq.filter (List.isEmpty >> not)
     Seq.map ((Resource.compatctedJsonLD opts (Context(context,opts))) >> elasiticerise) xr 

@@ -66,7 +66,10 @@ let main argv =
     let iriP = iriP()
     toPublish
     |>PSeq.iter (fun x ->
-      let m = iriP.Match ((x.["@id"]).Value<string>()) //ugh
+      printfn "%s" (string x)
+      let id = ( x.["_id"]).Value<string>()  //ugh
+      printfn "Writing ld for %s" id
+      let m = iriP.Match id
       use fout = System.IO.File.CreateText(System.IO.Path.Combine(output,(sprintf "%s.jsonld" m.fragment.Value)))
       use w = new JsonTextWriter(fout)
       x.WriteTo w
