@@ -1,3 +1,4 @@
+#I "../../bin"
 #r "../../packages/json-ld.net/lib/net40-Client/JsonLD.dll"
 #r "../../packages/Newtonsoft.Json/lib/net40/Newtonsoft.Json.dll"
 #r "../../packages/VDS.Common/lib/net40-client/VDS.Common.dll"
@@ -20,40 +21,60 @@
 #r "../../packages/FSharp.RDF/lib/FSharp.RDF.dll"
 #r "../../packages/FSharpx.Core/lib/40/FSharpx.Core.dll"
 #r "../../packages/FSharp.Collections.ParallelSeq/lib/net40/FSharp.Collections.ParallelSeq.dll"
+#r "../../packages/FSharp.Formatting/lib/net40/FSharp.Markdown.dll"
 #r "../../packages/FSharp.Compiler.Service/lib/net40/FSharp.Compiler.Service.dll"
 #r "../../bin/freya.exe"
-open FSharp.Data
-open Newtonsoft.Json.Linq
+
+
+open Freya
+open Freya.Markdown
 open Freya.Builder
+open FSharp
 open FSharp.RDF
 open FSharp.RDF.Assertion
-open 
-
+open FSharp.Markdown
 {
  Represents = Uri.from "http://lol"
  TargetId = Uri.from "http://lol2"
- Path = Path.from "/somewhere"
+ Path = File.from "/somewhere"
  Content = Markdown.Parse """
- ```
-   Stuff
- ```
- I am a title
- ------------
+```
+This is codes
+```
+Quality statement 11: Psychological interventions and relapse prevention medication for adults
+----------------------------------------------------------------------------------------------
 
- ## Quality Statement
+##Quality Statement
 
- This is the text you want as an abstract
- 
- But this isn't
+This is the text you want as an abstract
 
- ### And really
+But this isn't
 
- Not this
+### And really
 
- ## This
+Not this
 
- Is right out
- """}
-|> (fun md ->
- ()
+## This
+
+Is right out
+"""}
+|> (fun x ->
+    let h1 = x.Content.Paragraphs
+             |> List.choose MarkdownParagraph.hAny
+             |> List.map MarkdownSpan.text
+             |> List.map (fun x -> rdf.dataProperty !!"http://purl.org/dc/terms/title" (x^^xsd.string) )
+             |> List.tryHead
+
+    let p1 = x.Content.Paragraphs
+             |> MarkdownParagraph.following
+                   (MarkdownParagraph.hAny >>= (MarkdownSpan.re ".*(Q|q)uality.*(S|s)tatement.*"))
+             |> List.map MarkdownParagraph.text
+             |> List.map (fun x -> rdf.dataProperty !!"http://purl.org/dc/terms/abstract" (x^^xsd.string) )
+             |> List.tryHead
+
+
+    {
+     Extracted = rdf.resource x.TargetId (Option.toList h1 @ Option.toLiist p1)
+     Trace = []
+    }
 )

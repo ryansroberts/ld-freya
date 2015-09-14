@@ -28,21 +28,22 @@ open Newtonsoft.Json.Linq
 open FSharp.RDF
 
 let commit = Uri.from (sprintf "http://ld.nice.org.uk/prov/commit#%s" "824b345")
-
-let stardog = Store.Store.stardog "http://192.168.99.100/" "nice" "admin" "admin"
-
-let contexts = [
-  "http://192.168.99.100/ns/qualitystandard.jsonld"
-  "http://192.168.99.100/ns/qualitystandard/agegroup.jsonld"
-  "http://192.168.99.100/ns/qualitystandard/conditiondisease.jsonld"
-  "http://192.168.99.100/ns/qualitystandard/setting.jsonld"
-  "http://192.168.99.100/ns/qualitystandard/servicearea.jsonld"
-  "http://192.168.99.100/ns/prov.jsonld"
-  "http://192.168.99.100/ns/owl.jsonld"
-  "http://192.168.99.100/ns/dcterms.jsonld"
-]
+let stardog = 
+  Store.Store.stardog "http://192.168.99.100/" "nice" "admin" "admin"
+let contexts = 
+  [ "http://192.168.99.100/ns/qualitystandard.jsonld"; 
+    "http://192.168.99.100/ns/qualitystandard/agegroup.jsonld"; 
+    "http://192.168.99.100/ns/qualitystandard/conditiondisease.jsonld"; 
+    "http://192.168.99.100/ns/qualitystandard/setting.jsonld"; 
+    "http://192.168.99.100/ns/qualitystandard/servicearea.jsonld"; 
+    "http://192.168.99.100/ns/prov.jsonld"; 
+    "http://192.168.99.100/ns/owl.jsonld"; 
+    "http://192.168.99.100/ns/dcterms.jsonld" ]
 
 open Freya.Publication
-publish stardog commit ["<http://ld.nice.org.uk/ns/qualitystandard#setting>";"<http://ld.nice.org.uk/ns/qualitystandard#targetPopulation>"] contexts |> Seq.toList |> List.map string
 
-
+publish stardog commit 
+  [ "<http://ld.nice.org.uk/ns/qualitystandard#setting>"; 
+    "<http://ld.nice.org.uk/ns/qualitystandard#targetPopulation>" ] contexts
+|> Seq.toList
+|> List.map string

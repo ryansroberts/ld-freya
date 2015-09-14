@@ -1,51 +1,79 @@
 namespace Freya
 
-open ExtCore
+open FSharp.Data
+open Newtonsoft.Json.Linq
+open FSharp.RDF
+open FSharp.RDF.Assertion
+open Freya
 open FSharp.Markdown
-open System.Text
+open FSharp.RDF.Assertion
+open System.Text.RegularExpressions
 
-module MarkdownExtraction = 
-  type Axis = 
-    | Block
-  
-  type SpanSelector = 
-    | Regex of System.Text.RegularExpressions.Regex
-    override x.ToString() = 
-      match x with
-      | Regex x -> (string x)
-  
-  type Selector = 
-    | Heading of SpanSelector
-    override x.ToString() = 
-      match x with
-      | Heading x -> sprintf "#[%s]" (string x)
-  
-  type Expression = 
-    | Selection of Selector * Axis
-    | Sequence of Expression * Expression
-    override x.ToString() = 
-      match x with
-      | Selection(a, Block) -> sprintf "%s" (string a)
-      | Sequence(a, b) -> sprintf "%s/%s" (string a) (string b)
-  
-  type blockSelection = MarkdownParagraph list -> MarkdownParagraph list
-  
-  let evaluateSS = function 
-    | Regex r -> 
-      (fun xs -> 
-      let spansAsText = List.map string >> List.fold (+) ""
-      if (r.IsMatch(spansAsText xs)) then xs
-      else [])
-  let evaluateA = function 
-    | Block -> (fun xs -> xs)
-  let evaluateS = function 
-    | Heading ss -> 
-      (fun xs -> 
-      match evaluateSS ss xs with
-      | x :: xs -> xs
-      | _ -> [])
-  
-  let rec evaluateE = 
-    function 
-    | Selection(s, a) -> evaluateS s >> evaluateA a
-    | Sequence(a, b) -> evaluateE a >> evaluateE b
+module Markdown =
+  let level f =
+    function
+    | Some(i, x) when f i -> Some x
+    | _ -> None
+
+  let rec textN =
+    function
+    | MarkdownSpan.Literal x -> x
+    | MarkdownSpan.Strong xs -> text xs
+    | MarkdownSpan.Emphasis xs -> text xs
+    | MarkdownSpan.EmbedSpans xs -> text (xs.Render())
+    | MarkdownSpan.HardLineBreak -> "\n"
+    | _ -> ""
+
+  and text = List.map textN >> String.concat ""
+
+  let rec pTextN =
+    function
+    | MarkdownParagraph.CodeBlock(x, _, _) | MarkdownParagraph.InlineBlock(x) ->
+      x
+    | MarkdownParagraph.Heading(_, xs) | MarkdownParagraph.Paragraph xs | MarkdownParagraph.Span xs ->
+      text xs
+    | MarkdownParagraph.QuotedBlock xs -> pText xs
+    | MarkdownParagraph.ListBlock(_, xs) -> pText' xs
+    | MarkdownParagraph.TableBlock(x, _, xs) -> ""
+    | MarkdownParagraph.EmbedParagraphs(xs) -> ""
+
+  and pText = List.map pTextN >> String.concat ""
+
+  and pText' = List.map pText >> String.concat ""
+
+  type MarkdownSpan with
+    static member text = text
+    static member re s xs =
+      if ((Regex.IsMatch(MarkdownSpan.text xs, s))) then Some xs
+      else None
+
+  type SpanSelector = MarkdownParagraph -> MarkdownSpans option
+
+  type SpanFilter = MarkdownSpans option -> MarkdownSpans option
+
+  type MarkdownParagraph with
+
+    static member heading =
+      (function
+      | MarkdownParagraph.Heading(i, x) -> Some(i, x)
+      | _ -> None)
+
+    static member hAny = MarkdownParagraph.heading >> level (fun f -> true)
+    static member h1 = MarkdownParagraph.heading >> level ((=) 1)
+    static member h2 = MarkdownParagraph.heading >> level ((=) 2)
+    static member h3 = MarkdownParagraph.heading >> level ((=) 3)
+    static member text = pTextN
+    static member text = pText
+    static member text = pText'
+    static member following f =
+      function
+      | x :: xs ->
+        match f (x : MarkdownParagraph) with
+        | Some _ -> xs
+        | None -> MarkdownParagraph.following f xs
+      | _ -> []
+
+  let inline (>>=) f g x =
+    match f x with
+    | Some x -> g x
+    | _ -> None

@@ -6,4 +6,3 @@ open FSharp.RDF
 open FSharp.Data
 open FSharp.RDF.JsonLD
 open Newtonsoft.Json.Linq
-
