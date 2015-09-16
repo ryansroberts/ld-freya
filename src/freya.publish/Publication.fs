@@ -13,32 +13,33 @@ open FSharp.RDF.JsonLD
 open JsonLD.Core
 open Newtonsoft.Json.Linq
 
-module Publication = 
-  type PropertyPaths = 
+module Publication =
+  type PropertyPaths =
     | PropertyPaths of Uri list list
-  
-  let publish (stardog : Store) commit propertyPaths contexts = 
+
+  let publish (stardog : Store) commit propertyPaths contexts =
     let contextS (uri) = sprintf """ "%s" """ uri
     let contexts = contexts |> List.map contextS
     let context = (JObject.Parse(sprintf """ {
                 "@context": [
+                     {"@language" : "en"},
                      %s,
                      {"resource" : "http://ld.nice.org.uk/resource#" }
                   ]
                }
     """ (String.concat ",\n" contexts)) :> JToken)
-    
-    let urinode = 
-      function 
+
+    let urinode =
+      function
       | Node.Uri x -> Some x
       | _ -> None
-    
-    let asUri = 
+
+    let asUri =
       Seq.map urinode
       >> Seq.filter Option.isSome
       >> Seq.map Option.get
-    
-    let resources = 
+
+    let resources =
       (stardog.queryResultSet [] """
             prefix prov:  <http://www.w3.org/ns/prov#>
 
@@ -52,8 +53,17 @@ module Publication =
             """ []
        |> ResultSet.singles
        |> asUri)
-    
-    let entityForResource resource = 
+
+    let rec retry f x =
+        try
+          f x
+        with
+          | e ->
+            printfn "Failure: %s" e.Message
+            retry f x
+
+
+    let entityForResource resource =
       (stardog.queryResultSet [] """
             prefix prov: <http://www.w3.org/ns/prov#>
             prefix niceprov: <http://ld.nice.org.uk/prov>
@@ -83,14 +93,20 @@ module Publication =
                   ("head", Param.Uri commit) ]
        |> ResultSet.singles
        |> asUri)
-    
-    let clause = 
-      List.mapi (fun i v -> sprintf "@entity %s ?o_%d ." v i) 
-      >> List.fold (+) ""
-    
-    let subGraph entity = 
+
+    let clause =
+      List.mapi (fun i v -> sprintf "optional { @entity %s ?o_%d . } " v i)
+      >> String.concat "\n"
+
+    let construct =
+      List.mapi (fun i v -> sprintf " @entity %s ?o_%d . " v i)
+      >> String.concat "\n"
+
+
+    let subGraph entity =
       let clause = clause propertyPaths
-      Graph.defaultPrefixes (Uri.from "http://ld.nice.org.uk/") [] (stardog.queryGraph 
+      let construct = construct propertyPaths
+      Graph.defaultPrefixes (Uri.from "http://ld.nice.org.uk/") [] (stardog.queryGraph
                                                                       [] (sprintf """
             prefix prov: <http://www.w3.org/ns/prov#>
             prefix niceprov: <http://ld.nice.org.uk/prov>
@@ -109,29 +125,33 @@ module Publication =
             where {
               @entity a ?t .
               @entity prov:specializationOf ?r .
-              optional  { @entity prov:alternateOf ?alt .  }
+              optional { @entity prov:alternateOf ?alt .  } .
               %s
             }
-         """ clause clause) [ ("entity", Param.Uri entity) ])
-    
+         """ construct clause) [ ("entity", Param.Uri entity) ])
+
+   
     ///Append _id and _type
-    let elasiticerise (x : JObject) = 
+    let elasiticerise (x : JObject) =
       x.["_id"] <- x.["prov:specializationOf"]
-      x.["_type"] <- x.["@type"]
+      x.Add("_type",JValue("qualitystatement"))
+      x.Remove("@context") |> ignore
       x
-    
+
     let opts = JsonLdOptions()
     opts.SetCompactArrays(true)
     opts.SetUseRdfType(false)
+    opts.SetUseNativeTypes(true)
     opts.SetEmbed(System.Nullable<_>(true))
-    let xr = 
+    opts.SetExplicit(System.Nullable<_>(false))
+    let xr =
       (resources
-       |> Seq.collect entityForResource
-       |> Seq.map subGraph
-       |> Seq.map 
-            (Resource.fromType 
-               (Uri.from "http://www.w3.org/2002/07/owl#NamedIndividual")))
-      |> Seq.filter (List.isEmpty >> not)
-    Seq.map 
-      ((Resource.compatctedJsonLD opts (Context(context, opts))) 
+       |> Seq.collect ( entityForResource |> retry )
+       |> Seq.map ( subGraph |> retry )
+       |> Seq.map
+            (Resource.fromType
+               (Uri.from "http://www.w3.org/2002/07/owl#NamedIndividual"))
+      |> Seq.filter (List.isEmpty >> not))
+    Seq.map
+      ((Resource.compatctedJsonLD opts (Context(context, opts)))
        >> elasiticerise) xr

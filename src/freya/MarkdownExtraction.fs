@@ -28,14 +28,17 @@ module Markdown =
 
   let rec pTextN =
     function
-    | MarkdownParagraph.CodeBlock(x, _, _) | MarkdownParagraph.InlineBlock(x) ->
-      x
+    | MarkdownParagraph.Paragraph xs -> text xs
+    | MarkdownParagraph.CodeBlock(x, _, _)
+    | MarkdownParagraph.InlineBlock(x)
+    | MarkdownParagraph.InlineBlock x -> x
     | MarkdownParagraph.Heading(_, xs) | MarkdownParagraph.Paragraph xs | MarkdownParagraph.Span xs ->
       text xs
     | MarkdownParagraph.QuotedBlock xs -> pText xs
     | MarkdownParagraph.ListBlock(_, xs) -> pText' xs
     | MarkdownParagraph.TableBlock(x, _, xs) -> ""
     | MarkdownParagraph.EmbedParagraphs(xs) -> ""
+    | _ -> ""
 
   and pText = List.map pTextN >> String.concat ""
 
@@ -63,8 +66,6 @@ module Markdown =
     static member h2 = MarkdownParagraph.heading >> level ((=) 2)
     static member h3 = MarkdownParagraph.heading >> level ((=) 3)
     static member text = pTextN
-    static member text = pText
-    static member text = pText'
     static member following f =
       function
       | x :: xs ->
