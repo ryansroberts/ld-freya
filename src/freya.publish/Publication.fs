@@ -43,7 +43,7 @@ module Publication =
       (stardog.queryResultSet [] """
             prefix prov:  <http://www.w3.org/ns/prov#>
 
-            select ?resource
+            select distinct ?resource
             from <http://ld.nice.org.uk/ns>
             from <http://ld.nice.org.uk/prov>
             from <http://ld.nice.org.uk/>
@@ -130,8 +130,9 @@ module Publication =
             }
          """ construct clause) [ ("entity", Param.Uri entity) ])
 
-   
-    ///Append _id and _type
+
+    ///Append _id and _type, kill context for now as elastic doesn't like the remotes
+    ///Would whine about type implicit from structure but this would be a bit hypocritical
     let elasiticerise (x : JObject) =
       x.["_id"] <- x.["prov:specializationOf"]
       x.Add("_type",JValue("qualitystatement"))
