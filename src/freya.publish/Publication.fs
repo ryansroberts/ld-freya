@@ -98,8 +98,11 @@ module Publication =
       List.mapi (fun i v -> sprintf "optional { @entity %s ?o_%d . } " v i)
       >> String.concat "\n"
 
+    let firstPathOPath (s:System.String) =
+      s.Split([|'/'|]) |> Seq.head
+
     let construct =
-      List.mapi (fun i v -> sprintf " @entity %s ?o_%d . " v i)
+      List.mapi (fun i v -> sprintf " @entity %s ?o_%d . " (firstPathOPath v) i)
       >> String.concat "\n"
 
 
