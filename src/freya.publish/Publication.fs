@@ -40,6 +40,7 @@ module Publication =
       >> Seq.map Option.get
 
     let resources =
+      printf "Running query for all resources"
       (stardog.queryResultSet [] """
             prefix prov:  <http://www.w3.org/ns/prov#>
 
@@ -64,6 +65,7 @@ module Publication =
 
 
     let entityForResource resource =
+      printf "Getting entity for resource %A" resource
       (stardog.queryResultSet [] """
             prefix prov: <http://www.w3.org/ns/prov#>
             prefix niceprov: <http://ld.nice.org.uk/prov>
@@ -109,29 +111,32 @@ module Publication =
     let subGraph entity =
       let clause = clause propertyPaths
       let construct = construct propertyPaths
+      let query = (sprintf """
+                           prefix prov: <http://www.w3.org/ns/prov#>
+                           prefix niceprov: <http://ld.nice.org.uk/prov>
+                           prefix compilation: <http://ld.nice.org.uk/ns/compilation#>
+                           prefix nice: <http://ld.nice.org.uk/>
+                           prefix dcterms: <http://purl.org/dc/terms/>
+                           construct {
+                             @entity a ?t .
+                             @entity prov:specializationOf ?r .
+                             @entity prov:alternateOf ?alt .
+                             %s
+                           }
+                           from <http://ld.nice.org.uk/ns>
+                           from <http://ld.nice.org.uk/prov>
+                           from <http://ld.nice.org.uk/>
+                           where {
+                             @entity a ?t .
+                             @entity prov:specializationOf ?r .
+                             optional { @entity prov:alternateOf ?alt .  } .
+                             %s
+                           }
+                        """ construct clause)
+      printf "Running query for resource: %s" query
+
       Graph.defaultPrefixes (Uri.from "http://ld.nice.org.uk/") [] (stardog.queryGraph
-                                                                      [] (sprintf """
-            prefix prov: <http://www.w3.org/ns/prov#>
-            prefix niceprov: <http://ld.nice.org.uk/prov>
-            prefix compilation: <http://ld.nice.org.uk/ns/compilation#>
-            prefix nice: <http://ld.nice.org.uk/>
-            prefix dcterms: <http://purl.org/dc/terms/>
-            construct {
-              @entity a ?t .
-              @entity prov:specializationOf ?r .
-              @entity prov:alternateOf ?alt .
-              %s
-            }
-            from <http://ld.nice.org.uk/ns>
-            from <http://ld.nice.org.uk/prov>
-            from <http://ld.nice.org.uk/>
-            where {
-              @entity a ?t .
-              @entity prov:specializationOf ?r .
-              optional { @entity prov:alternateOf ?alt .  } .
-              %s
-            }
-         """ construct clause) [ ("entity", Param.Uri entity) ])
+                                                                      [] query [ ("entity", Param.Uri entity) ])
 
 
     ///Append _id and _type, kill context for now as elastic doesn't like the remotes
