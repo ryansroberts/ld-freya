@@ -10,8 +10,11 @@ open FSharp.Data
 open FSharp.RDF
 open FSharp.RDF.Store
 open FSharp.RDF.JsonLD
+open FSharp.Text.RegexProvider
 open JsonLD.Core
 open Newtonsoft.Json.Linq
+
+type PathRegex = Regex< "<(?<firstPartOfPropertyPath>.*)>">
 
 module Publication =
   type PropertyPaths =
@@ -101,10 +104,10 @@ module Publication =
       >> String.concat "\n"
 
     let firstPathOPath (s:System.String) =
-      s.Split([|'/'|]) |> Seq.head
+      PathRegex().Match(s).firstPartOfPropertyPath.Value
 
     let construct =
-      List.mapi (fun i v -> sprintf " @entity %s ?o_%d . " (firstPathOPath v) i)
+      List.mapi (fun i v -> sprintf " @entity <%s> ?o_%d . " (firstPathOPath v) i)
       >> String.concat "\n"
 
 

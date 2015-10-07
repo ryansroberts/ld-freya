@@ -50,3 +50,13 @@ publish stardog commit
     ] contexts
 |> Seq.toList
 |> List.map string
+
+
+
+
+#r "../../packages/FSharp.Text.RegexProvider/lib/net40/FSharp.Text.RegexProvider.dll"
+open FSharp.Text.RegexProvider
+
+type PathRegex = Regex< "<(?<firstPartOfPropertyPath>.*)>">
+let s = "<http://ld.nice.org.uk/ns/qualitystandard#age>/^rdfs:subClassOf*"
+PathRegex().Match(s).firstPartOfPropertyPath.Value
