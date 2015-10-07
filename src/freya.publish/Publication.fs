@@ -43,7 +43,7 @@ module Publication =
       >> Seq.map Option.get
 
     let resources =
-      printf "Running query for all resources"
+      //printf "Running query for all resources"
       (stardog.queryResultSet [] """
             prefix prov:  <http://www.w3.org/ns/prov#>
 
@@ -68,7 +68,7 @@ module Publication =
 
 
     let entityForResource resource =
-      printf "Getting entity for resource %A" resource
+      //printf "Getting entity for resource %A" resource
       (stardog.queryResultSet [] """
             prefix prov: <http://www.w3.org/ns/prov#>
             prefix niceprov: <http://ld.nice.org.uk/prov>
@@ -136,7 +136,7 @@ module Publication =
                              %s
                            }
                         """ construct clause)
-      printf "Running query for resource: %s" query
+      //printf "Running query for resource: %s" query
 
       Graph.defaultPrefixes (Uri.from "http://ld.nice.org.uk/") [] (stardog.queryGraph
                                                                       [] query [ ("entity", Param.Uri entity) ])
