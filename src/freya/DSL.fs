@@ -16,7 +16,8 @@ type ExtractionContext<'a> =
   { Represents : FSharp.RDF.Uri
     TargetId : FSharp.RDF.Uri
     Path : File
-    Content : 'a }
+    Content : 'a
+    Captured : Capture list}
 
 type ExtractionResult =
   { Trace : Statement list
@@ -42,7 +43,8 @@ let extractor n f =
          match f ({ Represents = m.Represents
                     TargetId = m.Target.Id
                     Path = m.Target.Path
-                    Content = m.Target.Content |> snd }) with
+                    Content = m.Target.Content |> snd
+                    Captured = m.Captured}) with
          | { Trace = trace; Extracted = extracted } ->
            pipeline.succeed (Tracing.semanticExtraction m (Name n) trace)
              extracted))
@@ -68,7 +70,8 @@ let markdownExtractor n f =
     f { Represents = x.Represents
         TargetId = x.TargetId
         Path = x.Path
-        Content = Markdown.Parse x.Content })
+        Content = Markdown.Parse x.Content
+        Captured = x.Captured})
 
 let yamlExtractor n f =
   extractor n (fun x ->
@@ -84,7 +87,8 @@ let yamlExtractor n f =
         f { Represents = x.Represents
             TargetId = x.TargetId
             Path = x.Path
-            Content = YamlParser.parse yaml }
+            Content = YamlParser.parse yaml
+            Captured = x.Captured}
       with :? SharpYaml.YamlException as e ->
         { Trace =
             [ Tracing.warn (sprintf "Yaml parse error %s" e.Message)
