@@ -192,6 +192,7 @@ type PipelineExecution =
   | Failure of Target * ToolOutput
   | Success of Target * ToolOutput
 
+
 module pipeline =
   let prov =
     function
@@ -372,6 +373,7 @@ module compilationuris =
         yield! g.GetTriplesWithSubject(s.Subject)
     }
 
+
   let loadProvenance g =
     let g =
       g
@@ -494,7 +496,7 @@ module Tracing =
         objectProperty !!"compilation:source" uri ]
 
   let message t s p =
-    printfn "In (%s) %s" (string p) s
+    printfn """{"type" : "%s","location" : "%s","message" : "%s"}""" (string t) (string p) s
     blank !!"compilation:message"
       [ a t
         dataProperty !!"rdfs:label" (s ^^ xsd.string)
