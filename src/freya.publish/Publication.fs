@@ -13,14 +13,24 @@ open FSharp.RDF.JsonLD
 open FSharp.Text.RegexProvider
 open JsonLD.Core
 open Newtonsoft.Json.Linq
+open FSharp.Collections.ParallelSeq
+type PathRegex = Regex< ".*<(?<firstPartOfPropertyPath>.*)>.*">
 
-type PathRegex = Regex< "<(?<firstPartOfPropertyPath>.*)>">
+
+type Logger =
+  | Debug
+  | Info
+  with member inline __.write level message =
+    match __,level,message with
+    | Info,_,s -> System.Console.WriteLine (string s);s
+    | Debug,Debug,s -> System.Console.WriteLine (string s);s
+    | _,_,s -> s
 
 module Publication =
   type PropertyPaths =
     | PropertyPaths of Uri list list
 
-  let publish (stardog : Store) commit propertyPaths contexts =
+  let publish (log:Logger) (stardog : Store) commit propertyPaths contexts =
     let contextS (uri) = sprintf """ "%s" """ uri
     let contexts = contexts |> List.map contextS
     let context = (JObject.Parse(sprintf """ {
@@ -43,7 +53,6 @@ module Publication =
       >> Seq.map Option.get
 
     let resources =
-      //printf "Running query for all resources"
       (stardog.queryResultSet [] """
             prefix prov:  <http://www.w3.org/ns/prov#>
 
@@ -63,13 +72,13 @@ module Publication =
           f x
         with
           | e ->
-            printfn "Failure: %s" e.Message
+            sprintf "Failure: %s" e.Message |> log.write Info |> ignore
             retry f x
 
 
     let entityForResource resource =
-      //printf "Getting entity for resource %A" resource
-      (stardog.queryResultSet [] """
+      (sprintf "Getting entity for resource %A" resource) |> log.write Debug |> ignore
+      stardog.queryResultSet [] """
             prefix prov: <http://www.w3.org/ns/prov#>
             prefix niceprov: <http://ld.nice.org.uk/prov>
             prefix compilation: <http://ld.nice.org.uk/ns/compilation#>
@@ -97,7 +106,7 @@ module Publication =
             """ [ ("resource", Param.Uri resource)
                   ("head", Param.Uri commit) ]
        |> ResultSet.singles
-       |> asUri)
+       |> asUri
 
     let clause =
       List.mapi (fun i v -> sprintf "optional { @entity %s ?o_%d . } " v i)
@@ -123,7 +132,7 @@ module Publication =
                            construct {
                              @entity a ?t .
                              @entity prov:specializationOf ?r .
-                             @entity prov:alternateOf ?alt .
+                             ?alt ^prov:alternateOf @entity .
                              %s
                            }
                            from <http://ld.nice.org.uk/ns>
@@ -135,11 +144,9 @@ module Publication =
                              optional { @entity prov:alternateOf ?alt .  } .
                              %s
                            }
-                        """ construct clause)
-      //printf "Running query for resource: %s" query
+                   """ construct clause) |> log.write Debug
 
-      Graph.defaultPrefixes (Uri.from "http://ld.nice.org.uk/") [] (stardog.queryGraph
-                                                                      [] query [ ("entity", Param.Uri entity) ])
+      Graph.defaultPrefixes (Uri.from "http://ld.nice.org.uk/") [] (stardog.queryGraph [] query [ ("entity", Param.Uri entity) ])
 
 
     ///Append _id and _type, kill context for now as elastic doesn't like the remotes
@@ -158,12 +165,12 @@ module Publication =
     opts.SetExplicit(System.Nullable<_>(false))
     let xr =
       (resources
-       |> Seq.collect ( entityForResource |> retry )
-       |> Seq.map ( subGraph |> retry )
-       |> Seq.map
+       |> PSeq.collect ( entityForResource |> retry )
+       |> PSeq.map ( subGraph |> retry )
+       |> PSeq.map
             (Resource.fromType
                (Uri.from "http://www.w3.org/2002/07/owl#NamedIndividual"))
       |> Seq.filter (List.isEmpty >> not))
-    Seq.map
+    PSeq.map
       ((Resource.compatctedJsonLD opts (Context(context, opts)))
        >> elasiticerise) xr

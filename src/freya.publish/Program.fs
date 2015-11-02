@@ -17,6 +17,7 @@ type Arguments =
   | Commit of string
   | Context of string
   | PropertyPath of string
+  | Debug
   interface IArgParserTemplate with
     member s.Usage =
       match s with
@@ -28,6 +29,7 @@ type Arguments =
       | Context _ -> "Remote json ld context to use"
       | Commit _ -> "Commit hash to publish"
       | PropertyPath _ -> "Property path to include in elastic record"
+      | Debug _ -> "Print diagnostic information"
 
 type iriP = Regex< "(?<prefix>.*):(?<fragment>.*)" >
 
@@ -36,8 +38,10 @@ open Newtonsoft.Json
 
 [<EntryPoint>]
 let main argv =
+  System.Net.ServicePointManager.DefaultConnectionLimit <- System.Int32.MaxValue //Magic go faster switch, defaults to 3 http connections
   let parser = new UnionArgParser<Arguments>()
   let args = parser.Parse argv
+  let logger = (if args.Contains <@ Debug @> then Logger.Debug else Info)
   let toLower (s : string) = s.ToLower()
   let containsParam param = Seq.map toLower >> Seq.exists ((=) (toLower param))
   let paramIsHelp param =
@@ -55,7 +59,7 @@ let main argv =
       (sprintf "http://ld.nice.org.uk/prov/commit#%s"
          (args.GetResult <@ Commit @>))
   let toPublish =
-    publish stardog commit (args.GetResults <@ PropertyPath @>)
+    publish logger stardog commit (args.GetResults <@ PropertyPath @>)
       (args.GetResults <@ Context @>)
   let output = args.GetResult <@ Output @>
   let iriP = iriP()
